@@ -1,0 +1,32 @@
+{
+  "name": "work-cregis-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Cregis desktop business app — built on @eds/desktop-tokens and @eds/desktop-components",
+  "scripts": {
+    "predev": "pnpm --dir ../eds-desktop build:tokens && pnpm --dir ../eds-desktop build:components",
+    "dev": "vite",
+    "prebuild": "pnpm --dir ../eds-desktop build:tokens && pnpm --dir ../eds-desktop build:components",
+    "build": "vue-tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "vue-tsc --noEmit"
+  },
+  "dependencies": {
+    "@eds/desktop-components": "link:../eds-desktop/packages/components",
+    "@eds/desktop-tokens": "link:../eds-desktop/packages/tokens",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.1",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.7",
+    "vue-tsc": "^2.2.0"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  },
+  "packageManager": "pnpm@9.15.4"
+}

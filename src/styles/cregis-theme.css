@@ -1,0 +1,74 @@
+/**
+ * Cregis 业务主题 — 覆盖 DS 基色变量（Display P3 双声明）。
+ * --eds-brand 对齐 Cregis 品牌绿 #1FC35A（与 eds-success 同源）。
+ */
+:root,
+[data-theme='light'],
+[data-theme='dark'] {
+  --eds-brand: #1fc35a;
+  --eds-brand: color(display-p3 0.1216 0.7647 0.3529);
+}
+
+/**
+ * 浏览器外壳背景 — 模拟客户端窗口外的宿主环境（业务约定，非 DS token）。
+ */
+:root {
+  --cregis-shell-bg: #eff4fa;
+  --cregis-shell-bg: color(display-p3 0.9373 0.9569 0.9804);
+  --cregis-shell-orb-size-lg: calc(var(--scale-50) * 2.1);
+  --cregis-shell-orb-size-md: calc(var(--scale-50) * 1.5);
+  --cregis-shell-orb-size-sm: var(--scale-50);
+  --cregis-shell-edge-halo: inset 0 0 var(--blur-deep) var(--blur-shallow)
+    color-mix(in display-p3, var(--eds-match) 5%, transparent);
+  /* 背景网格（业务约定） */
+  --cregis-shell-grid-size: var(--scale-20);
+  --cregis-shell-grid-line-width: var(--stroke-xs);
+  --cregis-shell-grid-line-color: var(--stroke-divider-page);
+  --cregis-shell-grid-opacity-top: 0.36;
+  --cregis-shell-grid-opacity-bottom: 0.18;
+  --cregis-shell-grid-fade: linear-gradient(
+    to bottom,
+    rgb(0 0 0 / var(--cregis-shell-grid-opacity-top)) 0%,
+    rgb(0 0 0 / var(--cregis-shell-grid-opacity-bottom)) 100%
+  );
+  --cregis-shell-grid: linear-gradient(
+      to right,
+      var(--cregis-shell-grid-line-color) var(--cregis-shell-grid-line-width),
+      transparent var(--cregis-shell-grid-line-width)
+    ),
+    linear-gradient(
+      to bottom,
+      var(--cregis-shell-grid-line-color) var(--cregis-shell-grid-line-width),
+      transparent var(--cregis-shell-grid-line-width)
+    );
+  --cregis-shell-orbs: radial-gradient(
+      var(--cregis-shell-orb-size-lg) circle at 12% 10%,
+      color-mix(in display-p3, var(--eds-brand) 2%, transparent) 0%,
+      transparent 72%
+    ),
+    radial-gradient(
+      var(--cregis-shell-orb-size-md) circle at 88% 8%,
+      color-mix(in display-p3, var(--eds-match) 3%, transparent) 0%,
+      transparent 72%
+    ),
+    radial-gradient(
+      var(--cregis-shell-orb-size-sm) circle at 18% 88%,
+      color-mix(in display-p3, var(--eds-tag-colorful-ice-blue-bg) 8%, transparent) 0%,
+      transparent 72%
+    ),
+    radial-gradient(
+      var(--cregis-shell-orb-size-lg) circle at 92% 42%,
+      color-mix(in display-p3, var(--eds-tag-colorful-cyan-bg) 5%, transparent) 0%,
+      transparent 72%
+    ),
+    radial-gradient(
+      var(--cregis-shell-orb-size-md) circle at 78% 92%,
+      color-mix(in display-p3, var(--eds-tag-colorful-lilac-bg) 9%, transparent) 0%,
+      transparent 72%
+    ),
+    radial-gradient(
+      var(--cregis-shell-orb-size-lg) circle at 12% 48%,
+      color-mix(in display-p3, var(--eds-tag-colorful-coral-bg) 5%, transparent) 0%,
+      transparent 72%
+    );
+}
