@@ -1,0 +1,17 @@
+.remarkTrigger {
+  display: inline-flex;
+}
+
+/** Popover 展开时保持 EgButton 点按态（同 :active；非 active 展开态 / event-focus）。 */
+.remarkTriggerRejectPressed :global(.eds-button:not(:disabled)) {
+  color: var(--event-active-danger);
+}
+
+.remarkTriggerPassPressed :global(.eds-button:not(:disabled)) {
+  color: var(--text-face-secondary);
+}
+
+/** Popover 展开时保持 danger solid 点按态。 */
+.remarkTriggerWithdrawPressed :global(.eds-button:not(:disabled)) {
+  color: var(--text-same-white-secondary);
+}

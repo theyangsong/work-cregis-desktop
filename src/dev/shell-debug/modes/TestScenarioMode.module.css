@@ -1,0 +1,312 @@
+.shell {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+}
+
+.shell:not([data-qa-needs-scroll]) {
+  flex: 1 1 auto;
+  min-height: 100%;
+}
+
+.shell[data-qa-needs-scroll] {
+  flex: 1 1 auto;
+  height: 100%;
+  overflow: hidden;
+}
+
+:global(.shell-debug-qa-top-tool-head) {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: stretch;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+:global(
+  .eds-popover:has(.shell-debug-qa-popover)
+    .shell-debug-qa-top-tool-head
+    [class*='topToolTitle']
+) {
+  padding-bottom: var(--spacing-2);
+}
+
+.scopeControl {
+  box-sizing: border-box;
+  width: 100%;
+  padding-inline: var(--spacing-3);
+  padding-bottom: var(--spacing-2);
+}
+
+.scopeControl :global(.eds-segmented-control) {
+  width: 100%;
+  max-width: 100%;
+}
+
+.measureHost {
+  position: fixed;
+  top: 0;
+  left: 0;
+  visibility: hidden;
+  pointer-events: none;
+  clip-path: inset(100% 0 0 0);
+}
+
+.measurePanel {
+  box-sizing: border-box;
+  width: 312px;
+}
+
+:global(.eds-popover:has(.shell-debug-qa-popover:not([data-qa-needs-scroll])) [class*='contentSlotWithTopTool']) {
+  display: block;
+  flex: 0 0 auto;
+  min-height: 0;
+  overflow: visible;
+}
+
+:global(.eds-popover:has(.shell-debug-qa-popover[data-qa-needs-scroll]) [class*='contentSlotWithTopTool']) {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+:global(.eds-popover:has(.shell-debug-qa-popover:not([data-qa-needs-scroll])) .shell-debug-popover-content) {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  height: auto;
+  margin-inline: calc(-1 * (var(--spacing-4) - var(--spacing-1)));
+  margin-bottom: calc(-1 * (var(--spacing-4) - var(--spacing-1)));
+}
+
+:global(.eds-popover:has(.shell-debug-qa-popover[data-qa-needs-scroll]) .shell-debug-popover-content) {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  margin-inline: calc(-1 * (var(--spacing-4) - var(--spacing-1)));
+  margin-bottom: calc(-1 * (var(--spacing-4) - var(--spacing-1)));
+}
+
+.deformShell {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.deformShell:not([data-shell-ready]) {
+  transition: none;
+}
+
+.deformContent {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.deformShellScrollable {
+  flex: 1 1 auto;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.deformShellScrollable :global(.motion-layout-deform-content) {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.root {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+}
+
+.rootScrollable {
+  flex: 1 1 auto;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+.rootScrollable::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.rootScrollFadeBottom {
+  -webkit-mask-image: linear-gradient(to top, transparent 0, #000 var(--spacing-2));
+  mask-image: linear-gradient(to top, transparent 0, #000 var(--spacing-2));
+  transition: var(--motion-recipe-scroll-fade);
+}
+
+.rootEmpty {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.emptyStateBlock {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-2);
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 120px;
+  padding-inline: var(--spacing-3);
+  padding-bottom: var(--spacing-6);
+}
+
+.emptyStateIcon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  color: var(--stroke-outline-deep);
+}
+
+.emptyStateText {
+  margin: 0;
+  font-size: var(--eds-body-medium-size);
+  font-weight: var(--eds-body-medium-weight);
+  line-height: var(--eds-body-medium-line-height);
+  color: var(--text-base-quaternary);
+  text-align: center;
+}
+
+.itemList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-025);
+}
+
+.itemRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-2);
+  box-sizing: border-box;
+  padding: var(--spacing-2) var(--spacing-3);
+  border-radius: var(--radius-md);
+  background: transparent;
+  composes: motion-ease is-hover from global;
+}
+
+.itemRow:hover {
+  background-color: var(--event-hover);
+}
+
+.itemText {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
+}
+
+.itemLabel {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  margin: 0;
+  min-width: 0;
+}
+
+.itemLabelDot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background-color: var(--status-success);
+  animation: shellDebugQaLabelDotBreathe 3s ease-in-out infinite;
+}
+
+.itemLabelText {
+  min-width: 0;
+  font-size: var(--eds-body-medium-size);
+  font-weight: var(--eds-body-medium-weight);
+  line-height: var(--eds-body-medium-line-height);
+  color: var(--text-base-primary);
+}
+
+@keyframes shellDebugQaLabelDotBreathe {
+  0% {
+    background-color: var(--status-success);
+    opacity: 1;
+  }
+
+  16.5% {
+    background-color: var(--status-success);
+    opacity: 0.35;
+  }
+
+  33.3% {
+    background-color: var(--status-warning);
+    opacity: 1;
+  }
+
+  49.8% {
+    background-color: var(--status-warning);
+    opacity: 0.35;
+  }
+
+  66.6% {
+    background-color: var(--status-danger);
+    opacity: 1;
+  }
+
+  83.1% {
+    background-color: var(--status-danger);
+    opacity: 0.35;
+  }
+
+  100% {
+    background-color: var(--status-success);
+    opacity: 1;
+  }
+}
+
+.itemDesc {
+  margin: var(--spacing-025) 0 0;
+  font-size: var(--eds-footnote-size);
+  line-height: var(--eds-footnote-line-height);
+  color: var(--text-base-secondary);
+}
+
+.meta {
+  flex-shrink: 0;
+  margin: 0;
+  padding-block: var(--spacing-2);
+  font-size: var(--eds-footnote-size);
+  font-weight: var(--eds-footnote-strong-weight);
+  line-height: var(--eds-footnote-line-height);
+  color: var(--text-base-secondary);
+  text-align: center;
+}

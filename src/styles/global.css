@@ -1,0 +1,328 @@
+:root {
+  /* 客户端窗口尺寸（业务约定，非 DS token） */
+  --app-preview-width: 1280px;
+  --app-preview-height: 800px;
+  --app-preview-min-width: 960px;
+  --app-preview-min-height: 720px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  position: relative;
+  color: var(--text-base-primary);
+  background-color: var(--cregis-shell-bg);
+  background-image: var(--cregis-shell-orbs);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  box-shadow: var(--cregis-shell-edge-halo);
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: var(--cregis-shell-grid);
+  background-size: var(--cregis-shell-grid-size) var(--cregis-shell-grid-size);
+  background-repeat: repeat;
+  background-attachment: fixed;
+  mask-image: var(--cregis-shell-grid-fade);
+  -webkit-mask-image: var(--cregis-shell-grid-fade);
+}
+
+#app {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  margin: 0;
+}
+
+/* ── 容器层：EgTooltip → effect-container-box ── */
+#app > .app-preview {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  align-items: stretch;
+  align-self: center;
+  user-select: none;
+  -webkit-user-select: none;
+  width: clamp(
+    var(--app-preview-min-width),
+    var(--app-preview-width),
+    100vw
+  );
+  height: clamp(
+    var(--app-preview-min-height),
+    var(--app-preview-height),
+    100vh
+  );
+  max-width: var(--app-preview-width);
+  max-height: var(--app-preview-height);
+}
+
+/* 输入态仍允许框内选区；业务页禁止 user-select: text 绕过 */
+.app-preview :is(input, textarea, [contenteditable='true']) {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/*
+ * EgFlotation / AnchoredTooltip 默认 teleport 到 body，不在 .app-preview 内。
+ * 与 shell 一致：浮层文本不可选、不可复制（§1.1 禁止复制）。
+ */
+body > [id^='eds-tooltip-v-'],
+.eds-flotation-menu {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* 仅根容器 EgTooltip 的面板；勿用后代选择器，否则会覆盖 BatchBar 等嵌套 flotation 面板 */
+.app-preview > .eds-tooltip-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  flex: 1 1 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  border-radius: inherit;
+  background: transparent;
+  overflow: hidden;
+}
+
+.app-preview > .eds-tooltip-panel > * {
+  flex: 1 1 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+}
+
+/* EgPopup shell host — 与 EgContainer 同级，absolute 铺满预览框，不参与 flex 分配 */
+.app-preview > .eds-tooltip-panel > .app-popup-overlay-root {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  flex: none;
+  width: auto;
+  height: auto;
+  max-height: none;
+  pointer-events: none;
+}
+
+.app-preview > .eds-tooltip-panel > .app-popup-overlay-host {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  flex: none;
+  width: auto;
+  height: auto;
+  max-height: none;
+  pointer-events: none;
+}
+
+.app-popup-overlay-host > * {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.app-popup-overlay-root .eds-popup,
+.app-popup-overlay-host .eds-popup {
+  pointer-events: auto;
+}
+
+/*
+ * 客户端预览框内全局浮标：默认 z-index 由 FloatHost.module 控制（1101，高于 click Popover 1100）；
+ * EgPopup 打开时 FloatHost 挂 underPopup 降至 15，低于 shell（z-index: 20）。
+ */
+.app-preview > .eds-tooltip-panel > [data-app-client-float-host] {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* 仅浮标触发区可点；禁止对 overlay 子层 blanket 设 pointer-events: auto（会盖住整页列表）。 */
+.app-preview > .eds-tooltip-panel > [data-app-client-float-host] [data-float-interactive] {
+  pointer-events: auto;
+}
+
+/* @deprecated 选择器：浮标在 .eds-tooltip-panel 内，非 .app-preview 直接子节点 */
+.app-preview > [data-app-client-float-host] {
+  pointer-events: none;
+}
+
+.app-preview > [data-app-client-float-host] [data-float-interactive] {
+  pointer-events: auto;
+}
+
+#app > .app-preview {
+  overflow: visible;
+}
+
+/* teleport 到 .app-preview 的 AnchoredTooltip 浮层（多签邀请、详情引导等） */
+.app-preview > [id^='eds-tooltip-v-'] {
+  z-index: 1100;
+}
+
+/*
+ * Hover / focus Tooltip：仅浮层命中区拦截指针，避免 tooltip 下方误触底层行。
+ * 离场动画 inner 带 floatingInnerPassThrough，:has 不匹配故不拦截。
+ * 多签邀请关闭/离场时须穿透至浮标（1101），见 multiSignInvitationPanel.css。
+ */
+body > [id^='eds-tooltip-v-'] > div:first-child:has(> :not([class*='floatingInnerPassThrough'])),
+.app-preview
+  > [id^='eds-tooltip-v-']:not(:has(.multi-sign-invitation-panel-root))
+  > div:first-child:has(> :not([class*='floatingInnerPassThrough'])) {
+  pointer-events: auto;
+}
+
+.app-popup-overlay-root > .app-popup-overlay-host > * {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.app-popup-overlay-root > .app-popup-overlay-host .eds-popup {
+  pointer-events: auto;
+}
+
+/* 批量签名进度 host：收起为浮标时仅穿透，弹窗打开时由内部 EgPopup 接管点击 */
+.app-popup-overlay-host > .signing-batch-global-progress-host {
+  pointer-events: none;
+}
+
+/*
+ * 可点击态：默认箭头指针，不用手型（对齐 DS EgButton / motion-ease.is-hover）。
+ */
+.app-preview
+  :is(
+    button,
+    [role='button'],
+    [role='radio'],
+    [role='tab'],
+    a[href],
+    .motion-ease.is-hover,
+    .motion-ease.is-hover-enter-only
+  ):not(:disabled):not([aria-disabled='true']) {
+  cursor: default;
+}
+
+/* ── EgContainer ── */
+.app-shell-container,
+.app-shell-container.eds-container,
+.app-shell-container .eds-container,
+.app-shell-container .content {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+/* ── EgLayout（与 Showcase LayoutPreview 一致） ── */
+.app-shell-container .eds-layout {
+  flex: 1 1 0;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.app-shell-container .eds-layout > div:has(> .eds-nav-bar-shell) {
+  flex-shrink: 0;
+  align-self: stretch;
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.app-shell-container .eds-layout .eds-nav-bar-shell {
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  align-self: stretch;
+}
+
+.app-shell-container .eds-layout .eds-nav-bar {
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+}
+
+.app-shell-container .eds-layout > div:has(> .eds-module-menu) {
+  flex-shrink: 0;
+  align-self: stretch;
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.app-shell-container .eds-layout .eds-module-menu {
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.app-shell-container .eds-layout .main {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.app-shell-container .eds-layout .scrollPanel {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.app-shell-container .eds-layout .body {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+}

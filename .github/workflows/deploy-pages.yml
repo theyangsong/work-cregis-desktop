@@ -1,0 +1,102 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: work-cregis-desktop
+    steps:
+      - name: Checkout work-cregis-desktop
+        uses: actions/checkout@v4
+        with:
+          path: work-cregis-desktop
+          fetch-depth: 0
+
+      - name: Log work-cregis-desktop revision
+        working-directory: work-cregis-desktop
+        run: |
+          echo "work-cregis-desktop SHA: $(git rev-parse HEAD)"
+          git log -1 --oneline
+
+      - name: Checkout eds-desktop
+        uses: actions/checkout@v4
+        with:
+          repository: theyangsong/evergreen-design-system-desktop
+          ref: 730b04cc657b7e770efcc52fbbe9c8eae1ae4e71
+          path: eds-desktop
+
+      - name: Log eds-desktop revision
+        working-directory: eds-desktop
+        run: |
+          echo "eds-desktop SHA: $(git rev-parse --short HEAD)"
+          git log -1 --oneline
+
+      - name: Verify ModuleMenu hover CSS
+        run: grep -q '.item:hover:not(.itemFocused)' ../eds-desktop/packages/components/src/organisms/module-menu/ModuleMenu.module.css
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: work-cregis-desktop/pnpm-lock.yaml
+
+      - name: Set Vite base path
+        working-directory: work-cregis-desktop
+        run: |
+          REPO="${{ github.event.repository.name }}"
+          if [[ "$REPO" == *.github.io ]]; then
+            echo "VITE_BASE_PATH=/" >> "$GITHUB_ENV"
+          else
+            echo "VITE_BASE_PATH=/${REPO}/" >> "$GITHUB_ENV"
+          fi
+          echo "VITE_SHELL_DEBUG=true" >> "$GITHUB_ENV"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install eds-desktop dependencies
+        working-directory: eds-desktop
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify eds-desktop checkout
+        run: test -f ../eds-desktop/packages/components/src/index.ts
+
+      - name: Build Pages artifact
+        run: node scripts/build-pages-artifact.mjs
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: work-cregis-desktop/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

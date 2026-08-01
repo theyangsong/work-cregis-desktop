@@ -1,0 +1,12 @@
+/* 批处理停止签名确认：placement=top 走 DS topTool；标题 padding 对齐退出确认。 */
+:global(
+  .eds-popover:has([data-stop-sign-confirm-popover])
+    [class*='topToolTitle']
+) {
+  padding: var(--spacing-4) var(--spacing-4) var(--spacing-1);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+}

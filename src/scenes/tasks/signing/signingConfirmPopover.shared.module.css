@@ -1,0 +1,73 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.topTool {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  align-items: flex-start;
+  box-sizing: border-box;
+  width: calc(100% + var(--spacing-4) * 2);
+  margin: calc(-1 * var(--spacing-4)) calc(-1 * var(--spacing-4)) 0;
+}
+
+.topToolTitle {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: var(--spacing-4) var(--spacing-4) var(--spacing-1);
+  box-sizing: border-box;
+  text-align: left;
+  color: var(--text-base-primary);
+  font-size: var(--eds-body-medium-strong-size);
+  font-weight: var(--eds-body-medium-strong-weight);
+  line-height: var(--eds-body-medium-strong-line-height);
+  word-break: break-word;
+}
+
+.topToolClose {
+  position: absolute;
+  top: var(--spacing-1);
+  right: var(--spacing-1);
+  z-index: 1;
+  display: inline-flex;
+  flex-shrink: 0;
+  padding: var(--spacing-0);
+}
+
+.topToolClose :global(.eds-icon-button) {
+  background-color: var(--material-hide);
+}
+
+.topToolClose :global(.eds-icon-button > span) {
+  color: var(--material-base-tertiary);
+}
+
+.topToolClose :global(.eds-icon-button:hover:not(:disabled):not(.isDisabled)),
+.topToolClose :global(.eds-icon-button:focus-visible:not(:disabled):not(.isDisabled)),
+.topToolClose :global(.eds-icon-button:active:not(:disabled):not(.isDisabled)) {
+  background-color: var(--event-hover);
+}
+
+.topToolClose :global(.eds-icon-button:hover:not(:disabled):not(.isDisabled) > span),
+.topToolClose :global(.eds-icon-button:focus-visible:not(:disabled):not(.isDisabled) > span),
+.topToolClose :global(.eds-icon-button:active:not(:disabled):not(.isDisabled) > span) {
+  color: var(--material-base-secondary);
+}
+
+.message {
+  margin: var(--spacing-1) 0 0;
+  color: var(--text-base-primary);
+  font-size: var(--eds-body-small-size);
+  font-weight: var(--eds-body-small-weight);
+  line-height: var(--eds-body-small-line-height);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--spacing-4);
+}

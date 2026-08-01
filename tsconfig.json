@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "jsx": "preserve",
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["vite/client"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@eds/desktop-components": ["../eds-desktop/packages/components/src/index.ts"],
+      "@eds/desktop-components/*": ["../eds-desktop/packages/components/src/*"],
+      "@eds/desktop-animations": ["../eds-desktop/packages/animations/src/index.ts"],
+      "@eds/desktop-animations/*": ["../eds-desktop/packages/animations/src/*"],
+      "@eds/desktop-tokens": ["../eds-desktop/packages/tokens"],
+      "@eds/desktop-tokens/*": ["../eds-desktop/packages/tokens/*"]
+    },
+    "resolveJsonModule": true
+  },
+  "include": ["src/**/*.ts", "src/**/*.vue", "env.d.ts"]
+}

@@ -1,0 +1,113 @@
+/**
+ * 待处理多签邀请 — Flotation Box 内容区（外层 effect-flotation-box 由 EgAnchoredTooltip panel-kind=flotation 承担）。
+ */
+
+/* 高于 [data-app-client-float-host] overlay（1101），否则展开面板可能被遮挡或点不中 */
+.app-preview > [id^='eds-tooltip-v-']:has(.multi-sign-invitation-panel-root) {
+  z-index: 1102;
+}
+
+/*
+ * 关闭/离场时 teleport 层仍在浮标（1101）之上；无 active 态时强制穿透，避免挡浮标 click。
+ * 打开态由 inner `.glassMicroFloatHostActive` 恢复面板命中。
+ */
+.app-preview
+  > [id^='eds-tooltip-v-']:has(.multi-sign-invitation-panel-root):not(
+    :has(.glassMicroFloatHostActive)
+  ) {
+  pointer-events: none;
+}
+
+.desktopTokens.effect-flotation-box:has(.multi-sign-invitation-panel-root) {
+  align-items: stretch;
+  padding: 0;
+}
+
+html[data-theme='light'] .desktopTokens.effect-flotation-box:has(.multi-sign-invitation-panel-root),
+html[data-theme='dark'] .desktopTokens.effect-flotation-box:has(.multi-sign-invitation-panel-root) {
+  padding: 0;
+}
+
+.multiSignInvitationFlotationRoot.desktopTokens {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  align-self: stretch;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.multiSignInvitationFlotationRows {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.multiSignInvitationPanelHeader {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: var(--spacing-3) var(--spacing-10) var(--spacing-1) var(--spacing-4);
+}
+
+.multiSignInvitationPanelTitle {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--text-base-primary);
+  font-size: var(--eds-body-medium-strong-size);
+  font-weight: var(--eds-body-medium-strong-weight);
+  line-height: var(--eds-body-medium-strong-line-height);
+}
+
+.multiSignInvitationPanelHeaderDivider {
+  flex-shrink: 0;
+  align-self: stretch;
+  width: 100%;
+}
+
+.multiSignInvitationPanelListScroll {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.multiSignInvitationPanelListScroll::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.multiSignInvitationPanelListScrollFadeBottom {
+  -webkit-mask-image: linear-gradient(to top, transparent 0, #000 var(--spacing-2));
+  mask-image: linear-gradient(to top, transparent 0, #000 var(--spacing-2));
+  transition: var(--motion-recipe-scroll-fade);
+}
+
+.multiSignInvitationPanelList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  box-sizing: border-box;
+  padding: var(--spacing-2) var(--spacing-1) var(--spacing-4);
+}

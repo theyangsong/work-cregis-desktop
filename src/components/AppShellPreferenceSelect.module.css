@@ -1,0 +1,7 @@
+.root {
+  flex-shrink: 0;
+}
+
+.menu {
+  min-width: 0;
+}

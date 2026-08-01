@@ -1,0 +1,48 @@
+.listFieldCell {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  width: 100%;
+}
+
+.statusFieldCell {
+  justify-content: center;
+}
+
+.statusFieldCellEnd {
+  justify-content: flex-end;
+}
+
+.receiverFieldCellEnd,
+.senderFieldCellEnd {
+  justify-content: flex-end;
+}
+
+.fieldItem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-05);
+  align-items: flex-start;
+}
+
+.fieldBarPrimary,
+.fieldBarSecondary,
+.cellBar {
+  border-radius: var(--radius-full);
+  background: var(--material-brand-quaternary);
+}
+
+.fieldBarPrimary {
+  width: var(--scale-20);
+  height: var(--scale-5);
+}
+
+.fieldBarSecondary {
+  width: var(--scale-50);
+  height: var(--scale-2-5);
+}
+
+.cellBar {
+  width: var(--scale-20);
+  height: var(--scale-5);
+}

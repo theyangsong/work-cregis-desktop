@@ -1,0 +1,76 @@
+.toolbarPage {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+}
+
+.toolbarBar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-3);
+  width: 100%;
+  min-width: 0;
+  padding: var(--spacing-3) var(--spacing-4);
+  box-sizing: border-box;
+}
+
+.toolbarBarActionsOnly {
+  justify-content: flex-end;
+}
+
+.toolbarStart {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  min-width: 0;
+}
+
+.toolbarNav {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.toolbarCounter {
+  position: absolute;
+  left: 50%;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  min-width: 0;
+  max-width: calc(100% - var(--spacing-4) * 2);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+.toolbarCounterCurrent {
+  color: var(--text-base-primary);
+  font-size: var(--eds-footnote-size);
+  font-weight: var(--eds-footnote-strong-weight);
+  line-height: var(--eds-footnote-line-height);
+  font-variant-numeric: tabular-nums;
+}
+
+.toolbarCounterRest {
+  color: var(--text-base-secondary);
+  font-size: var(--eds-footnote-size);
+  font-weight: var(--eds-footnote-weight);
+  line-height: var(--eds-footnote-line-height);
+  font-variant-numeric: tabular-nums;
+}
+
+.toolbarActions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--spacing-1);
+  justify-content: flex-end;
+}

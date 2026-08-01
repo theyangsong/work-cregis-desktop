@@ -1,0 +1,231 @@
+.host {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.combo {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--spacing-05);
+  align-items: flex-start;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+}
+
+.stackPreview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-05);
+  align-items: flex-start;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.hashLikeCombo {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--spacing-05);
+  align-items: flex-start;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+}
+
+.hashLikeComboSecondaryRow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--spacing-1);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.hashLikeComboSecondaryRow .secondaryRowAction {
+  flex: 0 1 auto;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.hashLikeComboSecondaryRow .secondaryRowAction :global(.eds-anchored-tooltip) {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.hashLikeComboSecondaryRow .secondaryRowCountdown {
+  flex: 0 0 auto;
+}
+
+.hashLikeComboSecondaryRow > :global(.eds-divider) {
+  align-self: center;
+  flex-shrink: 0;
+  height: var(--scale-2-5);
+  min-height: var(--scale-2-5);
+  max-height: var(--scale-2-5);
+}
+
+.operationTypeOnlyRow {
+  display: flex;
+  align-items: flex-start;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+}
+
+.operationTypePrimaryLine {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+}
+
+.operationTypePrimaryLine :global(.eds-anchored-tooltip) {
+  flex: 0 0 auto;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+}
+
+.secondaryRow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--spacing-1);
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+}
+
+.secondaryRowSource,
+.secondaryRowAction,
+.secondaryRowCountdown {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.secondaryRowSource {
+  flex: 0 0 auto;
+}
+
+.secondaryRowSource :global(.eds-anchored-tooltip) {
+  flex: 0 0 auto;
+  min-width: 0;
+  max-width: none;
+}
+
+.secondaryRowAction {
+  flex: 1 1 auto;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.secondaryRowAction :global(.eds-anchored-tooltip) {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.secondaryRowCountdown {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.secondaryRowCountdown :global(.eds-anchored-tooltip) {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.secondaryRow > :global(.eds-divider) {
+  align-self: center;
+  flex-shrink: 0;
+  height: var(--scale-2-5);
+  min-height: var(--scale-2-5);
+  max-height: var(--scale-2-5);
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.titleTextSlot {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.titleTextSlot > span {
+  display: block;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.titleRow :global(.eds-tag) {
+  flex-shrink: 0;
+}
+
+.avatar {
+  flex-shrink: 0;
+}
+
+.appIcon {
+  flex-shrink: 0;
+  width: var(--avatar-xs);
+  height: var(--avatar-xs);
+}
+
+.singleStack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-05);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.singleStackAlignLeft {
+  align-items: flex-start;
+}
+
+.singleStackAlignCenter {
+  align-items: center;
+}
+
+.singleStackAlignRight {
+  align-items: flex-end;
+}
+
+.countdown {
+  font-size: var(--eds-footnote-size);
+  font-weight: var(--eds-footnote-weight);
+  line-height: var(--eds-footnote-line-height);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.countdownTime {
+  display: inline-block;
+  color: var(--status-danger);
+  font-weight: var(--weight-medium);
+  min-width: 31px;
+}
+
+.countdownSuffix {
+  color: var(--text-base-secondary);
+}

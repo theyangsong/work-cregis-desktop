@@ -1,0 +1,37 @@
+.countdown {
+  font-size: var(--eds-footnote-size);
+  font-weight: var(--eds-footnote-weight);
+  line-height: var(--eds-footnote-line-height);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.countdownTime {
+  display: inline-block;
+  color: var(--status-danger);
+  font-weight: var(--weight-medium);
+  min-width: 31px;
+}
+
+.countdownList {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  font-weight: var(--weight-regular);
+}
+
+.countdownTimeList {
+  min-width: 0;
+  color: var(--text-base-secondary);
+  font-weight: var(--weight-regular);
+  font-variant-numeric: tabular-nums;
+}
+
+.countdownSuffixList {
+  color: var(--text-base-secondary);
+  font-weight: var(--weight-regular);
+}
+
+.countdownSuffix {
+  color: var(--text-base-secondary);
+}

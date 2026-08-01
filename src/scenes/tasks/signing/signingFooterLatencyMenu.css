@@ -1,0 +1,7 @@
+/**
+ * MPC 网络 Flotation 菜单 — list-header menuBodySticky gap-1（4px）。
+ * 覆写 DS 默认 spacing-2；勿写死 CSS Modules hash（用 class* 匹配 menuBodySticky）。
+ */
+:global(.eds-flotation-menu.signing-footer-latency-menu.eds-flotation-menu--list-header [class*='menuBodySticky']) {
+  gap: var(--spacing-1);
+}

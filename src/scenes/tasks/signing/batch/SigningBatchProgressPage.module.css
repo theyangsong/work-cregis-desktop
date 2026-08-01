@@ -1,0 +1,130 @@
+.progressPanel {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.headerCard {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  padding: var(--spacing-6) var(--spacing-6) var(--spacing-5);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: var(--fill-base-secondary);
+  overflow: visible;
+}
+
+.headerTableDivider {
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.statusProgressGroup {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: var(--spacing-2);
+  row-gap: var(--spacing-1-5);
+  width: 100%;
+  min-width: 0;
+  overflow: visible;
+}
+
+.statusProgressGroup :global(.eds-progress) {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  overflow: visible;
+}
+
+.statusProgressGroup :global(.eds-progress .trackArea) {
+  overflow: visible;
+}
+
+.statusLabel {
+  grid-column: 1;
+  grid-row: 1;
+  flex-shrink: 0;
+  color: var(--text-base-primary);
+  font-size: var(--eds-body-medium-size);
+  font-weight: var(--eds-body-medium-strong-weight);
+  line-height: var(--eds-body-medium-line-height);
+}
+
+.metrics {
+  grid-column: 2;
+  grid-row: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-3);
+}
+
+.metricItem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  color: var(--text-base-secondary);
+  font-size: var(--eds-footnote-size);
+  font-weight: var(--eds-footnote-weight);
+  line-height: var(--eds-footnote-line-height);
+}
+
+.metricLabel {
+  color: var(--text-base-secondary);
+}
+
+.metricValue {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-05);
+  color: var(--text-base-primary);
+  font-size: var(--eds-footnote-size);
+  font-weight: var(--eds-footnote-strong-weight);
+  line-height: var(--eds-footnote-line-height);
+}
+
+.metricValueTime {
+  width: 55px;
+}
+
+.metricCountUnit {
+  color: var(--text-base-primary);
+  font-weight: var(--eds-footnote-weight);
+}
+
+.metricValueFailed {
+  color: var(--status-danger);
+}
+
+.listWrap {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  --eds-layout-chrome-inset-top: 0;
+}
+
+.statusTagPending {
+  color: var(--text-base-secondary);
+}
+
+.statusTagActive {
+  color: var(--status-warning);
+}
+
+.statusTagSuccess {
+  color: var(--status-success);
+}
+
+.statusTagFailed {
+  color: var(--status-danger);
+}
+

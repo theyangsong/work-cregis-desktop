@@ -1,0 +1,268 @@
+.addressTooltipHost {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.addressTooltipHost :global(.eds-hover-tooltip-trigger) {
+  display: inline-block;
+  width: max-content;
+  max-width: 100%;
+  vertical-align: top;
+}
+
+.addressTooltipHost :global(.eds-hover-tooltip-trigger > span) {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.addressTooltipHost :global(.eds-flotation) {
+  display: inline-flex;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.addressTooltipHostAlignEnd {
+  align-items: flex-end;
+  margin-left: auto;
+}
+
+.tooltipTriggerBody {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-05);
+  min-width: 0;
+  max-width: 100%;
+  width: max-content;
+  overflow: hidden;
+  white-space: normal;
+  text-overflow: unset;
+  vertical-align: top;
+}
+
+.tooltipTriggerBodyAlignEnd {
+  align-items: flex-end;
+  margin-left: auto;
+}
+
+.tooltipTriggerBodyAlignEnd .metaRow {
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.tooltipTriggerBodyAlignEnd .aliasPrimaryRow {
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.aliasLine {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--eds-body-medium-size);
+  line-height: var(--eds-body-medium-line-height);
+  font-weight: var(--eds-body-medium-weight);
+  color: var(--text-base-primary);
+  vertical-align: top;
+}
+
+.addressHoverMotion {
+  composes: motion-ease is-hover from global;
+}
+
+.aliasHost {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-05);
+  min-width: 0;
+  max-width: 100%;
+  width: max-content;
+}
+
+.aliasHostAlignEnd {
+  align-items: flex-end;
+  margin-left: auto;
+}
+
+.aliasHostAlignEnd .metaRow {
+  justify-content: flex-end;
+}
+
+.addressLineHost {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+}
+
+.addressLineHostAlignEnd {
+  justify-content: flex-end;
+}
+
+/** EgListFieldAddressLine 根节点（EgTextOverflowTooltip / EgFlotation host）。 */
+.addressLineHostAlignEnd > :global(span) {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  width: max-content;
+  max-width: 100%;
+  margin-left: auto;
+}
+
+/** DS EgListFieldAddressLine · eds-crypto-address-flotation 触发区右对齐。 */
+.addressLineHostAlignEnd :global(.eds-crypto-address-flotation) {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-left: auto;
+  max-width: 100%;
+}
+
+.addressLineHostAlignEnd :global(.eds-crypto-address-flotation > span) {
+  margin-left: auto;
+  max-width: 100%;
+}
+
+.addressLineHostAlignEnd :global(.eds-crypto-address-flotation > span > span) {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  width: max-content;
+  max-width: 100%;
+}
+
+.addressLineHostAlignEnd :global(.eds-crypto-address-flotation > span > span > div:last-child) {
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.addressLineHostAlignEnd :global(.eds-flotation) {
+  display: inline-flex;
+  max-width: 100%;
+}
+
+.addressLineHostAlignEnd :global(.eds-hover-tooltip-trigger) {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  max-width: 100%;
+}
+
+/** defer-hover-target：measure 槽内的地址行 + Tag 行。 */
+.addressLineHostAlignEnd :global(.eds-hover-tooltip-trigger > span > span:not([aria-hidden='true'])) {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  width: max-content;
+  max-width: 100%;
+  gap: var(--spacing-05);
+}
+
+.addressLineHostAlignEnd :global(.eds-hover-tooltip-trigger > span > span:not([aria-hidden='true']) > div) {
+  display: inline-flex;
+  justify-content: flex-end;
+  align-items: center;
+  max-width: 100%;
+}
+
+.aliasPrimaryRow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.walletPrimaryText {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.walletPrimaryText :global(span) {
+  display: block;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.aliasPrimaryRow :global(.eds-anchored-tooltip) {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.walletMetaRow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.walletMetaRowAlignEnd {
+  justify-content: flex-end;
+  margin-left: auto;
+}
+
+.walletMetaRow .walletMetaAddress {
+  flex: 0 1 auto;
+}
+
+/** 发送方副行地址：12px（--eds-footnote-size / --size-sm）；颜色由 __target--secondary 继承。 */
+.walletMetaAddress {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--eds-footnote-size);
+  line-height: var(--eds-footnote-line-height);
+  font-weight: var(--eds-footnote-weight);
+}
+
+.addressTooltipHost :global(.eds-hover-tooltip-trigger__target--secondary) .walletMetaAddress {
+  font-size: var(--eds-footnote-size);
+  line-height: var(--eds-footnote-line-height);
+  font-weight: var(--eds-footnote-weight);
+}
+
+.rowTag {
+  flex: 0 0 auto;
+  min-width: 0;
+  max-width: var(--scale-16);
+}
+
+.rowTag :global(.eds-tag) {
+  max-width: 100%;
+}
+
+.metaRow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.metaSecondaryText {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--eds-footnote-size);
+  line-height: var(--eds-footnote-line-height);
+  font-weight: var(--eds-footnote-weight);
+  color: var(--text-base-secondary);
+}

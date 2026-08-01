@@ -1,0 +1,97 @@
+.detailHost {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+}
+
+.headlineFiat {
+  color: var(--text-base-secondary);
+  font-size: var(--eds-body-small-size);
+  font-weight: var(--eds-body-small-strong-weight);
+  line-height: var(--eds-body-small-line-height);
+}
+
+.detailHost :global([data-detail-headline-eyebrow]) {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.detailEyebrowRow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1-5);
+  color: var(--text-base-primary);
+  font-size: var(--eds-body-small-strong-size);
+  font-weight: var(--eds-body-small-strong-weight);
+  line-height: var(--eds-body-small-strong-line-height);
+}
+
+.detailEyebrowDivider {
+  flex-shrink: 0;
+  align-self: center;
+  height: var(--scale-3);
+  min-height: var(--scale-3);
+  max-height: var(--scale-3);
+}
+
+/* EgDetail toolbar：module 分割线常驻（默认仅 scrollOverflows 时显示）。 */
+.detailHost :global(.eds-detail > footer .eds-divider) {
+  opacity: 1;
+  background: var(--stroke-divider-module);
+}
+
+/* 交易信息分区与 append 第二分区衔接：去掉 sections 底 padding，由 append 顶 padding 承接 sections gap-4。 */
+.detailHost :global(.eds-detail [class*='sections']) {
+  padding-bottom: 0;
+}
+
+/*
+ * append 第二分区 — 数值对齐 EgDetail Detail.module.css
+ * (.sections / .sectionDivider / .sectionContent / .sectionTitle*)
+ */
+
+.appendSection {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-5);
+  width: 100%;
+  padding: var(--spacing-4) var(--spacing-3) var(--spacing-5);
+  box-sizing: border-box;
+}
+
+.sectionDivider {
+  flex-shrink: 0;
+  width: 100%;
+  padding-inline: var(--spacing-3);
+  box-sizing: border-box;
+  background-clip: content-box;
+}
+
+.sectionContent {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-025);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.sectionTitleRow {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.sectionTitle {
+  padding: var(--spacing-0) 0 var(--spacing-4) var(--spacing-3);
+  box-sizing: border-box;
+  color: var(--text-base-primary);
+  font-size: var(--eds-body-small-strong-size);
+  font-weight: var(--eds-body-small-strong-weight);
+  line-height: var(--eds-body-small-strong-line-height);
+}

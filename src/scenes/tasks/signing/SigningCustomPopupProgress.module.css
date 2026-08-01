@@ -1,0 +1,170 @@
+.progress {
+  flex-shrink: 0;
+  padding: var(--spacing-10) var(--spacing-20) var(--spacing-6);
+  background: var(--material-card-shallow);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.stepTrack {
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.stepColumn {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-2);
+  min-width: 0;
+}
+
+/* 暂时隐藏「链上确认」步骤，后续可能恢复。 */
+.stepColumnTemporarilyHidden {
+  display: none;
+}
+
+.stepIconWrap {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+}
+
+.stepIconWrapPending {
+  box-sizing: border-box;
+  border: var(--stroke-xl) solid var(--stroke-base-quaternary);
+  border-radius: var(--radius-full);
+  background: transparent;
+}
+
+.stepIconWrapActive {
+  border-radius: var(--radius-full);
+  background: var(--status-warning);
+}
+
+.stepIconWrapDone {
+  box-sizing: border-box;
+  border: var(--stroke-xl) solid var(--status-success);
+  border-radius: var(--radius-full);
+  background: var(--status-success);
+}
+
+.stepIconWrapFailed {
+  box-sizing: border-box;
+  border: 3px solid var(--status-danger);
+  border-radius: var(--radius-full);
+  background: var(--status-danger);
+}
+
+.stepIconFailedClose {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--icon-md);
+  height: var(--icon-md);
+  color: var(--stroke-same-white-primary);
+}
+
+.stepIconFailedClose :global(.svgHost),
+.stepIconFailedClose :global(.svgHost svg) {
+  display: block;
+  width: var(--icon-md);
+  height: var(--icon-md);
+}
+
+.stepIconDoneTick {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--icon-md);
+  height: var(--icon-md);
+  color: var(--stroke-same-white-primary);
+}
+
+.stepIconDoneTick :global(.svgHost),
+.stepIconDoneTick :global(.svgHost svg) {
+  display: block;
+  width: var(--icon-md);
+  height: var(--icon-md);
+}
+
+.stepIconMotionProcessing {
+  --motion-processing-color: var(--stroke-same-white-primary);
+  --motion-processing-size: 9px;
+  --motion-processing-stroke: 1.6px;
+  flex-shrink: 0;
+}
+
+.stepConnector {
+  flex: 1 1 auto;
+  align-self: flex-start;
+  min-width: 0;
+  height: 3px;
+  margin: calc((var(--icon-lg) - 3px) / 2) var(--spacing-8) 0;
+  background-repeat: repeat-x;
+  background-position: center;
+  background-size: 7px 3px;
+}
+
+.stepConnectorDone {
+  background-image: radial-gradient(
+    circle,
+    var(--status-success) 1.5px,
+    transparent 1.5px
+  );
+}
+
+.stepConnectorFailed {
+  background-image: radial-gradient(
+    circle,
+    var(--status-danger) 1.5px,
+    transparent 1.5px
+  );
+}
+
+.stepConnectorAnimating {
+  background-image: radial-gradient(
+    circle,
+    var(--status-warning) 1.5px,
+    transparent 1.5px
+  );
+  animation: signingProgressConnectorMarch 0.6s linear infinite;
+}
+
+.stepConnectorPending {
+  background-image: radial-gradient(
+    circle,
+    var(--stroke-outline-shallow) 1.5px,
+    transparent 1.5px
+  );
+}
+
+@keyframes signingProgressConnectorMarch {
+  from {
+    background-position: 0 center;
+  }
+
+  to {
+    background-position: 7px center;
+  }
+}
+
+.stepLabel {
+  margin: 0;
+  max-width: 100%;
+  color: var(--text-base-primary);
+  font-size: var(--eds-body-small-size);
+  font-weight: var(--eds-body-small-strong-weight);
+  line-height: var(--eds-body-small-line-height);
+  white-space: nowrap;
+}
+
+.stepLabelPending {
+  color: var(--text-base-tertiary);
+}

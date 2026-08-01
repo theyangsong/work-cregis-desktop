@@ -1,0 +1,33 @@
+/**
+ * Batch signing EgPopup uses=custom — 对齐 Showcase OrganismPreview.previewOrganismPopupHost。
+ * alertPanelShell 默认把 `.eds-popup-box-content` 直子居中，slot chrome 入场时会抖一下。
+ */
+
+:global(.alertPanelShellCustom .eds-popup-box-content:has(> .eds-popup-slot-chrome)),
+:global(.alertPanelShell .eds-popup-box-content:has(> .eds-popup-slot-chrome)) {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+  align-self: stretch !important;
+  box-sizing: border-box;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+:global(.alertPanelShellCustom .eds-popup-box-content:not(.eds-verify) > .eds-popup-slot-chrome),
+:global(.alertPanelShell .eds-popup-box-content:not(.eds-verify) > .eds-popup-slot-chrome) {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  align-self: stretch !important;
+  justify-content: flex-start !important;
+  box-sizing: border-box;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+}

@@ -1,0 +1,283 @@
+.dataListNest {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dataListNest :deep(.eds-layout) {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.dataListNest :deep(.eds-tool-bar) {
+  flex-shrink: 0;
+}
+
+.dataListNest :deep(.eds-paginer) {
+  flex-shrink: 0;
+}
+
+.dataListNest :deep(.eds-data-list) {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+}
+
+.listRegion {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.listInteractionBlocker {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: auto;
+}
+
+/**
+ * 列宽动画由 DataList RAF 驱动；溢出测量在动画期间冻结（见 overflowMeasureDuringLayout.ts）。
+ */
+
+.endFeedbackHost {
+  position: absolute;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.listToastHost {
+  position: absolute;
+  top: var(--spacing-6);
+  left: 50%;
+  z-index: 1100;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.comboHeader {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1-5);
+  width: auto;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  margin-left: 0;
+  color: var(--text-base-tertiary);
+  font-size: var(--eds-footnote-strong-size);
+  font-weight: var(--eds-footnote-strong-weight);
+  line-height: var(--eds-footnote-strong-line-height);
+}
+
+.comboHeaderAlignEnd {
+  margin-left: auto;
+}
+
+.comboHeaderSegment {
+  display: inline-flex;
+  flex: 0 1 auto;
+  align-items: center;
+  gap: 0;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.comboHeaderSegmentTextWrap {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  flex: 1 1 0;
+}
+
+.comboHeaderSegmentText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  max-width: 100%;
+  cursor: default;
+  user-select: none;
+}
+
+/** 引用库 legacy span 规则：仅纯文本 span，不含 EgFlotation 排序（text 已在 textWrap div 内）。 */
+.comboHeaderSegment > span:not(:global(.eds-flotation)) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.comboHeaderSegment > span:not(:only-child):not(:global(.eds-flotation)) {
+  flex: 1 1 auto;
+}
+
+.comboHeaderSegment > :global(.eds-flotation) {
+  flex: 0 0 auto;
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+.comboHeader > :global(.eds-divider) {
+  align-self: center;
+  flex-shrink: 0;
+  height: var(--scale-2-5);
+  min-height: var(--scale-2-5);
+  max-height: var(--scale-2-5);
+  background: var(--stroke-base-quaternary);
+}
+
+/**
+ * 批处理 Flotation 触发器：视觉同 EgIconButtonPro，但定位锚点仅 iconSlot
+ *（data-eds-trigger-metrics），避免 AnchoredTooltip 量到含文案的 button。
+ */
+.batchProTriggerRoot {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  width: max-content;
+  min-width: var(--scale-12);
+  border: none;
+  padding: 0;
+  background: none;
+  cursor: default;
+}
+
+.batchProTriggerDisabled {
+  cursor: not-allowed;
+}
+
+.batchProIconSlot {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.batchProIconSlot :global(.eds-icon-button) {
+  pointer-events: none;
+}
+
+.batchProTriggerRoot:hover:not(.batchProTriggerDisabled) .batchProIconSlot :global(.eds-icon-button),
+.batchProTriggerRoot:active:not(.batchProTriggerDisabled) .batchProIconSlot :global(.eds-icon-button) {
+  background-color: var(--event-hover);
+}
+
+.batchProTriggerRoot:hover:not(.batchProTriggerDisabled) .batchProIconSlot :global(.eds-icon) {
+  color: var(--stroke-base-primary);
+}
+
+.batchProTriggerRoot:active:not(.batchProTriggerDisabled) .batchProIconSlot :global(.eds-icon) {
+  color: var(--stroke-base-secondary);
+}
+
+.batchProTriggerDisabled .batchProIconSlot :global(.eds-icon) {
+  color: var(--stroke-base-quaternary);
+}
+
+/**
+ * Flotation 展开时保持 icon 聚焦态。
+ * 对齐 EgFlotationTrigger.expanded / EgIconButton :focus-visible（--event-focus）。
+ */
+.batchFlotationTriggerExpanded:not(.batchProTriggerDisabled) .batchProIconSlot :global(.eds-icon-button) {
+  background-color: var(--event-focus);
+}
+
+.batchFlotationTriggerExpanded:not(.batchProTriggerDisabled) .batchProIconSlot :global(.eds-icon) {
+  color: var(--stroke-base-secondary);
+}
+
+.batchProLabelWrap {
+  position: relative;
+  display: inline-block;
+  box-sizing: border-box;
+  overflow: hidden;
+  max-width: 100%;
+  color: var(--text-base-secondary);
+  text-align: center;
+}
+
+.batchProTriggerDisabled .batchProLabelWrap {
+  color: var(--text-base-quaternary);
+}
+
+.batchProLabelSizer {
+  display: block;
+  visibility: hidden;
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  font-size: var(--eds-bar-size);
+  font-weight: var(--eds-bar-weight);
+  line-height: var(--eds-bar-line-height);
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
+
+.batchProLabelPaint {
+  position: absolute;
+  top: 0;
+  left: 0;
+  box-sizing: border-box;
+  width: 200%;
+  padding: 0;
+  margin: 0;
+  font-size: calc(var(--eds-bar-size) * 2);
+  font-weight: var(--eds-bar-weight);
+  line-height: calc(var(--eds-bar-line-height) * 2);
+  transform: scale(0.5);
+  transform-origin: top left;
+  color: inherit;
+  text-align: center;
+  white-space: nowrap;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  pointer-events: none;
+}
+
+.batchProBadge {
+  position: absolute;
+  top: -3px;
+  left: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--scale-4);
+  padding: var(--spacing-025) var(--spacing-1);
+  border-radius: var(--radius-full);
+  background-color: var(--material-brand-primary);
+  color: var(--text-same-white-primary);
+}
+
+.batchProBadgeText {
+  font-size: var(--eds-bar-size);
+  font-weight: var(--eds-bar-weight);
+  line-height: var(--eds-bar-line-height);
+}
+
+.batchProReddot {
+  position: absolute;
+  top: 2px;
+  left: 28px;
+  width: var(--scale-2);
+  height: var(--scale-2);
+  border-radius: var(--radius-md);
+  background-color: var(--status-danger);
+}
