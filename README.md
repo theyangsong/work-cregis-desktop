@@ -62,3 +62,18 @@ src/
 | `pnpm build` | 生产构建 |
 | `pnpm preview` | 预览构建产物 |
 | `pnpm typecheck` | TypeScript 检查 |
+
+## GitHub Pages 部署
+
+仓库已配置 [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml)：`main` 分支 push 后自动构建并发布。
+
+**前置：** CI 需同目录检出 [evergreen-design-system-desktop](https://github.com/theyangsong/evergreen-design-system-desktop)（workflow 内自动 clone 为 sibling `eds-desktop`）。
+
+**预览地址（push 成功后）：** https://theyangsong.github.io/work-cregis-desktop/
+
+本地模拟 Pages 构建：
+
+```bash
+VITE_BASE_PATH=/work-cregis-desktop/ pnpm build
+pnpm preview --base /work-cregis-desktop/
+```
