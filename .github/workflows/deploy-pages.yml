@@ -58,7 +58,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Install eds-desktop dependencies
-        working-directory: ../eds-desktop
+        working-directory: eds-desktop
         run: pnpm install --frozen-lockfile
 
       - name: Build
