@@ -1,0 +1,10 @@
+.statusPreview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-05);
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}

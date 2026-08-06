@@ -5,9 +5,10 @@
   "type": "module",
   "description": "Cregis desktop business app — built on @eds/desktop-tokens and @eds/desktop-components",
   "scripts": {
-    "predev": "pnpm --dir ../eds-desktop build:tokens && pnpm --dir ../eds-desktop build:components",
+    "predev": "node scripts/verify-list-field-crypto.mjs && pnpm --dir ../eds-desktop build:tokens",
     "dev": "vite",
-    "prebuild": "pnpm --dir ../eds-desktop build:tokens && pnpm --dir ../eds-desktop build:components",
+    "dev:clean": "rm -rf node_modules/.vite && vite",
+    "prebuild": "node scripts/verify-list-field-crypto.mjs && pnpm --dir ../eds-desktop build:tokens && pnpm --dir ../eds-desktop build:components",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "vue-tsc --noEmit"

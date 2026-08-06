@@ -7,8 +7,9 @@ import {
 import { initLiquidGlass } from '@eds/desktop-tokens/liquid-glass';
 import '@eds/desktop-tokens/fonts';
 import '@eds/desktop-tokens';
-import '@eds/desktop-components/style.css';
+import './styles/desktop-components-scope.css';
 
+import { initAppLocale } from './composables/useAppLocale';
 import App from './App.vue';
 import { router } from './router';
 import './styles/global.css';
@@ -17,6 +18,7 @@ import './styles/cregis-theme.css';
 initLiquidGlass();
 initEdsDesktopRuntime();
 initThemeProvider();
+initAppLocale();
 
 createApp(App).use(router).mount('#app');
 

@@ -83,7 +83,8 @@ body::after {
   max-height: var(--app-preview-height);
 }
 
-.app-preview .eds-tooltip-panel {
+/* 仅根容器 EgTooltip 的面板；勿用后代选择器，否则会覆盖 BatchBar 等嵌套 flotation 面板 */
+.app-preview > .eds-tooltip-panel {
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -97,7 +98,7 @@ body::after {
   overflow: hidden;
 }
 
-.app-preview .eds-tooltip-panel > * {
+.app-preview > .eds-tooltip-panel > * {
   flex: 1 1 0;
   width: 100%;
   height: 100%;

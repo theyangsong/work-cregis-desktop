@@ -43,32 +43,32 @@
     );
   --cregis-shell-orbs: radial-gradient(
       var(--cregis-shell-orb-size-lg) circle at 12% 10%,
-      color-mix(in display-p3, var(--eds-brand) 2%, transparent) 0%,
+      color-mix(in display-p3, var(--eds-brand) 7%, transparent) 0%,
       transparent 72%
     ),
     radial-gradient(
       var(--cregis-shell-orb-size-md) circle at 88% 8%,
-      color-mix(in display-p3, var(--eds-match) 3%, transparent) 0%,
+      color-mix(in display-p3, var(--eds-match) 8%, transparent) 0%,
       transparent 72%
     ),
     radial-gradient(
       var(--cregis-shell-orb-size-sm) circle at 18% 88%,
-      color-mix(in display-p3, var(--eds-tag-colorful-ice-blue-bg) 8%, transparent) 0%,
+      color-mix(in display-p3, var(--eds-tag-colorful-ice-blue-bg) 14%, transparent) 0%,
       transparent 72%
     ),
     radial-gradient(
       var(--cregis-shell-orb-size-lg) circle at 92% 42%,
-      color-mix(in display-p3, var(--eds-tag-colorful-cyan-bg) 5%, transparent) 0%,
+      color-mix(in display-p3, var(--eds-tag-colorful-cyan-bg) 11%, transparent) 0%,
       transparent 72%
     ),
     radial-gradient(
       var(--cregis-shell-orb-size-md) circle at 78% 92%,
-      color-mix(in display-p3, var(--eds-tag-colorful-lilac-bg) 9%, transparent) 0%,
+      color-mix(in display-p3, var(--eds-tag-colorful-lilac-bg) 15%, transparent) 0%,
       transparent 72%
     ),
     radial-gradient(
       var(--cregis-shell-orb-size-lg) circle at 12% 48%,
-      color-mix(in display-p3, var(--eds-tag-colorful-coral-bg) 5%, transparent) 0%,
+      color-mix(in display-p3, var(--eds-tag-colorful-coral-bg) 11%, transparent) 0%,
       transparent 72%
     );
 }

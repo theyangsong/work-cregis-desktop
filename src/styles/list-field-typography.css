@@ -1,0 +1,15 @@
+/** List Field 预览 typography — 与 eds-desktop Showcase text-style-preview 对齐。 */
+
+.typography-body-medium {
+  font-family: var(--eds-family-sans);
+  font-size: var(--eds-body-medium-size);
+  font-weight: var(--eds-body-medium-weight);
+  line-height: var(--eds-body-medium-line-height);
+}
+
+.typography-footnote {
+  font-family: var(--eds-family-sans);
+  font-size: var(--eds-footnote-size);
+  font-weight: var(--eds-footnote-weight);
+  line-height: var(--eds-footnote-line-height);
+}
