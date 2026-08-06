@@ -30,7 +30,17 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: theyangsong/evergreen-design-system-desktop
+          ref: main
           path: eds-desktop
+
+      - name: Log eds-desktop revision
+        working-directory: eds-desktop
+        run: |
+          echo "eds-desktop SHA: $(git rev-parse --short HEAD)"
+          git log -1 --oneline
+
+      - name: Verify ModuleMenu hover CSS
+        run: grep -q 'itemHover:hover:not(.itemFocused)' eds-desktop/packages/components/src/organisms/module-menu/ModuleMenu.module.css
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
