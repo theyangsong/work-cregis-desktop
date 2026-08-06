@@ -5,6 +5,7 @@ import { defineConfig } from 'vite';
 const EDS_COMPONENTS_SRC = resolve(__dirname, '../eds-desktop/packages/components/src/index.ts');
 
 export default defineConfig({
+  base: process.env.VITE_BASE_PATH || '/',
   plugins: [vue()],
   resolve: {
     alias: {
