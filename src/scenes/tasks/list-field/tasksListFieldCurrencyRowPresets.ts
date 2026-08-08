@@ -65,10 +65,30 @@ export const CURRENCY_ROW_PRESETS: readonly CurrencyRowPreset[] = [
   },
 ] as const;
 
-export const CURRENCY_PRESET_SYMBOLS = new Set(
-  CURRENCY_ROW_PRESETS.map((preset) => preset.symbol),
-);
+/** 首列固定 preset 行数（0-based rowIndex 0–7）；随机池 offset 以此为基准。 */
+export const FIXED_CURRENCY_PRESET_ROW_COUNT = CURRENCY_ROW_PRESETS.length;
+
+/** 指定行币种覆盖（0-based rowIndex；第 19 条 = 18，第 20 条 = 19）。 */
+const CURRENCY_ROW_PRESET_OVERRIDES: Partial<Record<number, CurrencyRowPreset>> = {
+  18: {
+    symbol: 'TRX',
+    cryptoName: 'eds-trx-tron',
+    showNetwork: false,
+    addressFamily: 'trx',
+  },
+  19: {
+    symbol: 'BTC',
+    cryptoName: 'eds-btc-bitcoin',
+    showNetwork: false,
+    addressFamily: 'btc',
+  },
+};
+
+export const CURRENCY_PRESET_SYMBOLS = new Set([
+  ...CURRENCY_ROW_PRESETS.map((preset) => preset.symbol),
+  ...Object.values(CURRENCY_ROW_PRESET_OVERRIDES).map((preset) => preset!.symbol),
+]);
 
 export function getCurrencyRowPreset(rowIndex: number): CurrencyRowPreset | undefined {
-  return CURRENCY_ROW_PRESETS[rowIndex];
+  return CURRENCY_ROW_PRESET_OVERRIDES[rowIndex] ?? CURRENCY_ROW_PRESETS[rowIndex];
 }

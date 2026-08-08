@@ -2,9 +2,10 @@ import {
   createDetailApplyItemRow,
   type DetailItemData,
 } from '@eds/desktop-components';
+import { formatGroupedAmountText } from '@/utils/formatGroupedDisplay';
 import { buildAmountRowValues } from '../list-field/tasksListFieldAmountRowData';
 import { buildTasksListFieldCurrencyCustomize } from '../list-field/tasksListFieldCurrencyDefaults';
-import { getCurrencyRowPreset } from '../list-field/tasksListFieldCurrencyRowPresets';
+import { resolveCurrencyRowPreset } from '../list-field/tasksListFieldCurrencyRowData';
 import {
   buildReceiverItem,
   buildSenderItem,
@@ -22,15 +23,13 @@ export function resolveSigningCustomPopupCurrencyMeta(
   detail: SigningDetail,
 ): SigningCustomPopupCurrencyMeta {
   const rowIndex = parseRowIndexFromSigningId(detail.id);
-  const preset = getCurrencyRowPreset(rowIndex);
+  const preset = resolveCurrencyRowPreset(rowIndex);
   const customize = buildTasksListFieldCurrencyCustomize(rowIndex);
-  const symbol = preset?.symbol ?? 'USDT';
-  const cryptoName = preset?.cryptoName ?? 'eds-usdt-tether usd';
-  const networkLabel = String(customize.networkLabel ?? preset?.networkLabel ?? '').trim();
+  const networkLabel = String(customize.networkLabel ?? preset.networkLabel ?? '').trim();
 
   return {
-    symbol,
-    cryptoName,
+    symbol: preset.symbol,
+    cryptoName: preset.cryptoName,
     networkLabel,
   };
 }
@@ -42,13 +41,15 @@ const MINER_FEE_DISPLAYS = [
 ] as const;
 
 function resolveMinerFeeDisplay(rowIndex: number): string {
-  return MINER_FEE_DISPLAYS[rowIndex % MINER_FEE_DISPLAYS.length] ?? MINER_FEE_DISPLAYS[1];
+  const raw = MINER_FEE_DISPLAYS[rowIndex % MINER_FEE_DISPLAYS.length] ?? MINER_FEE_DISPLAYS[1];
+  return formatGroupedAmountText(raw);
 }
 
 /** Figma 656×516 签名 custom 弹窗 — 明细：币种 → 金额 → 发送方 → 接收方 → 矿工费 → Memo */
 export function buildSigningCustomPopupItems(
   detail: SigningDetail,
   translate: (key: string) => string,
+  minerFeeDisplay?: string | null,
 ): DetailItemData[] {
   const rowIndex = parseRowIndexFromSigningId(detail.id);
   const currency = resolveSigningCustomPopupCurrencyMeta(detail);
@@ -66,7 +67,7 @@ export function buildSigningCustomPopupItems(
     createDetailApplyItemRow('amount', {
       key: 'amount',
       title: translate('Amount'),
-      value: `${amount.cryptoValue} ≈ ${amount.fiatValue}`,
+      value: formatGroupedAmountText(`${amount.cryptoValue} ≈ ${amount.fiatValue}`),
       tag: '',
     }),
     buildSenderItem(detail, translate),
@@ -74,7 +75,7 @@ export function buildSigningCustomPopupItems(
     createDetailApplyItemRow('fee', {
       key: 'miner-fee',
       title: translate('Miner Fee'),
-      value: resolveMinerFeeDisplay(rowIndex),
+      value: minerFeeDisplay ?? resolveMinerFeeDisplay(rowIndex),
     }),
     createDetailApplyItemRow('memo', {
       key: 'memo',
@@ -88,5 +89,5 @@ export function formatSigningCustomPopupAmountHeadline(
   detail: SigningDetail,
   currency: SigningCustomPopupCurrencyMeta,
 ): string {
-  return `${detail.amountHeadline} ${currency.symbol}`.trim();
+  return formatGroupedAmountText(`${detail.amountHeadline} ${currency.symbol}`.trim());
 }

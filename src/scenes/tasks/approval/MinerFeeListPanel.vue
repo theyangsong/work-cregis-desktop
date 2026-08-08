@@ -11,48 +11,42 @@ import {
 } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
 import type { MinerFeeCustomSaved } from './minerFeeCustomTypes';
+import {
+  minerFeeSpeedCryptoRangeKey,
+  minerFeeSpeedUsdRangeKey,
+  resolveMinerFeeEvmShellVariant,
+} from './minerFeeEvmShellVariant';
 import styles from './ApprovalRemarkPopoverPanel.module.css';
 
-const MINER_FEE_SPEED_OPTIONS = [
-  {
-    id: 'fast',
-    labelKey: 'Miner fee speed fast',
-    dotTone: 'success',
-    ethRangeKey: 'Miner fee fast eth range',
-    usdRangeKey: 'Miner fee fast usd range',
-  },
-  {
-    id: 'normal',
-    labelKey: 'Miner fee speed normal',
-    dotTone: 'warning',
-    ethRangeKey: 'Miner fee normal eth range',
-    usdRangeKey: 'Miner fee normal usd range',
-  },
-  {
-    id: 'slow',
-    labelKey: 'Miner fee speed slow',
-    dotTone: 'danger',
-    ethRangeKey: 'Miner fee slow eth range',
-    usdRangeKey: 'Miner fee slow usd range',
-  },
-] as const;
+const MINER_FEE_SPEED_IDS = ['fast', 'normal', 'slow'] as const;
+
+const MINER_FEE_SPEED_META = {
+  fast: { labelKey: 'Miner fee speed fast', dotTone: 'success' as const },
+  normal: { labelKey: 'Miner fee speed normal', dotTone: 'warning' as const },
+  slow: { labelKey: 'Miner fee speed slow', dotTone: 'danger' as const },
+};
 
 const MINER_FEE_CUSTOM_ID = 'custom' as const;
 
 export type MinerFeeOptionId =
-  | (typeof MINER_FEE_SPEED_OPTIONS)[number]['id']
+  | (typeof MINER_FEE_SPEED_IDS)[number]
   | typeof MINER_FEE_CUSTOM_ID;
 
-const props = defineProps<{
-  minerFee: MinerFeeOptionId | null;
-  customFeeSaved: MinerFeeCustomSaved | null;
-  remark: string;
-  placeholderKey: string;
-  feedbackKey: string;
-  confirmDisabled: boolean;
-  /** 离屏高度预测量：跳过 EgIcon，避免 clipPath id 与可见实例冲突。 */
-  measureOnly?: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    minerFee: MinerFeeOptionId | null;
+    customFeeSaved: MinerFeeCustomSaved | null;
+    remark: string;
+    placeholderKey: string;
+    feedbackKey: string;
+    confirmDisabled: boolean;
+    symbol?: string;
+    measureOnly?: boolean;
+  }>(),
+  {
+    symbol: 'ETH',
+  },
+);
 
 const emit = defineEmits<{
   'update:remark': [value: string];
@@ -64,6 +58,18 @@ const emit = defineEmits<{
 const { ui } = useAppI18n();
 
 const rootRef = ref<HTMLElement | null>(null);
+
+const shellVariant = computed(() => resolveMinerFeeEvmShellVariant(props.symbol));
+
+const speedOptions = computed(() =>
+  MINER_FEE_SPEED_IDS.map((id) => ({
+    id,
+    labelKey: MINER_FEE_SPEED_META[id].labelKey,
+    dotTone: MINER_FEE_SPEED_META[id].dotTone,
+    cryptoRangeKey: minerFeeSpeedCryptoRangeKey(shellVariant.value, id),
+    usdRangeKey: minerFeeSpeedUsdRangeKey(shellVariant.value, id),
+  })),
+);
 
 const remarkModel = computed({
   get: () => props.remark,
@@ -101,7 +107,7 @@ defineExpose({
           :aria-label="ui('Gas fee')"
         >
           <button
-            v-for="option in MINER_FEE_SPEED_OPTIONS"
+            v-for="option in speedOptions"
             :key="option.id"
             type="button"
             role="radio"
@@ -119,7 +125,7 @@ defineExpose({
               />
               <span :class="styles.minerFeeOptionName">{{ ui(option.labelKey) }}</span>
             </span>
-            <span :class="styles.minerFeeEthRange">{{ ui(option.ethRangeKey) }}</span>
+            <span :class="styles.minerFeeEthRange">{{ ui(option.cryptoRangeKey) }}</span>
             <span :class="styles.minerFeeUsdRange">{{ ui(option.usdRangeKey) }}</span>
           </button>
 
@@ -141,7 +147,7 @@ defineExpose({
               <span :class="styles.minerFeeOptionHeader">
                 <span :class="styles.minerFeeOptionName">{{ ui('Custom') }}</span>
               </span>
-              <span :class="styles.minerFeeEthRange">{{ customFeeSaved.ethRange }}</span>
+              <span :class="styles.minerFeeEthRange">{{ customFeeSaved.cryptoRange }}</span>
               <span :class="styles.minerFeeUsdRange">{{ customFeeSaved.usdRange }}</span>
             </span>
             <EgLink

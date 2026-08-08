@@ -3,16 +3,19 @@ import { computed, toRef } from 'vue';
 import { EgButton, EgPopup } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
 import { usePopupShellLifecycle } from '../shared/usePopupShellLifecycle';
+import ApprovalRemarkPopover from '../approval/ApprovalRemarkPopover.vue';
 import {
-  buildSigningCustomPopupItems,
-  resolveSigningCustomPopupCurrencyMeta,
-} from './buildSigningCustomPopupItems';
-import { buildMultiSignWaitingPopupSteps } from './buildSigningCustomPopupProgressSteps';
-import SigningCustomPopupPanel from './SigningCustomPopupPanel.vue';
+  isEvmMinerFeeShell,
+  resolveMinerFeePopoverTitleKey,
+  resolveMinerFeeProfileFromDetail,
+} from '../shared/minerFeeProfile';
+import type { MinerFeeSelection } from '../shared/minerFeeProfile';
+import { buildMultiSignWaitingPanelModel } from './buildMultiSignWaitingPanelModel';
+import MultiSignWaitingPanel from './MultiSignWaitingPanel.vue';
 import {
-  SIGNING_CUSTOM_POPUP_HEIGHT,
-  SIGNING_CUSTOM_POPUP_WIDTH,
-} from './signingCustomPopup.constants';
+  MULTI_SIGN_WAITING_POPUP_HEIGHT,
+  MULTI_SIGN_WAITING_POPUP_WIDTH,
+} from './multiSignWaiting.constants';
 import type { SigningDetail } from './types';
 
 const props = defineProps<{
@@ -20,37 +23,63 @@ const props = defineProps<{
   detail: SigningDetail | null;
   phase: 'waiting' | 'ready';
   joinedCount: number;
+  remark: string;
+  minerFeeDisplay?: string | null;
+  dismissWithoutAnimation?: boolean;
 }>();
 
 const emit = defineEmits<{
   'update:open': [value: boolean];
+  'update:remark': [value: string];
   close: [];
-  sign: [];
+  readyConfirm: [selection: MinerFeeSelection | null];
 }>();
 
 const { ui } = useAppI18n();
 
 const { popupMounted, popupOpen, onPopupClosed } = usePopupShellLifecycle({
   open: toRef(props, 'open'),
+  dismissWithoutAnimation: toRef(props, 'dismissWithoutAnimation'),
   onClosed: () => {
     emit('update:open', false);
     emit('close');
   },
 });
 
-const currencyMeta = computed(() =>
-  props.detail ? resolveSigningCustomPopupCurrencyMeta(props.detail) : null,
+const minerFeeProfile = computed(() =>
+  props.detail ? resolveMinerFeeProfileFromDetail(props.detail) : null,
 );
 
-const items = computed(() =>
-  props.detail ? buildSigningCustomPopupItems(props.detail, ui) : [],
+const usesEvmMinerFeeShell = computed(
+  () => minerFeeProfile.value != null && isEvmMinerFeeShell(minerFeeProfile.value.kind),
 );
 
-const progressSteps = computed(() => buildMultiSignWaitingPopupSteps(props.phase, ui));
+const minerFeePopoverTitle = computed(() => {
+  if (usesEvmMinerFeeShell.value) {
+    return ui('Gas fee');
+  }
+  if (!minerFeeProfile.value) {
+    return ui('Gas fee');
+  }
+  return ui(resolveMinerFeePopoverTitleKey(minerFeeProfile.value));
+});
+
+const panelModel = computed(() =>
+  props.detail
+    ? buildMultiSignWaitingPanelModel(props.detail, props.joinedCount, ui)
+    : null,
+);
 
 function onClose() {
   popupOpen.value = false;
-  emit('update:open', false);
+}
+
+function onReadyConfirm(selection: MinerFeeSelection | null) {
+  emit('readyConfirm', selection);
+}
+
+function onRemarkDismiss() {
+  emit('update:remark', '');
 }
 </script>
 
@@ -59,32 +88,42 @@ function onClose() {
     v-if="popupMounted"
     v-model:open="popupOpen"
     uses="custom"
-    :box-width="SIGNING_CUSTOM_POPUP_WIDTH"
-    :box-height="SIGNING_CUSTOM_POPUP_HEIGHT"
+    :box-width="MULTI_SIGN_WAITING_POPUP_WIDTH"
+    :box-height="MULTI_SIGN_WAITING_POPUP_HEIGHT"
     @close="onPopupClosed"
   >
-    <SigningCustomPopupPanel
-      v-if="detail && currencyMeta"
-      :items="items"
-      :progress-steps="progressSteps"
-      footer-latency-label="122ms"
-      :show-footer-actions="phase === 'ready'"
+    <MultiSignWaitingPanel
+      v-if="detail && panelModel"
+      :model="panelModel"
+      :phase="phase"
       @close="onClose"
     >
-      <template #actions>
-        <EgButton tone="danger" variant="text" size="md" @click="onClose">
-          {{ ui('Cancel') }}
-        </EgButton>
-        <EgButton
-          v-if="phase === 'ready'"
-          tone="decor"
-          variant="solid"
-          size="md"
-          @click="emit('sign')"
+      <template v-if="phase === 'ready'" #actions>
+        <ApprovalRemarkPopover
+          v-if="minerFeeProfile"
+          boundary-selector=".app-preview"
+          :title="minerFeePopoverTitle"
+          :remark="remark"
+          :show-miner-fee="usesEvmMinerFeeShell"
+          :miner-fee-profile="minerFeeProfile"
+          require-miner-fee
+          @update:remark="emit('update:remark', $event)"
+          @confirm="onReadyConfirm"
+          @dismiss="onRemarkDismiss"
         >
-          {{ ui('Sign') }}
-        </EgButton>
+          <template #trigger="{ active, onClick }">
+            <EgButton
+              tone="decor"
+              variant="solid"
+              size="md"
+              :aria-expanded="active"
+              @click.stop="onClick"
+            >
+              {{ ui('Sign') }}
+            </EgButton>
+          </template>
+        </ApprovalRemarkPopover>
       </template>
-    </SigningCustomPopupPanel>
+    </MultiSignWaitingPanel>
   </EgPopup>
 </template>

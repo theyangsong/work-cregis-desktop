@@ -6,12 +6,13 @@ import {
 } from './listFieldCurrencyAddressCustomize';
 import {
   getPinnedAddressForRow,
+  resolveAddressFamily,
   resolveSampleAddressForSymbol,
   sideAddressPoolIndex,
-  type CryptoAddressFamily,
 } from './listFieldCryptoSampleAddresses';
 import {
   CURRENCY_PRESET_SYMBOLS,
+  FIXED_CURRENCY_PRESET_ROW_COUNT,
   getCurrencyRowPreset,
   type CurrencyRowPreset,
 } from './tasksListFieldCurrencyRowPresets';
@@ -42,7 +43,8 @@ function buildRandomCurrencyPool(): string[] {
 function resolveRandomCurrencySymbol(rowIndex: number): string {
   const pool = buildRandomCurrencyPool();
   if (pool.length === 0) return 'BTC';
-  const offset = rowIndex - CURRENCY_PRESET_SYMBOLS.size;
+  const offset = rowIndex - FIXED_CURRENCY_PRESET_ROW_COUNT;
+  if (offset < 0) return pool[0] ?? 'BTC';
   return pool[offset % pool.length] ?? pool[0];
 }
 
@@ -75,15 +77,19 @@ function resolveRandomRowPreset(rowIndex: number): CurrencyRowPreset {
     symbol,
     cryptoName,
     showNetwork: false,
+    addressFamily: resolveAddressFamily(symbol),
   };
 }
 
+/** 任意行的有效币种 preset（含随机池行与 addressFamily 推断）。 */
+export function resolveCurrencyRowPreset(rowIndex: number): CurrencyRowPreset {
+  return getCurrencyRowPreset(rowIndex) ?? resolveRandomRowPreset(rowIndex);
+}
+
 export function resolveCurrencySymbolForRow(rowIndex: number): string {
-  const preset = getCurrencyRowPreset(rowIndex) ?? resolveRandomRowPreset(rowIndex);
-  return preset.symbol;
+  return resolveCurrencyRowPreset(rowIndex).symbol;
 }
 
 export function buildCurrencyRowPresetCustomize(rowIndex: number): Record<string, unknown> {
-  const preset = getCurrencyRowPreset(rowIndex) ?? resolveRandomRowPreset(rowIndex);
-  return presetToCustomize(preset, rowIndex);
+  return presetToCustomize(resolveCurrencyRowPreset(rowIndex), rowIndex);
 }

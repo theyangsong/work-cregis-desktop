@@ -6,7 +6,7 @@ export type AmountRowPreset = {
 
 export const AMOUNT_ROW_PRESETS: readonly AmountRowPreset[] = [
   { cryptoValue: '24,500.50', fiatValue: '$24,500.50' },
-  { cryptoValue: '700732,879.00000012', fiatValue: '$700732,879.00000012' },
+  { cryptoValue: '79.00001', fiatValue: '$79.00001' },
   { cryptoValue: '0.0842', fiatValue: '$24.06' },
   { cryptoValue: '128,456.789012', fiatValue: '$32,114,197.25' },
   { cryptoValue: '12,345.67', fiatValue: '$12,345.67' },

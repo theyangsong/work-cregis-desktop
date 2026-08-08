@@ -155,10 +155,6 @@
   display: none;
 }
 
-.latencyFlotation :global(.eds-flotation-menu--list-header [class*='menuBodySticky']) {
-  gap: var(--spacing-1);
-}
-
 .latencyFlotation :global(.eds-flotation-trigger [class*='triggerSymbol']) {
   color: var(--latency-status-color);
 }

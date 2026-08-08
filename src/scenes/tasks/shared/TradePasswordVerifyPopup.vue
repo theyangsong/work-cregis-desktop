@@ -31,7 +31,6 @@ const {
   submit: (code) => props.submit(code),
   requestClose: () => {
     popupOpen.value = false;
-    emit('update:open', false);
   },
 });
 
@@ -50,7 +49,6 @@ const { popupMounted, popupOpen, onPopupClosed } = usePopupShellLifecycle({
 
 function closePopup() {
   popupOpen.value = false;
-  emit('update:open', false);
 }
 </script>
 

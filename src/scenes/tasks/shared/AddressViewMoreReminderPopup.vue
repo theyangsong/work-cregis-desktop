@@ -29,7 +29,6 @@ const { popupMounted, popupOpen, onPopupClosed } = usePopupShellLifecycle({
 
 function onConfirm() {
   popupOpen.value = false;
-  emit('update:open', false);
 }
 </script>
 

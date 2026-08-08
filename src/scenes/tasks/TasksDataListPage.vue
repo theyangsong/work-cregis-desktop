@@ -48,7 +48,10 @@ import {
   type TasksDataListCustomizeState,
 } from './tasksDataListPageData';
 import { useAppI18n } from '@/composables/useAppI18n';
+import { formatGroupedNumber } from '@/utils/formatGroupedDisplay';
 import ApprovalRemarkPopoverPanel from './approval/ApprovalRemarkPopoverPanel.vue';
+import type { MinerFeeSelection } from './shared/minerFeeProfile';
+import { isEvmMinerFeeShell } from './shared/minerFeeProfile';
 import { registerApprovalFlow } from './approval/approvalFlowContext';
 import {
   APPROVAL_BATCH_MAX,
@@ -401,7 +404,16 @@ function onBatchPopoverDismiss() {
   }
   if (isSigningMenu.value) {
     signingFlow.remark.value = '';
+    signingFlow.batchMinerFeeProfile.value = null;
   }
+}
+
+function onSigningBatchPopoverConfirm(
+  selection: MinerFeeSelection | null,
+  confirm: () => void,
+) {
+  signingFlow.onBatchRemarkConfirm(selection);
+  confirm();
 }
 
 const displayDataList = computed(() => {
@@ -448,6 +460,7 @@ const displayStatisticsItems = computed(() =>
   statisticsItems.value.map((item) => ({
     ...item,
     text: ui(item.text),
+    number: formatGroupedNumber(item.number),
   })),
 );
 const displayBatchActions = computed(() => {
@@ -571,9 +584,16 @@ const displayBatchActions = computed(() => {
             <ApprovalRemarkPopoverPanel
               :selected-count="selectedCount"
               :remark="signingFlow.remark.value"
-              :show-miner-fee="action.key === 'pass'"
+              :show-miner-fee="
+                action.key === 'pass'
+                  && signingFlow.batchMinerFeeProfile.value != null
+                  && isEvmMinerFeeShell(signingFlow.batchMinerFeeProfile.value.kind)
+              "
+              :miner-fee-profile="
+                action.key === 'pass' ? signingFlow.batchMinerFeeProfile.value : null
+              "
               @update:remark="signingFlow.remark.value = $event"
-              @confirm="confirm"
+              @confirm="onSigningBatchPopoverConfirm($event, confirm)"
               @cancel="close"
             />
           </template>

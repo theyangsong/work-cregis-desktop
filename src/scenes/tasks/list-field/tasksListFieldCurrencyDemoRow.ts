@@ -8,7 +8,7 @@ import {
   resolveSampleAddressForSymbol,
   sideAddressPoolIndex,
 } from './listFieldCryptoSampleAddresses';
-import { getCurrencyRowPreset } from './tasksListFieldCurrencyRowPresets';
+import { resolveCurrencyRowPreset } from './tasksListFieldCurrencyRowData';
 
 function seededFraction(seed: number): number {
   const x = Math.sin(seed * 9973) * 10000;
@@ -22,8 +22,8 @@ function buildDemoFromAddressOverrides(
   rowIndex: number,
 ): Record<string, unknown> {
   const symbol = String(customize.symbol ?? 'ZEC');
-  const preset = getCurrencyRowPreset(rowIndex);
-  const familyOverride = preset?.addressFamily;
+  const preset = resolveCurrencyRowPreset(rowIndex);
+  const familyOverride = preset.addressFamily;
 
   const primary = String(customize.fromAddress1 ?? '').trim();
   const used = new Set<string>(primary ? [primary] : []);

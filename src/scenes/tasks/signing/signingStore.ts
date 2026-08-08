@@ -68,7 +68,7 @@ function buildCustomDetailFields(id: string, rowIndex: number) {
       },
     ],
     signingMode,
-    signingThreshold: signingMode === 'multi' ? '2 / 3' : null,
+    signingThreshold: signingMode === 'multi' ? '3 / 4' : null,
     signers: [
       member,
       { ...member, name: 'Signer B', avatarName: 'Signer B' },
@@ -91,7 +91,7 @@ function syncDetailFromRow(entry: StoreEntry, rowIndex: number) {
   Object.assign(entry, buildSigningDetailRowFields(rowIndex));
   const mode = signingModeFromRow(rowIndex);
   entry.signingMode = mode;
-  entry.signingThreshold = mode === 'multi' ? '2 / 3' : null;
+  entry.signingThreshold = mode === 'multi' ? '3 / 4' : null;
 }
 
 function ensureEntry(id: string, rowIndex: number): StoreEntry {
@@ -113,6 +113,14 @@ export function parseRowIndexFromSigningId(id: string): number {
   const match = /^SIG-(\d+)$/.exec(id);
   if (!match) return 0;
   return Math.max(0, Number.parseInt(match[1], 10) - 1);
+}
+
+/** 与列表 Payout Wallets 列「多签」Tag 同源（rightLabel === 'Multi-Sign'）。 */
+export function isMultiSignSigningDetail(
+  detail: Pick<SigningDetail, 'id'> | null | undefined,
+): boolean {
+  if (!detail) return false;
+  return isMultiSignRow(parseRowIndexFromSigningId(detail.id));
 }
 
 export function isSigningRowEligibleForBatch(rowIndex: number): boolean {

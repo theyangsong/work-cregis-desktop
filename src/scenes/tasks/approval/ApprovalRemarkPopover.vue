@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { EgAnchoredPopover, POPOVER_PRESET_WIDTH_BASE } from '@eds/desktop-components';
+import type { MinerFeeProfile, MinerFeeSelection } from '../shared/minerFeeProfile';
 import ApprovalRemarkPopoverPanel from './ApprovalRemarkPopoverPanel.vue';
 
 type MinerFeeScreen = 'list' | 'custom';
@@ -10,11 +11,14 @@ const props = withDefaults(
     remark: string;
     selectedCount?: number;
     title: string;
+    /** @deprecated 用 minerFeeProfile；true 且无 profile 时回退以太坊网络。 */
     showMinerFee?: boolean;
+    minerFeeProfile?: MinerFeeProfile | null;
     boundarySelector?: string;
     onBeforeOpen?: () => void | Promise<void>;
     placeholderKey?: string;
     feedbackKey?: string;
+    requireMinerFee?: boolean;
   }>(),
   {
     selectedCount: 1,
@@ -22,12 +26,13 @@ const props = withDefaults(
     boundarySelector: '.eds-data-list',
     placeholderKey: 'Please enter',
     feedbackKey: 'Optional, Max. 256 characters',
+    requireMinerFee: false,
   },
 );
 
 const emit = defineEmits<{
   'update:remark': [value: string];
-  confirm: [];
+  confirm: [selection: MinerFeeSelection | null];
   dismiss: [];
 }>();
 
@@ -71,11 +76,13 @@ function onMinerFeeScreenChange(screen: MinerFeeScreen) {
         :selected-count="selectedCount"
         :remark="remark"
         :show-miner-fee="showMinerFee"
+        :miner-fee-profile="minerFeeProfile"
+        :require-miner-fee="requireMinerFee"
         :placeholder-key="placeholderKey"
         :feedback-key="feedbackKey"
         @update:remark="emit('update:remark', $event)"
         @miner-fee-screen-change="onMinerFeeScreenChange"
-        @confirm="() => { emit('confirm'); close(); }"
+        @confirm="(selection) => { emit('confirm', selection); close(); }"
         @cancel="close"
       />
     </template>

@@ -1,23 +1,15 @@
 <script setup lang="ts">
 import {
   EgButton,
-  EgDivider,
-  EgFlotation,
-  EgFlotationMenu,
-  EgFlotationMenuItem,
-  EgFlotationTrigger,
   EgIcon,
   EgIconButton,
   type DetailItemData,
 } from '@eds/desktop-components';
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import './signingCustomPopupHost.css';
-import {
-  SIGNING_FOOTER_LATENCY_MENU_TITLE,
-  signingFooterLatencyNetworkItems,
-} from './signingFooterLatencyMenu';
 import SigningCustomPopupItemRow from './SigningCustomPopupItemRow.vue';
 import SigningCustomPopupProgress from './SigningCustomPopupProgress.vue';
+import SigningFooterLatencyToolbar from './SigningFooterLatencyToolbar.vue';
 import type { SigningCustomPopupProgressStep } from './signingCustomPopupProgress.types';
 import { useSigningCustomPopupHost } from './useSigningCustomPopupHost';
 import styles from './SigningCustomPopupPanel.module.css';
@@ -34,19 +26,6 @@ const props = withDefaults(
     showFooterActions: false,
   },
 );
-
-const selectedLatencyIndex = ref(0);
-
-const selectedLatencyNetwork = computed(
-  () =>
-    signingFooterLatencyNetworkItems[selectedLatencyIndex.value]
-    ?? signingFooterLatencyNetworkItems[0]!,
-);
-
-function selectLatencyNetwork(index: number, close: () => void) {
-  selectedLatencyIndex.value = index;
-  close();
-}
 
 const emit = defineEmits<{
   close: [];
@@ -150,100 +129,18 @@ watch([scrollRef, scrollContentRef, () => props.items.length], () => {
         </div>
       </div>
 
-      <footer
-        :class="[
-          styles.toolbar,
-          styles.toolbarScrim,
-          scrollOverflows && styles.toolbarScrimActive,
-        ]"
+      <SigningFooterLatencyToolbar
+        :scroll-overflows="scrollOverflows"
+        :show-actions="showFooterActions"
       >
-        <div :class="styles.toolbarScrimContent">
-          <div :class="styles.toolbarPage">
-            <EgDivider
-              :class="styles.toolbarDivider"
-              type="module"
-              direction="horizontal"
-            />
-            <div :class="styles.toolbarBar">
-              <div :class="styles.toolbarStart">
-                <EgFlotation
-                  :class="styles.latencyFlotation"
-                  :style="{ '--latency-status-color': selectedLatencyNetwork.statusColor }"
-                  placement="top"
-                  trigger-style="text"
-                  trigger-size="md"
-                  :show-add="false"
-                  boundary-selector=".app-preview"
-                  flip
-                  close-on-scroll
-                >
-                  <template #trigger="{ expanded }">
-                    <EgFlotationTrigger
-                      trigger-style="text"
-                      size="md"
-                      label=""
-                      show-symbol
-                      symbol-icon="eds-wifi-fill"
-                      :expanded="expanded"
-                    >
-                      <template #message>
-                        <span :class="styles.latencyText">
-                          {{ selectedLatencyNetwork.statusLabel }}
-                        </span>
-                      </template>
-                    </EgFlotationTrigger>
-                  </template>
-                  <template #content="{ close }">
-                    <EgFlotationMenu
-                      list-scroll
-                      :show-add="false"
-                      :show-divider="false"
-                      width-mode="fixed"
-                      :width="280"
-                      height-mode="adaptive"
-                    >
-                      <template #header>
-                        <p :class="styles.latencyMenuTitle">
-                          {{ SIGNING_FOOTER_LATENCY_MENU_TITLE }}
-                        </p>
-                      </template>
-                      <EgFlotationMenuItem
-                        v-for="(network, index) in signingFooterLatencyNetworkItems"
-                        :key="network.key"
-                        box-type="text"
-                        :label="network.label"
-                        :focused="selectedLatencyIndex === index"
-                        :show-tag="false"
-                        @click="selectLatencyNetwork(index, close)"
-                      >
-                        <template #message>
-                          <span
-                            :class="styles.latencyMenuStatus"
-                            :style="{ color: network.statusColor }"
-                          >
-                            {{ network.statusLabel }}
-                          </span>
-                        </template>
-                      </EgFlotationMenuItem>
-                    </EgFlotationMenu>
-                  </template>
-                </EgFlotation>
-              </div>
-
-              <div
-                v-if="showFooterActions"
-                :class="[styles.toolbarActions, styles.toolbarActionsRight]"
-              >
-                <slot name="actions">
-                  <EgButton tone="decor" variant="solid" size="md" @click="emit('close')">
-                    Close
-                  </EgButton>
-                </slot>
-              </div>
-            </div>
-          </div>
-        </div>
-      </footer>
+        <template #actions>
+          <slot name="actions">
+            <EgButton tone="decor" variant="solid" size="md" @click="emit('close')">
+              Close
+            </EgButton>
+          </slot>
+        </template>
+      </SigningFooterLatencyToolbar>
     </div>
   </div>
 </template>

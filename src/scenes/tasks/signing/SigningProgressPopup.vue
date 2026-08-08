@@ -19,6 +19,7 @@ const props = defineProps<{
   open: boolean;
   detail: SigningDetail | null;
   phase: SigningProgressPhase;
+  minerFeeDisplay?: string | null;
 }>();
 
 const emit = defineEmits<{
@@ -41,14 +42,15 @@ const currencyMeta = computed(() =>
 );
 
 const items = computed(() =>
-  props.detail ? buildSigningCustomPopupItems(props.detail, ui) : [],
+  props.detail
+    ? buildSigningCustomPopupItems(props.detail, ui, props.minerFeeDisplay)
+    : [],
 );
 
 const progressSteps = computed(() => buildSigningProgressPopupSteps(props.phase, ui));
 
 function onClose() {
   popupOpen.value = false;
-  emit('update:open', false);
 }
 </script>
 

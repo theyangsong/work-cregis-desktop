@@ -229,7 +229,7 @@ Dev 环境建议 Vite alias 指向 `eds-desktop/packages/components/src`，与 S
 5. **排版**使用整组角色 token（size + weight + line-height 同角色），如 `--eds-body-small-strong-*`。
 6. **禁止在业务 CSS 私定义 `--my-panel-gap`** 等 DS 未发布变量名；禁止 `--foo: var(--radius-md)` 再引用 `--foo`。
 7. **动效**：hover 用 `var(--motion-transition-hover)`；**click / focus / selected 禁止 transition**（`.motion-none`）。
-8. **数字展示**：使用 `formatGroupedNumber`（`@eds/desktop-components`），禁止各处手写 `toLocaleString`。
+8. **数字展示**：使用 `formatGroupedNumber`（`@eds/desktop-components`），禁止各处手写 `toLocaleString`；复合金额/文案见 **§6.4**。
 9. **嵌套滚动**（§6 eds-project）：`overscroll-behavior: none` + wheel 边界 `preventDefault` + `scrollTop` 钳制。
 
 ### 6.2 常用语义映射
@@ -253,6 +253,68 @@ eds-desktop/packages/tokens/dist/json/tokens.json （机器可读清单）
 ```
 
 **不存在于 spec/dist → 停止编码 → 向 EDS 维护者确认**（新增 token / 批准硬编码 / 登记业务例外）。
+
+### 6.4 数字千分位展示（锁死）
+
+**原则**：客户端**展示态**数字须千分位分组；输入框、`v-model`、纯编号/ID **不**格式化。
+
+#### 工具（按场景选用）
+
+| 层级 | 入口 | 用途 |
+|------|------|------|
+| DS 基座 | `formatGroupedNumber`（`@eds/desktop-components`） | 整数、计数、Paginer/BatchBar/Detail 工具栏等 |
+| 业务封装 | `src/utils/formatGroupedDisplay.ts` | 金额、复合文案、阈值、矿工费模板 |
+
+**`formatGroupedDisplay.ts` 导出**
+
+| 函数 | 用途 | 示例 |
+|------|------|------|
+| `formatGroupedNumber` | re-export DS；整数/计数 | `128` → `128`；`128456` → `128,456` |
+| `formatGroupedDecimalAmount` | 金额字符串；`$` 前缀；**小数部分原样保留** | `128456.789012` → `128,456.789012`；`$79.00001` → `$79.00001` |
+| `formatGroupedAmountText` | 复合文案内所有数字 token | `128456.789012 USDT ≈ $32,114,197.25` |
+| `formatGroupedThresholdString` | 多签阈值 | `3 / 4`（大数同样分组） |
+| `formatGroupedLatencyLabel` | 延迟 ms 后缀 | `2100ms` → `2,100ms`；`无网络` 不变 |
+| `formatGroupedTemplateValue` | 矿工费 UI 模板 `{bandwidth}` 等变量 | TRON 资源行、激活说明 |
+
+#### 必须格式化的展示入口
+
+- 列表金额列：`buildAmountRowValues` + `TasksListFieldAmount.vue`（预设行亦须走 formatter）
+- Detail / 多签等待侧栏：金额、地址计数 `(n)`、阈值、参与人数
+- 矿工费：EVM / TON / TRON 报价与 `buildSigningCustomPopupItems`
+- MPC 网络延迟：`SigningFooterLatencyToolbar`（`formatGroupedLatencyLabel`）
+- Paginer 统计 `statNumber`、Module Menu 角标（`formatModuleMenuBadgeCount`）
+
+#### DS 已内置（勿重复包一层）
+
+`EgPaginer`（`data-volume-count`）、`BatchBarActionItem`、`Detail` 工具栏 current/total、`PaginationItem` 等已在引用库内调用 `formatGroupedNumber`。
+
+#### 禁止 / 例外
+
+| 禁止 | 原因 |
+|------|------|
+| 手写 `toLocaleString` / 正则手搓千分位 | 与 DS locale 行为不一致 |
+| 对倒计时 `30:00`、`MM:SS` 套 `formatGroupedAmountText` | 会误改时间片段 |
+| 对输入态、`v-model` 绑定值格式化 | 展示层职责；输入由控件自身处理 |
+| 对 ID / 编号格式化 | 如 `SIG-000001`、`TP-20260717-001` |
+
+#### 接入示例
+
+```typescript
+import {
+  formatGroupedNumber,
+  formatGroupedDecimalAmount,
+  formatGroupedAmountText,
+} from '@/utils/formatGroupedDisplay';
+
+// 列表 / 详情金额
+const cryptoValue = formatGroupedDecimalAmount(preset.cryptoValue);
+
+// Detail 多地址计数
+value: `${address} (${formatGroupedNumber(detail.senderCount)})`,
+
+// 矿工费 / 复合金额行
+value: formatGroupedAmountText(detail.amountDisplay),
+```
 
 ---
 
@@ -309,7 +371,8 @@ usePopupShellLifecycle({
 |------|------|
 | **入场** | `open && !suspended` → `popupMounted=true`（EgPopup `open=false`）→ `nextTick` → `requestAnimationFrame` → `popupOpen=true` |
 | **真关闭** | `open=false` → `popupOpen=false` → 出场动效 → `@close` → `onClosed()`（可卸数据） |
-| **暂挂（上层打开）** | `open=true && suspended=true` → `popupOpen=false` + `closingForSuspend=true` → 出场动效 → `@close` **不**调 `onClosed`（Detail 数据/翻页保留） |
+| **内联关闭**（关闭钮 / 取消 / 自定义面板 `@close`） | **仅** `popupOpen=false`；**禁止**同 handler 内 `emit('update:open', false)`（见下节） |
+| **暂挂（上层打开）** | `open=true && suspended=true` → **instant 卸 shell**（无出场动效，避免与上层入场叠多层 motion）→ **不**调 `onClosed` |
 | **恢复（上层关闭）** | `suspended=false` 且 `open` 仍为 true → 再次走延迟入场 |
 | **watch** | 必须 `{ immediate: true }` — Detail 懒挂载首帧 `open=true` 时也要触发，否则点行无反应 |
 
@@ -320,7 +383,9 @@ usePopupShellLifecycle({
 | `visibility: hidden` / `pointer-events: none` 暂挂下层 | 下层瞬间消失，与上层 EgPopup 动效不同步 |
 | 懒挂载首帧 `open=true` 且无 lifecycle | 跳过 microFloat 入场；或 watch 不触发、点行无反应 |
 | 上层打开时 `v-if` 卸下层 | 跳过出场动效 |
-| suspend 触发的 `@close` 走 `popup-closed` 清数据 | Detail 被误关、翻页状态丢失 |
+| 上层打开时下层仍走 EgPopup 出场动效 | 与上层入场叠加，出现「多层 motion」；suspend 须 instant 卸 shell（§7.1） |
+| suspend 触发的 `@close` / `onClosed` 清数据 | Detail 被误关、翻页状态丢失 |
+| 内联关闭时 **同时** `popupOpen=false` + `emit('update:open', false)` | lifecycle 在 EgPopup 出场前 `teardown()`，关闭钮与点遮罩动效不一致（§7.1.1） |
 | 在 FlowHost 手写 `verifyPopupMounted` 且与 EgPopup 内部 lifecycle 重复 | 双重卸载或动效竞态 |
 | 显式传 `micro-float`（可省略） | 非必须；EgPopup 默认 `microFloat: true` |
 
@@ -332,6 +397,46 @@ usePopupShellLifecycle({
 | 地址查看更多 Reminder | 其上有 Verify（Signing 另加 progress / multiSign） |
 
 Verify（`TradePasswordVerifyPopup`）为最上层之一，**不设** `suspended`；须 `useVerifySubmit` + i18n 文案 + `@cancel` / `@switch` 关闭。
+
+#### 7.1.1 关闭动效一致性（锁死）
+
+**原则**：凡关闭 Popup（点遮罩、Esc、EgDetail 关闭钮、自定义面板关闭、Verify 取消等），须走**同一条 EgPopup 出场链**；遮罩点击与关闭钮 **不得**出现两种动效。
+
+**EgPopup 内部**（引用库 `Popup.vue`）：`open=false` → `runShellLeaveAnimation()`（`.motion-layout` + scrim）→ `emit('close')`。
+
+**业务侧正确分工**
+
+| 层级 | 职责 |
+|------|------|
+| 内容层 `@close`（如 `EgDetail`、`MultiSignWaitingPanel`、Verify `@cancel`） | **只** `popupOpen.value = false` |
+| `usePopupShellLifecycle` `onClosed` / EgPopup `@close="onPopupClosed"` | 出场结束后 `emit('update:open', false)`、`popup-closed`、必要时 `popupMounted=false`、清业务数据 |
+
+**错误模式（回归高发）**
+
+```typescript
+// ❌ 关闭钮 — 动画被截断
+function onDetailClose() {
+  popupOpen.value = false;
+  emit('update:open', false); // lifecycle 见 props.open=false 且 popupOpen 已 false → 立刻 teardown
+}
+
+// ✅ 与点遮罩一致
+function onDetailClose() {
+  popupOpen.value = false;
+}
+```
+
+**时序对比**
+
+| 操作 | 行为 |
+|------|------|
+| 点遮罩 | `popupOpen=false` → 父级 `open` 仍为 true → 等 EgPopup `@close` → `onClosed()` |
+| 关闭钮（错误） | `popupOpen=false` + 立刻 `update:open=false` → **跳过**出场动效、`v-if` 卸 Popup |
+| 关闭钮（正确） | 同点遮罩 |
+
+**须遵守的文件模式**：`*DetailPopup.vue`、`TradePasswordVerifyPopup.vue`、`MultiSignWaitingPopup.vue`、`SigningProgressPopup.vue`、`AddressViewMoreReminderPopup.vue` 等 — 内联关闭 handler **不得**同步 `emit('update:open', false)`。
+
+关闭动画期间 **勿** `v-if` 卸掉 Detail 内容（`AGENTS.md` EgPopup 挂载 §）；数据清理放在 `onClosed`。
 
 #### 验证成功 → 自动翻下一条（motion-page）
 
@@ -357,158 +462,20 @@ Verify 打开时 Detail 会 **suspend 出场**（EgDetail 卸载）。若验证�
 
 `EgDataList`：`batch-popover-width-mode="fixed"` + `:batch-popover-width="POPOVER_PRESET_WIDTH_BASE"` + `batch-popover-top-tool` + `batch-popover-top-tool-closable`。
 
-#### Layout Deform — Popover / Tooltip 多页切换（锁死）
+#### 矿工费 Popover 多页切换 — Layout Deform（锁死）
 
-**适用**：同一 Popover / Tooltip 内 A↔B 子页切换 — 固定宽度 + shell 高度 morph + 内容 crossfade（macOS Popover 风格）。
+列表 ↔ 自定义子页须走 DS **`useMotionLayoutDeformPageSwitch`**，禁止 Vue `<Transition>` 或自写 transform。
 
-**不适用**：
+**权威**：`../eds-desktop/packages/components/docs/layout-deform-page-switch.md`（eds-project §7 摘要）
 
-| 场景 | 用 |
-|------|-----|
-| Detail 整页推动 | `.motion-page` + `motionPageTransition.module.css` |
-| 浮层进出场 | `.motion-flotation` + microFloat |
-| Tab 滑块形变 | `.motion-deform` |
-
-**权威**：`../eds-desktop/packages/components/docs/layout-deform-page-switch.md` · glue `motionLayoutDeformTransition.module.css` · composable `motionLayoutDeform.ts`
-
-##### 两层并行结构（与 HTML demo 一致）
-
-```text
-┌─ shell：.motion-layout-deform ─────────────┐  height 350ms morph
-│  overflow: hidden                         │
-│  ┌─ content：.motion-layout-deform-content ┐  fade + translateY
-│  │  单 wrapper · v-if 换子页              │
-│  └────────────────────────────────────────┘
-└───────────────────────────────────────────┘
-```
-
-**时序（锁死）**
-
-1. 点击 → **同时** shell 高度 morph + 内容 `.is-exiting`（`translateY(+offset)` + 淡出）
-2. **120ms** → 换页（`activePage`）+ `.is-entering`（保持同一 `+offset`）
-3. **下一帧 rAF** → 去掉 `.is-entering`，内容从 `+offset` 淡入到 `0`
-
-内容位移 **始终是 `+offset → 0`**。禁止 to-smaller / to-larger 反向 transform（换页帧会跳 ~20px → 视觉上「弹一下」）。
-
-##### 必须做的（缺一项就容易弹）
-
-**1. 用 DS composable，不要自己写 `<Transition mode="out-in">`**
-
-```ts
-import {
-  MOTION_LAYOUT_DEFORM_CONTENT,
-  MOTION_LAYOUT_DEFORM_CONTENT_ENTERING,
-  MOTION_LAYOUT_DEFORM_CONTENT_EXITING,
-  useMotionLayoutDeformPageSwitch,
-  type MotionLayoutDeformPageSpec,
-} from '@eds/desktop-components';
-
-const pageSpecs = reactive<Record<'list' | 'custom', MotionLayoutDeformPageSpec>>({
-  list: { shellHeight: 400 },
-  custom: { shellHeight: 360 },
-});
-
-const {
-  activePage,
-  shellHeight,
-  contentExiting,
-  contentEntering,
-  contentDirection, // 可选，仅调试 / 标记变高变矮
-  switchTo,
-} = useMotionLayoutDeformPageSwitch(pageSpecs, 'list');
-```
-
-**2. Shell + Content 结构固定**
-
-```vue
-<div
-  class="motion-layout-deform"
-  :style="{ width: `${PANEL_W}px`, height: `${shellHeight}px` }"
-  :data-screen="activePage"
->
-  <div
-    :class="[
-      MOTION_LAYOUT_DEFORM_CONTENT,
-      contentExiting && MOTION_LAYOUT_DEFORM_CONTENT_EXITING,
-      contentEntering && MOTION_LAYOUT_DEFORM_CONTENT_ENTERING,
-    ]"
-  >
-    <div v-if="activePage === 'list'">...</div>
-    <div v-else>...</div>
-  </div>
-</div>
-```
-
-四个 class **必须全绑**：`motion-layout-deform-content`、`is-exiting`、`is-entering`。只绑 `is-exiting` → 内容硬切 + shell 单独收缩 → 「弹一下」。
-
-**3. 子页高度必须提前量好**
-
-- 每页 `shellHeight` 来自 **真实 DOM**（`scrollHeight`），禁止写死猜值
-- 目标页未 mount 时，用 **离屏预测量节点**（`visibility: hidden` + `clip-path: inset(100% 0 0 0)`）
-- `switchTo(next)` **之前**更新 `pageSpecs[next].shellHeight`
-
-**4. 业务 layout 跟 `activePage` 走，不要提前切**
-
-子页相关的 `data-*`、`:has()` 样式、padding、标题栏、Teleport → 绑 **`activePage`**，不要绑「用户点击意图」的临时 state。`switchTo` 后 **120ms** 才换页；提前改 layout 会在动画中途抖/弹。
-
-```vue
-<!-- ✅ -->
-:data-screen="activePage"
-<!-- ❌ 点击瞬间就切 -->
-:data-screen="pendingScreen"
-```
-
-**5. 切换只走 `switchTo(next)`**
-
-不要手动 `shellHeight` + `v-if` 两套逻辑各跑各的；不要 `<Transition>` 与 composable 混用。
-
-##### 禁止
-
-| 禁止 | 原因 |
+| 必须 | 禁止 |
 |------|------|
-| 自写 to-smaller / to-larger 反向 transform | DS 已统一为 `+offset → 0`，反向会在换页帧跳 ~20px |
-| 只绑 `is-exiting`，漏 `is-entering` | 入场起点接不上，B 硬切进来 |
-| 写死 `shellHeight` | Popover 定位随高度变，不准就整体上下跳 |
-| 动画进行中改 padding / 标题 / Teleport 布局 | 应等 `activePage` 切换后再改（120ms 后） |
-| 用 `.motion-page` / `.motion-flotation` 做内页切换 | 场景不对，动效模型不同 |
-| Vue `<Transition mode="out-in">` 替代 composable | 与 DS 时序不一致 |
+| shell `motion-layout-deform` + content 绑齐 `is-exiting` / `is-entering` | 只绑 `is-exiting` |
+| `switchTo` 前离屏/在页测量 `shellHeight`（`minerFeeMeasureHost`） | 写死高度 |
+| 子页 layout（padding、标题、Teleport）绑 **`activePage`** | 点击瞬间切 `data-*` / padding |
+| 只走 `switchTo(next)` | 手动 `shellHeight` + `v-if` 两套逻辑 |
 
-##### Token / 时序常量（勿改语义）
-
-| Token / 常量 | 值 | 含义 |
-|--------------|-----|------|
-| `--motion-recipe-layout-deform-shell` | 350ms | shell 高 morph |
-| `--motion-recipe-layout-deform-content` | opacity 180ms + transform 350ms | 内容 crossfade |
-| `--motion-offset-layout-deform-y` | 10px | 位移量 |
-| `--motion-delay-layout-deform-content-swap` | 120ms | 换页时机 |
-| `MOTION_LAYOUT_DEFORM_CONTENT_SWAP_MS` | 120 | composable 默认 swap |
-
-##### 业务参考 — 矿工费 Popover
-
-| 文件 | 说明 |
-|------|------|
-| `ApprovalRemarkPopoverPanel.vue` | composable + shell/content 结构 + `ensurePageHeight` + `switchTo` |
-| `ApprovalRemarkPopoverPanel.module.css` | `:has(.motion-layout-deform[data-miner-fee-screen=…])` 分 list/custom padding；topTool 隐藏 |
-| `MinerFeeCustomPanel.vue` | `measureOnly` 跳过 Teleport，供离屏预测量 |
-| Showcase `LayoutDeformDemoPreview.vue` | DS 标准最小 demo |
-
-矿工费要点：
-
-- 列表 ↔ 自定义子页；Popover 宽 **336**（`POPOVER_PRESET_WIDTH_BASE`）
-- 离屏 `minerFeeMeasureHost` + `customMeasureRef` 预测量 custom 高度；列表页 `listMeasureRef` 在页测量
-- `:has()` **只匹配** `.motion-layout-deform[data-miner-fee-screen=…]`，勿匹配离屏预测量节点
-- 导航只走 `setMinerFeeScreen` → `ensurePageHeight` → `switchTo`；勿与手动 `activePage = x` 双轨
-
-##### Agent 自检清单（交付前）
-
-- [ ] shell 有 `motion-layout-deform` + 动态 `height`（+ 固定 `width`）
-- [ ] content wrapper 绑齐 `motion-layout-deform-content` / `is-exiting` / `is-entering`
-- [ ] 各页高度已测量，`switchTo` 前更新 `pageSpecs`
-- [ ] 子页 layout 样式绑 `activePage`，不提前切
-- [ ] 未用 Vue `<Transition>` 替代 composable
-- [ ] A→B、B→A 各测一次：无 Popover 整体上下跳、无内容硬切
-
-**一句话**：Popover 内多页切换用 `useMotionLayoutDeformPageSwitch` + 固定 shell/content 结构；高度先量准、class 绑全、业务 layout 跟 `activePage` 走。内容动效是 **向下淡出 → 换页 → 从同一 offset 淡入到 0**，不要自己发明方向性 transform。
+参考：`ApprovalRemarkPopoverPanel.vue`。
 
 #### Popover 触发按钮点按态（锁死）
 
@@ -546,93 +513,6 @@ const {
 
 - `uses="verify"` + `verify-type="single-trade-password"`（328×416，不可改 Box 尺寸）
 - Alert 类 Popup（verify / reminder / custom 进度页等）默认 `alert-vertical-align="padding-top-md"`（未传时 DS 对 verify/reminder 亦默认顶边距）
-
-#### Signing Custom Popup（656×516 — 锁死）
-
-**适用**：签名流程中的广播进度（`SigningProgressPopup`）与多人签名等待（`MultiSignWaitingPopup`）。二者共用布局壳，**不是** Detail 弹窗（`SigningDetailPopup` 仍为旧 `uses="detail"`，另案对齐）。
-
-**挂载栈**（须在 `AppPopupOverlayHost` → `SigningFlowHost`，与 `EgContainer` 同级）：
-
-```text
-SigningFlowHost
-├─ SigningDetailPopup              ← uses=detail（旧壳，本次未重建）
-├─ TradePasswordVerifyPopup
-├─ MultiSignWaitingPopup           ← uses=custom 656×516
-├─ SigningProgressPopup            ← uses=custom 656×516
-└─ AddressViewMoreReminderPopup
-```
-
-**流程**：Detail 确认 → Verify → MultiSign（waiting → ready → Sign）→ Progress（signing → broadcasting → broadcast-success）。  
-`detailShellSuspended`：`verifyOpen` \|\| `viewMoreOpen` \|\| `progressOpen` \|\| `multiSignOpen`。
-
-##### 文件职责（真源）
-
-| 文件 | 职责 |
-|------|------|
-| `signingCustomPopup.constants.ts` | `656` × `516` Box 尺寸 |
-| `SigningCustomPopupPanel.vue` | 共享壳：TopBar 关闭 → 三步进度 → Hero 金额 + 币种 → 5 行明细 → 底部状态栏 |
-| `SigningCustomPopupProgress.vue` | 三步进度条（Signing / MultiSign 共用组件，步骤文案不同） |
-| `SigningCustomPopupItemRow.vue` | Apply_Item 行渲染（对齐 Detail 挂件，勿手改 `createDetailApplyItemRow` 输出） |
-| `buildSigningCustomPopupItems.ts` | 5 行：`initiated-by` / `text` / `sender` / `receiver` / `memo` |
-| `buildSigningCustomPopupProgressSteps.ts` | 进度步骤状态（Signing 与 MultiSign 各一套 builder） |
-| `signingCustomPopupHost.css` + `useSigningCustomPopupHost.ts` | 修复 EgPopup `alertPanelShell` 内容塌缩（见下） |
-| `SigningProgressPopup.vue` / `MultiSignWaitingPopup.vue` | 入口：`EgPopup uses="custom"` + `usePopupShellLifecycle` |
-
-##### EgPopup custom 塌缩修复（回归高发）
-
-`EgPopup` `alertPanelShell` 默认把插槽直子设为 `flex` + `center`（row），656×516 内容会被压成一条线，只剩关闭按钮 / 黑屏。
-
-| 项 | 约定 |
-|----|------|
-| Host class | `useSigningCustomPopupHost` 在 `.eds-popup-box-content` 挂 `eds-signing-custom-popup` |
-| CSS 覆写 | `signingCustomPopupHost.css`：`flex-direction: column; align-items: stretch`，直子 `.signing-custom-popup-shell` 撑满 `100%` |
-| 对齐参考 | 同 EgVerify `eds-verify`、EgReminder `eds-reminder` 的 Popup Box host 契约 |
-
-**禁止**：在业务页 subtree 挂 Popup；手搓平行 host CSS 而不复用 `signingCustomPopupHost.css`。
-
-##### 布局与 Token（勿混淆 token 名与像素）
-
-设计稿里的 **padding10 / gap4** 指 **spacing token 名**（如 `--spacing-10` = 40px），**不是**像素字面量（勿用 `--spacing-2-5` 当 10px）。
-
-| 区域 | 关键 token |
-|------|------------|
-| Progress | `padding: var(--spacing-10) var(--spacing-20) var(--spacing-6)`；背景 `--material-card-shallow`；节点图标 `--icon-lg`；done `--status-success` / active `--status-warning`；pending 3px 圆点 `--stroke-outline-shallow`（尺寸硬编码）；连接器圆点 trail，`margin: 0 var(--spacing-8)`（32px）；done→active 段 `--status-warning` marching 动效；首/末节点与左右 padding 对齐 |
-| Hero | padding 上/下/左右：`--spacing-6` / `--spacing-5` / `--spacing-3`；头像 `--avatar-xl`（40px）；金额 **`--eds-headline-*`**（25px，勿用不存在的 `--eds-title-small-*`）；头像↔金额 `--spacing-2`；分隔线 `EgDivider type="page"` |
-| Hero ↔ 明细 | `.scroll { gap: var(--spacing-4) }` |
-| 明细行 | DataList 风格行高 / hover；5 行字段见 `buildSigningCustomPopupItems` |
-| Footer 状态栏 | 默认：`122ms` + `eds-wifi-fill` + `eds-arrow-down-mini-ios`；**无** statusBar 背景色；MultiSign **`phase === 'ready'`** 时才 `:show-footer-actions="true"`（Cancel + Sign） |
-
-##### 进度条步骤（两套，共用 `SigningCustomPopupProgress`）
-
-**SigningProgress**（签名 → 广播 → 链上确认）：
-
-| state | 图标 | 颜色 |
-|-------|------|------|
-| done | `eds-enable-fill` | `--status-success` |
-| active | `eds-clocks-fill` | `--status-warning` |
-| pending | 3px 圆点（硬编码） | `--stroke-outline-shallow` |
-
-阶段映射（`buildSigningProgressPopupSteps`）：`signing` / `sign-failed` → 第 1 步 active；`broadcasting` / `broadcast-failed` → 第 2 步；`broadcast-success` → 全部 done（`activeIndex = 3`）。
-
-**MultiSignWaiting**（Waiting → Ready → Sign）：与 SigningProgress **步骤文案不同**，仍 3 列；`ready` 时第 1 步 done、第 2 步 active；第 3 步 Sign 在 ready 前为 pending。
-
-##### Detail 行（硬约束）
-
-5 行明细 **必须** `createDetailApplyItemRow(variantId, overrides)`（`@eds/desktop-components`）；**禁止** `showValueCopy: false` 等手改挂件。  
-映射参考：`buildSigningCustomPopupItems.ts` · `buildApprovalDetailSections.ts` · DS `detail-apply-item.md`。
-
-##### i18n 键（签名 custom 弹窗）
-
-`Signature step` · `Broadcast step` · `On-chain confirmation` · `Application payment` · `Outbound`（见 `uiTextZhCN.ts`）。
-
-##### Agent 改 Signing Custom Popup 前自检
-
-1. 656×516 是否完整显示（非仅关闭按钮）？→ 检查 `eds-signing-custom-popup` host + `signingCustomPopupHost.css`  
-2. 金额是否 ~25px？→ 必须 `--eds-headline-*`，非 title-small  
-3. Progress 上 padding 是否误用 `--spacing-2-5`？→ 应为 `--spacing-10`（token 名语义）  
-4. MultiSign waiting 是否误露 Cancel/Sign？→ 仅 `phase === 'ready'` 时 `show-footer-actions`  
-5. 明细行是否手搓而非 `createDetailApplyItemRow`？→ 改 builder，勿改 row 挂件  
-6. 是否从 showcase 复制 CSS？→ 禁止；仅 Desktop token + 本目录 module CSS
 
 #### Agent 改 Popup 前自检
 
@@ -809,8 +689,9 @@ PR 合并前逐项确认：
 - [ ] 可滚动区域已做嵌套滚动边界（§6 eds-project）
 - [ ] click/focus 态无多余 transition（hover only）
 - [ ] EgPopup 叠层用 `usePopupShellLifecycle` + `suspended`，无 CSS 硬隐藏下层（§7.1）
+- [ ] 内联关闭只设 `popupOpen=false`，不在同 handler `emit('update:open', false)`（§7.1.1）
 - [ ] Popover 触发按钮展开时有点按态（§7.1 Popover 触发按钮点按态）
-- [ ] 数字展示使用 `formatGroupedNumber`（如适用）
+- [ ] 数字展示走 `formatGroupedNumber` / `formatGroupedDisplay`（§6.4）；无手写 `toLocaleString`
 - [ ] sync eds-desktop 后已重启 dev server 验证
 - [ ] `listFieldCryptoSampleAddresses.ts` 仍含业务扩展（`pnpm` 跑过 `verify-list-field-crypto` 或手动确认 `getPinnedAddressForRow` 存在）
 
@@ -833,9 +714,10 @@ alwaysApply: true
 4. var(--*) 不在白名单 → 停止改代码，询问：「变量 xxx 在设计系统里不存在，是否使用硬编码？」默认否。
 5. 禁止私造 --*、禁止用 --scale-* 冒充语义 token、禁止覆盖 Eg* 组件样式。
 6. 浮层统一 EgFlotation Combo；动效 hover only；嵌套滚动见 eds-project §6。
-7. EgPopup 叠层/懒挂载须 usePopupShellLifecycle（§7.1），禁止 visibility 暂挂下层。
-8. 禁止 sync 或手动操作覆盖 listFieldCryptoSampleAddresses.ts 业务扩展；见 work.mdc §2.4。
-9. 权威约定：../eds-desktop/.cursor/rules/eds-project.mdc
+7. EgPopup 叠层/懒挂载须 usePopupShellLifecycle（§7.1），禁止 visibility 暂挂下层；内联关闭只设 popupOpen=false（§7.1.1）。
+8. 展示态数字须千分位：formatGroupedNumber / src/utils/formatGroupedDisplay.ts（§6.4）。
+9. 禁止 sync 或手动操作覆盖 listFieldCryptoSampleAddresses.ts 业务扩展；见 work.mdc §2.4。
+10. 权威约定：../eds-desktop/.cursor/rules/eds-project.mdc
 ```
 
 ---
@@ -870,6 +752,14 @@ Showcase 外层是 **Website** `body-medium`（18px）。Desktop spec 中 ToolBa
 
 见 **§7.1**。常见根因：懒挂载首帧 `open=true`、CSS 暂挂下层、suspend 误触发 `popup-closed`。改前先读 `usePopupShellLifecycle.ts`，勿再手搓平行 lifecycle。
 
+### Q: 关闭钮与点遮罩动效不一致？
+
+见 **§7.1.1**。根因：关闭 handler 内 **同时** `popupOpen=false` 与 `emit('update:open', false)`，lifecycle 在 EgPopup 出场前 `teardown()`。修复：内联关闭 **只** 设 `popupOpen=false`，父级 `open` 与数据清理留给 `@close` → `onClosed`。
+
+### Q: 金额 / 计数要不要千分位？
+
+见 **§6.4**。展示态用 `formatGroupedNumber` 或 `src/utils/formatGroupedDisplay.ts`；输入态、倒计时、`SIG-*` 编号不格式化。
+
 ---
 
 ## 12. 参考文件索引
@@ -884,8 +774,7 @@ Showcase 外层是 **Website** `body-medium`（18px）。Desktop spec 中 ToolBa
 | 同步约定 | `eds-desktop/.cursor/rules/eds-sync-local-consumers.mdc` |
 | list-field crypto 校验 | `work-cregis-desktop/scripts/verify-list-field-crypto.mjs` |
 | EgPopup 叠层 lifecycle | `src/scenes/tasks/shared/usePopupShellLifecycle.ts` |
-| Signing custom popup（656×516） | `src/scenes/tasks/signing/SigningCustomPopupPanel.vue` · `signingCustomPopupHost.css` |
-| Layout Deform 多页切换 | `eds-desktop/packages/components/docs/layout-deform-page-switch.md` |
+| 数字千分位封装 | `src/utils/formatGroupedDisplay.ts` |
 | 客户端示例 | `work-cregis-desktop/AGENTS.md` |
 
 ---
@@ -894,12 +783,12 @@ Showcase 外层是 **Website** `body-medium`（18px）。Desktop spec 中 ToolBa
 
 | 字段 | 值 |
 |------|-----|
-| 文档版本 | 1.1 |
+| 文档版本 | 1.2 |
 | 对齐 eds-project | 2026-08-05 |
 | EgPopup 叠层动效 §7.1 | 2026-08-08 |
+| 关闭动效一致性 §7.1.1 | 2026-08-09 |
+| 数字千分位 §6.4 | 2026-08-09 |
 | Popover 触发按钮点按态 §7.1 | 2026-08-08 |
-| Layout Deform 多页切换 §7.1 | 2026-08-08 |
-| Signing custom popup §7.1 | 2026-08-09 |
 | list-field sync 排除 | 2026-08-05 |
 | 维护 | EDS Desktop 维护者 |
 

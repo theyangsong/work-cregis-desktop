@@ -77,10 +77,6 @@ function onMultiSignPopupClosed() {
   props.flow.onMultiSignPopupClosed();
 }
 
-function onMultiSignSign() {
-  props.flow.requestMultiSignProgress();
-}
-
 function onViewMoreClosed() {
   props.flow.viewMoreOpen.value = false;
 }
@@ -103,7 +99,7 @@ function onViewMoreClosed() {
     @shell-opened="flow.onDetailShellOpened()"
     @prev="flow.navigateRelative(-1)"
     @next="flow.navigateRelative(1)"
-    @pass-confirm="flow.onDetailPassConfirm()"
+    @pass-confirm="flow.onDetailPassConfirm($event)"
     @reject-confirm="flow.onDetailRejectConfirm()"
     @view-more-sender="flow.openViewMore('sender')"
     @view-more-receiver="flow.openViewMore('receiver')"
@@ -117,17 +113,22 @@ function onViewMoreClosed() {
 
   <MultiSignWaitingPopup
     v-model:open="multiSignOpen"
+    :dismiss-without-animation="flow.multiSignClosingForProgress.value"
     :detail="flow.detail.value"
     :phase="flow.multiSignPhase.value"
     :joined-count="flow.multiSignJoinedCount.value"
+    :remark="flow.remark.value"
+    :miner-fee-display="flow.selectedMinerFeeDisplay.value"
+    @update:remark="flow.remark.value = $event"
+    @ready-confirm="flow.onMultiSignReadyConfirm($event)"
     @close="onMultiSignPopupClosed"
-    @sign="onMultiSignSign"
   />
 
   <SigningProgressPopup
     v-model:open="progressOpen"
     :detail="flow.detail.value"
     :phase="flow.progressPhase.value"
+    :miner-fee-display="flow.selectedMinerFeeDisplay.value"
     @close="onProgressPopupClosed"
   />
 

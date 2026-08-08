@@ -62,9 +62,13 @@
 | 挂载位置 | Popup host（如 `AppPopupOverlayHost`）放在 **客户端 shell**，与 `EgContainer` 同级 |
 | 禁止 | 挂在列表页、ModuleMenu 内容区等业务 subtree 内（遮罩会被限制在主内容区） |
 | reminder / verify | `EgPopup` 须 `v-if="open"` 或 shell host 在关闭时卸载，避免空遮罩 |
-| detail 关闭 | `EgDetail @close` → `v-model:open=false`；业务数据清理在 `EgPopup @close`（`.motion-layout` 出场后），关闭动画期间勿 `v-if` 卸掉 detail |
+| detail 关闭 | `EgDetail @close` → **仅** `popupOpen=false`；`emit('update:open', false)` 与数据清理在 EgPopup `@close` / `onClosed`（`.motion-layout` 出场后）。关闭钮与点遮罩须同链（`work.mdc` §7.1.1） |
 
 权威说明：`../eds-desktop/.cursor/rules/eds-project.mdc` §7 EgPopup。
+
+## 数字千分位（硬约束）
+
+展示态数字须千分位分组；用 `formatGroupedNumber`（`@eds/desktop-components`）或 `src/utils/formatGroupedDisplay.ts`（金额、复合文案、阈值、矿工费）。**不**格式化：输入态、倒计时 `MM:SS`、ID 编号（如 `SIG-*`）。详案：`.cursor/rules/work.mdc` §6.4。
 
 ## EgDetail · Apply_Item（硬约束）
 
@@ -82,4 +86,5 @@ Showcase 外层是 **Website token 壳**，部分未在 Desktop spec 定义的�
 ## 更多细节
 
 - `README.md` — 集成与脚本
+- `.cursor/rules/work.mdc` — 业务集成规范（Popup 动效 §7.1.1、数字 §6.4）
 - `.cursor/rules/eds-project.mdc` — 完整 EDS 约定

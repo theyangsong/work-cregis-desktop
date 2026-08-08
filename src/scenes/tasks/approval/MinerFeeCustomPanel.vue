@@ -12,14 +12,18 @@ import { useAppI18n } from '@/composables/useAppI18n';
 import styles from './MinerFeeCustomPanel.module.css';
 import {
   buildMinerFeeCustomPreview,
-  DEFAULT_MINER_FEE_CUSTOM_DRAFT,
+  defaultMinerFeeCustomDraft,
   type MinerFeeCustomDraft,
   type MinerFeeCustomMode,
 } from './minerFeeCustomTypes';
+import {
+  resolveMinerFeeEvmShellVariant,
+  type MinerFeeEvmShellVariant,
+} from './minerFeeEvmShellVariant';
 
 const props = defineProps<{
   draft?: MinerFeeCustomDraft;
-  /** 离屏高度预测量：不 Teleport topTool，避免污染 Popover 标题栏。 */
+  symbol?: string;
   measureOnly?: boolean;
 }>();
 
@@ -34,11 +38,17 @@ const { ui } = useAppI18n();
 const rootRef = ref<HTMLElement | null>(null);
 const topToolHost = ref<HTMLElement | null>(null);
 
-const form = ref<MinerFeeCustomDraft>(mergeDraft());
+const shellVariant = computed<MinerFeeEvmShellVariant>(() =>
+  resolveMinerFeeEvmShellVariant(props.symbol ?? 'ETH'),
+);
+
+const isBtcShell = computed(() => shellVariant.value === 'btc');
 
 function mergeDraft(draft?: MinerFeeCustomDraft): MinerFeeCustomDraft {
-  return { ...DEFAULT_MINER_FEE_CUSTOM_DRAFT, ...(draft ?? {}) };
+  return { ...defaultMinerFeeCustomDraft(shellVariant.value), ...(draft ?? {}) };
 }
+
+const form = ref<MinerFeeCustomDraft>(mergeDraft());
 
 watch(
   () => props.draft,
@@ -54,11 +64,14 @@ const tabModel = computed(() => (isAdvancedMode.value ? 0 : 1));
 
 const tabLabels = computed(() => [ui('Advanced mode'), ui('Normal mode')]);
 
-const preview = computed(() => buildMinerFeeCustomPreview(form.value));
+const preview = computed(() => buildMinerFeeCustomPreview(form.value, shellVariant.value));
 
-const previewText = computed(
-  () => `${preview.value.ethRange} ≈ ${preview.value.usdRange}`,
-);
+const previewText = computed(() => {
+  if (isBtcShell.value) {
+    return `${preview.value.cryptoRange} ${preview.value.usdRange}`;
+  }
+  return `${preview.value.cryptoRange} ≈ ${preview.value.usdRange}`;
+});
 
 function onTabSelect(index: number) {
   const nextMode: MinerFeeCustomMode = index === 0 ? 'advanced' : 'normal';
@@ -116,6 +129,7 @@ defineExpose({
 
     <div :class="styles.body">
       <EgTabs
+        v-if="!isBtcShell"
         :model-value="tabModel"
         :labels="tabLabels"
         horizontal-gap="sm"
@@ -124,7 +138,19 @@ defineExpose({
       />
 
       <div :class="styles.fields">
-        <template v-if="isAdvancedMode">
+        <template v-if="isBtcShell">
+          <EgComboInputItem :label="ui('Fee Rate')">
+            <EgInput
+              v-model="form.feeRate"
+              width-mode="full"
+              inputmode="decimal"
+              unit="sats/vB"
+              :clearable="false"
+            />
+          </EgComboInputItem>
+        </template>
+
+        <template v-else-if="isAdvancedMode">
           <EgComboInputItem :label="ui('Max Fee')">
             <EgInput
               v-model="form.maxFee"

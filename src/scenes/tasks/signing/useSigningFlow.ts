@@ -3,6 +3,7 @@ import { buildAddressMoreSummary } from './buildSigningDetailSections';
 import {
   checkSigningPending,
   getSigningDetail,
+  isMultiSignSigningDetail,
   isSigningRowEligibleForBatch,
   listAllPendingSigningIds,
   listPendingSigningIds,
@@ -12,6 +13,9 @@ import {
   submitSigningAction,
 } from './signingStore';
 import { SIGNING_PROGRESS_STEP_HOLD_MS } from './signingCustomPopup.constants';
+import { parseSigningThreshold } from './multiSignWaiting.constants';
+import type { MinerFeeProfile, MinerFeeSelection } from '../shared/minerFeeProfile';
+import { resolveMinerFeeProfile } from '../shared/minerFeeProfile';
 import type { SigningActionKind, SigningDetail, SigningProgressPhase } from './types';
 
 export const SIGNING_BATCH_MAX = 100;
@@ -42,6 +46,7 @@ export function useSigningFlow(options: {
   const pendingAction = ref<SigningActionKind | null>(null);
   const batchMode = ref(false);
   const batchSelectedIds = ref<string[]>([]);
+  const batchMinerFeeProfile = ref<MinerFeeProfile | null>(null);
   const remark = ref('');
   const viewMoreText = ref('');
   const progressPhase = ref<SigningProgressPhase>('signing');
@@ -52,6 +57,7 @@ export function useSigningFlow(options: {
   const pendingAutoAdvanceId = ref<string | null>(null);
   /** Progress 关闭后待翻页目标；在 verify 成功时按 pending 导航序捕获（此时当前项仍 pending）。 */
   const pendingDetailAdvanceAfterProgress = ref<string | null>(null);
+  const selectedMinerFeeDisplay = ref<string | null>(null);
 
   const currentIndex = computed(() => {
     if (!currentSigningId.value) return 0;
@@ -65,7 +71,7 @@ export function useSigningFlow(options: {
     () => currentIndex.value >= totalCount.value || totalCount.value === 0,
   );
 
-  const isMultiSignDetail = computed(() => detail.value?.signingMode === 'multi');
+  const isMultiSignDetail = computed(() => isMultiSignSigningDetail(detail.value));
 
   function syncPendingIds() {
     pendingIds.value = listAllPendingSigningIds(options.allRowIndexes.value);
@@ -109,6 +115,7 @@ export function useSigningFlow(options: {
   function onDetailPopupClosed() {
     currentSigningId.value = null;
     detail.value = null;
+    selectedMinerFeeDisplay.value = null;
   }
 
   function navigateRelative(delta: number) {
@@ -143,23 +150,20 @@ export function useSigningFlow(options: {
     openVerifyStep();
   }
 
-  function onDetailPassConfirm() {
-    if (detail.value?.signingMode === 'multi') {
-      if (!currentSigningId.value) return;
-      const rowIndex = parseRowIndexFromSigningId(currentSigningId.value);
-      if (!checkSigningPending(currentSigningId.value, rowIndex)) {
-        showProcessedError();
-        return;
-      }
-      pendingAction.value = 'pass';
-      batchMode.value = false;
-      openVerifyStep();
+  function onDetailPassConfirm(selection: MinerFeeSelection | null = null) {
+    if (isMultiSignSigningDetail(detail.value)) {
+      remark.value = '';
+      confirmRemarkStep('pass');
       return;
     }
+    selectedMinerFeeDisplay.value = selection?.displayValue ?? null;
     confirmRemarkStep('pass');
   }
 
   function onDetailRejectConfirm() {
+    if (isMultiSignSigningDetail(detail.value)) {
+      remark.value = '';
+    }
     confirmRemarkStep('reject');
   }
 
@@ -179,13 +183,15 @@ export function useSigningFlow(options: {
   }
 
   function startMultiSignRoom() {
-    multiSignPhase.value = 'waiting';
-    multiSignJoinedCount.value = 1;
+    multiSignPhase.value = 'ready';
+    const { required } = parseSigningThreshold(detail.value?.signingThreshold ?? null);
+    multiSignJoinedCount.value = required;
     multiSignOpen.value = true;
-    window.setTimeout(() => {
-      multiSignJoinedCount.value = 2;
-      multiSignPhase.value = 'ready';
-    }, 2000);
+  }
+
+  function onMultiSignReadyConfirm(selection: MinerFeeSelection | null) {
+    selectedMinerFeeDisplay.value = selection?.displayValue ?? null;
+    requestMultiSignProgress();
   }
 
   function finishRejectSuccess() {
@@ -265,6 +271,7 @@ export function useSigningFlow(options: {
     progressOpen.value = false;
     remark.value = '';
     pendingAction.value = null;
+    selectedMinerFeeDisplay.value = null;
     options.onRefreshList();
     syncPendingIds();
     scheduleDetailResumeAfterProgress();
@@ -278,16 +285,16 @@ export function useSigningFlow(options: {
     pendingDetailAdvanceAfterProgress.value = null;
   }
 
-  let multiSignClosingForProgress = false;
+  let multiSignClosingForProgress = ref(false);
 
   function requestMultiSignProgress() {
-    multiSignClosingForProgress = true;
+    multiSignClosingForProgress.value = true;
     multiSignOpen.value = false;
   }
 
   function onMultiSignPopupClosed() {
-    if (multiSignClosingForProgress) {
-      multiSignClosingForProgress = false;
+    if (multiSignClosingForProgress.value) {
+      multiSignClosingForProgress.value = false;
       startProgressPopup();
       return;
     }
@@ -349,7 +356,7 @@ export function useSigningFlow(options: {
 
     captureDetailAdvanceBeforeProgress();
 
-    if (detail.value?.signingMode === 'multi') {
+    if (isMultiSignSigningDetail(detail.value)) {
       startMultiSignRoom();
       return;
     }
@@ -377,6 +384,14 @@ export function useSigningFlow(options: {
     pendingAction.value = action;
     batchMode.value = true;
     remark.value = '';
+    batchMinerFeeProfile.value =
+      action === 'pass' && ids.length > 0
+        ? resolveMinerFeeProfile(parseRowIndexFromSigningId(ids[0]!))
+        : null;
+  }
+
+  function onBatchRemarkConfirm(selection: MinerFeeSelection | null) {
+    selectedMinerFeeDisplay.value = selection?.displayValue ?? null;
   }
 
   function confirmBatchRemark() {
@@ -432,6 +447,7 @@ export function useSigningFlow(options: {
     remark,
     viewMoreText,
     batchMode,
+    batchMinerFeeProfile,
     currentIndex,
     totalCount,
     prevDisabled,
@@ -441,6 +457,7 @@ export function useSigningFlow(options: {
     progressPhase,
     multiSignPhase,
     multiSignJoinedCount,
+    selectedMinerFeeDisplay,
     openDetailForRow,
     closeDetail,
     onDetailPopupClosed,
@@ -454,8 +471,11 @@ export function useSigningFlow(options: {
     onProgressClosed,
     requestMultiSignProgress,
     onMultiSignPopupClosed,
+    onMultiSignReadyConfirm,
+    multiSignClosingForProgress,
     prepareDetailRemarkOpen,
     prepareBatchRemarkOpen,
+    onBatchRemarkConfirm,
     confirmBatchRemark,
     onSelectedChange,
     openViewMore,

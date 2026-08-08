@@ -1,0 +1,42 @@
+/**
+ * 多签等待页 — 独立 Popup Box host（勿复用 SigningProgress 的 eds-signing-custom-popup）。
+ */
+:global(.effect-popup-box.panelFlush:has(.eds-multi-sign-waiting-popup)) {
+  align-items: stretch !important;
+}
+
+:global(.eds-popup-box-content.eds-multi-sign-waiting-popup.eds-tooltip-panel) {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  align-self: stretch !important;
+  justify-content: flex-start !important;
+  box-sizing: border-box;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 100% !important;
+  padding: 0 !important;
+  overflow: hidden;
+  background: var(--material-base-primary);
+  color: var(--text-base-primary);
+  user-select: none;
+}
+
+:global(.eds-popup-box-content.eds-multi-sign-waiting-popup) > :global(.multi-sign-waiting-shell) {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  align-self: stretch !important;
+  justify-content: flex-start !important;
+  box-sizing: border-box;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+}
+
+:global(body:has(.eds-multi-sign-waiting-popup)) :global(.floating.desktopTokens) {
+  z-index: 10000;
+  user-select: none;
+}

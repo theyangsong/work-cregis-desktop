@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { EgDivider, EgListFieldOverflowText } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
+import { formatGroupedDecimalAmount } from '@/utils/formatGroupedDisplay';
 import styles from './TasksListFieldAmount.module.css';
 
 const props = defineProps<{
@@ -33,8 +34,12 @@ function formatCountdownTotal(total: number): string {
 }
 
 const amountType = computed(() => String(props.customize.amountType ?? 'conversion'));
-const fiatValue = computed(() => String(props.customize.fiatValue ?? '$10'));
-const cryptoValue = computed(() => String(props.customize.cryptoValue ?? '12,500.000001'));
+const fiatValue = computed(() =>
+  formatGroupedDecimalAmount(String(props.customize.fiatValue ?? '$10')),
+);
+const cryptoValue = computed(() =>
+  formatGroupedDecimalAmount(String(props.customize.cryptoValue ?? '12,500.000001')),
+);
 const secondaryValueRaw = computed(() => String(props.customize.secondaryValue ?? '').trim());
 const useTransferTypeSecondary = computed(() => secondaryValueRaw.value.length > 0);
 const showCountdown = computed(

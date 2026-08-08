@@ -49,6 +49,9 @@ const FAMILY_BY_SYMBOL: Record<string, CryptoAddressFamily> = {
   TON: 'ton',
   DEEP: 'sui',
   SUI: 'sui',
+  BCH: 'btc',
+  CBBTC: 'btc',
+  CBXRP: 'xrp',
 };
 
 const FAMILY_BY_CRYPTO_NAME: Record<string, CryptoAddressFamily> = {

@@ -1,4 +1,5 @@
 import { ref } from 'vue';
+import { isMultiSignRow } from '../list-field/tasksListFieldBusinessTypeRowData';
 import type { ApprovalDetail, ApprovalStatus } from './types';
 import { buildApprovalDetailRowFields } from './buildApprovalDetailRowFields';
 
@@ -61,8 +62,8 @@ function buildCustomDetailFields(id: string, rowIndex: number) {
         members: [{ ...member, name: 'Auditor', avatarName: 'Auditor' }],
       },
     ],
-    signingMode: rowIndex % 2 === 0 ? ('multi' as const) : ('single' as const),
-    signingThreshold: rowIndex % 2 === 0 ? '2 / 3' : null,
+    signingMode: isMultiSignRow(rowIndex) ? ('multi' as const) : ('single' as const),
+    signingThreshold: isMultiSignRow(rowIndex) ? '2 / 3' : null,
     signers: [
       member,
       { ...member, name: 'Signer B', avatarName: 'Signer B' },

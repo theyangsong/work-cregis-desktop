@@ -2,6 +2,10 @@
 import { computed, toRef } from 'vue';
 import { EgAvatar, EgButton, EgDetail, EgPopup } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
+import {
+  formatGroupedDecimalAmount,
+  formatGroupedThresholdString,
+} from '@/utils/formatGroupedDisplay';
 import { usePopupShellLifecycle } from '../shared/usePopupShellLifecycle';
 import { buildApprovalDetailSections } from './buildApprovalDetailSections';
 import type { ApprovalDetail } from './types';
@@ -51,7 +55,12 @@ const { popupMounted, popupOpen, onPopupClosed } = usePopupShellLifecycle({
   },
 });
 
-const headline = computed(() => props.detail?.amountHeadline ?? '');
+const headline = computed(() =>
+  formatGroupedDecimalAmount(props.detail?.amountHeadline ?? ''),
+);
+const signingThresholdDisplay = computed(() =>
+  formatGroupedThresholdString(props.detail?.signingThreshold ?? ''),
+);
 const eyebrow = computed(() => ui(props.detail?.amountColumnLabel ?? 'Amount'));
 const statusTag = computed(() => ui('Pending'));
 const sections = computed(() =>
@@ -74,7 +83,6 @@ function onRemarkDismiss() {
 
 function onDetailClose() {
   popupOpen.value = false;
-  emit('update:open', false);
 }
 </script>
 
@@ -203,7 +211,7 @@ function onDetailClose() {
           <div :class="styles.progressBlock">
             <p :class="styles.progressLabel">{{ ui('Signature step') }}</p>
             <p v-if="detail.signingThreshold" :class="styles.progressSecondary">
-              {{ ui('Signing threshold') }}: {{ detail.signingThreshold }}
+              {{ ui('Signing threshold') }}: {{ signingThresholdDisplay }}
             </p>
             <div :class="styles.memberRow">
               <div

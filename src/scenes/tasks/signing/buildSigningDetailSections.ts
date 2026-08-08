@@ -3,6 +3,7 @@ import {
   type DetailItemData,
   type DetailSectionData,
 } from '@eds/desktop-components';
+import { formatGroupedAmountText, formatGroupedNumber } from '@/utils/formatGroupedDisplay';
 import { DATA_LIST_FIGMA_COLUMNS } from '../tasksDataListPageData';
 import type { SigningDetail } from './types';
 
@@ -30,7 +31,7 @@ export function buildSenderItem(
     return {
       key: 'sender',
       title: translate(DETAIL_ITEM_TITLES.sender),
-      value: `${address} (${detail.senderCount})`,
+      value: `${address} (${formatGroupedNumber(detail.senderCount)})`,
       showValueLink: true,
       valueLinkLabel: translate('View more'),
     };
@@ -55,7 +56,7 @@ export function buildReceiverItem(
     return {
       key: 'receiver',
       title: translate(DETAIL_ITEM_TITLES.receiver),
-      value: `${address} (${detail.receiverCount})`,
+      value: `${address} (${formatGroupedNumber(detail.receiverCount)})`,
       showValueLink: true,
       valueLinkLabel: translate('View more'),
     };
@@ -77,7 +78,7 @@ export function buildSigningDetailSections(
     createDetailApplyItemRow('amount', {
       key: 'amount',
       title: translate(DETAIL_ITEM_TITLES.amount),
-      value: detail.amountDisplay,
+      value: formatGroupedAmountText(detail.amountDisplay),
     }),
     createDetailApplyItemRow('type', {
       key: 'business-type',

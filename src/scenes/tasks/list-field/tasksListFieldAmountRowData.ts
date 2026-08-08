@@ -1,4 +1,5 @@
 import { formatGroupedNumber } from '@eds/desktop-components';
+import { formatGroupedDecimalAmount } from '@/utils/formatGroupedDisplay';
 import { resolveCurrencySymbolForRow } from './tasksListFieldCurrencyRowData';
 import { getAmountRowPreset } from './tasksListFieldAmountRowPresets';
 
@@ -127,8 +128,8 @@ export function buildAmountRowValues(rowIndex: number): AmountRowValues {
   if (preset) {
     return {
       cryptoSymbol,
-      cryptoValue: preset.cryptoValue,
-      fiatValue: preset.fiatValue,
+      cryptoValue: formatGroupedDecimalAmount(preset.cryptoValue),
+      fiatValue: formatGroupedDecimalAmount(preset.fiatValue),
     };
   }
 
