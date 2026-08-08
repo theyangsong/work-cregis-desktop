@@ -1,3 +1,88 @@
+/** 矿工费列表页：选项区贴 spacing-1；备注/分割线另行缩进至 spacing-4。 */
+:global(
+  .eds-popover-content [class*='contentSlotPaddingTop']:has(
+    .motion-layout-deform[data-miner-fee-screen='list']
+  )
+) {
+  padding-right: var(--spacing-1);
+  padding-left: var(--spacing-1);
+}
+
+/** 矿工费自定义页：保持 Popover 默认 spacing-4 左右边距。 */
+:global(
+  .eds-popover-content [class*='contentSlotPaddingTop']:has(
+    .motion-layout-deform[data-miner-fee-screen='custom']
+  )
+) {
+  padding-right: var(--spacing-4);
+  padding-left: var(--spacing-4);
+}
+
+/** 矿工费 Popover：contentSlot 随 layout-deform 自然高度，勿撑满留空、勿外层滚动。 */
+:global(.eds-popover-content [class*='contentSlotWithTopTool']:has([data-miner-fee-popover])) {
+  display: block;
+  flex: 0 0 auto;
+  min-height: 0;
+  overflow: visible;
+}
+
+/** 列表 / 自定义子页：去掉 ComboAction PopupWindow 默认 padding。 */
+:global(.eds-popover:has([data-miner-fee-popover]) [class*='popupRoot']) {
+  padding: 0;
+}
+
+/** 自定义子页：隐藏 Popover 原标题，由 Teleport 注入 EgIconButton +「自定义」。仅看 deform shell，勿匹配离屏预测量节点。 */
+:global(
+  .eds-popover-content:has(.motion-layout-deform[data-miner-fee-screen='custom'])
+    [class*='topToolTitle']
+) {
+  display: none;
+}
+
+/** 自定义子页：topTool 下不显示 page 分割线（Teleport 标题行已含分隔语义）。 */
+:global(
+  .eds-popover-content:has(.motion-layout-deform[data-miner-fee-screen='custom'])
+    > .eds-divider
+) {
+  display: none;
+}
+
+.minerFeeRootWrap {
+  position: relative;
+  width: 100%;
+}
+
+/** 离屏预测量自定义子页高度，避免 switchTo 目标高度偏差导致 Popover 向上弹跳。 */
+.minerFeeMeasureHost {
+  position: absolute;
+  width: 100%;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+  clip-path: inset(100% 0 0 0);
+}
+
+.minerFeeMeasureHost > :global(*) {
+  height: auto;
+}
+
+.minerFeeDeformShell {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.minerFeeDeformShell:global([data-miner-fee-screen='custom'])
+  > :global(.motion-layout-deform-content) {
+  height: 100%;
+}
+
+.minerFeeListPage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  width: 100%;
+}
+
 .root {
   display: flex;
   flex-direction: column;
@@ -6,12 +91,44 @@
   box-sizing: border-box;
 }
 
-.field :global([class*='label']) {
-  display: none;
+/** contentSlot 内矿工费列表区（上 025；左右由 contentSlot spacing-1 保证）。 */
+.minerFeeRoot {
+  flex: 1 1 auto;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 0;
+  padding-top: var(--spacing-025);
+  overflow-y: auto;
 }
 
-.fieldWithSectionLabel :global([class*='label']) {
-  display: block;
+/** contentSlot 内底部区：备注 + 确定；相对选项区缩进至 spacing-4。 */
+.minerFeeFooter {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  gap: var(--spacing-5);
+  box-sizing: border-box;
+  width: calc(100% - 2 * (var(--spacing-4) - var(--spacing-1)));
+  margin-top: var(--spacing-2);
+  margin-right: calc(var(--spacing-4) - var(--spacing-1));
+  margin-left: calc(var(--spacing-4) - var(--spacing-1));
+}
+
+.remarkField {
+  width: 100%;
+  min-width: 0;
+}
+
+/** 矿工费列表页备注 label：weight 500（body-small-strong）。 */
+.minerFeeFooter .remarkField :global([class*='label']) {
+  font-size: var(--eds-body-small-strong-size);
+  font-weight: var(--eds-body-small-strong-weight);
+  line-height: var(--eds-body-small-strong-line-height);
+}
+
+/** 无矿工费时 Popover topTool 已承载标题，隐藏 Combo 内 label。 */
+.remarkFieldNoLabel :global([class*='label']) {
+  display: none;
 }
 
 .confirm {
@@ -21,38 +138,143 @@
 .minerFee {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-2);
-}
-
-.sectionLabel {
-  margin: 0;
-  color: var(--text-base-primary);
-  font-size: var(--eds-body-medium-size);
-  font-weight: var(--eds-body-medium-strong-weight);
-  line-height: var(--eds-body-medium-line-height);
+  flex-shrink: 0;
+  width: 100%;
 }
 
 .minerFeeOptions {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-3);
+  gap: var(--spacing-025);
+  width: 100%;
 }
 
-.minerFeeOption {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
+/** contentSlot 子节点：自定义与备注之间；相对选项区缩进至 spacing-4。 */
+.minerFeeDivider {
+  flex-shrink: 0;
+  width: calc(100% - 2 * (var(--spacing-4) - var(--spacing-1)));
+  margin-right: calc(var(--spacing-4) - var(--spacing-1));
+  margin-left: calc(var(--spacing-4) - var(--spacing-1));
+}
+
+.minerFeeOption,
+.minerFeeCustomOption {
+  composes: motion-ease is-hover-enter-only from global;
   width: 100%;
-  padding: 0;
+  padding: var(--spacing-2) var(--spacing-3);
   border: none;
-  background: transparent;
+  border-radius: var(--radius-sm);
+  background: var(--material-hide);
   color: var(--text-base-primary);
   cursor: pointer;
   font: inherit;
   text-align: left;
+  box-sizing: border-box;
 }
 
-.minerFeeOptionLabel {
+.minerFeeOption:hover:not(.minerFeeOptionSelected),
+.minerFeeCustomOption:hover:not(.minerFeeOptionSelected) {
+  background: var(--event-hover);
+}
+
+.minerFeeOption:focus-visible,
+.minerFeeCustomOption:focus-visible,
+.minerFeeSavedCustomOption:focus-visible {
+  outline: none;
+  background: var(--event-focus-brand-weaken);
+}
+
+.minerFeeOptionSelected {
+  background: var(--event-focus-brand-weaken);
+}
+
+.minerFeeOption {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-0);
+}
+
+.minerFeeOption.minerFeeSavedCustomOption {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--spacing-2);
+  width: 100%;
+  min-width: 0;
+}
+
+.minerFeeSavedCustomMain {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-0);
+  min-width: 0;
+}
+
+.minerFeeSavedCustomEdit {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-self: center;
+  pointer-events: none;
+}
+
+.minerFeeCustomOption {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+}
+
+/** 离屏预测量占位，尺寸对齐 EgIcon sm。 */
+.minerFeeCustomOptionIconSpacer {
+  flex-shrink: 0;
+  width: var(--icon-md);
+  height: var(--icon-md);
+}
+
+.minerFeeOptionHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+}
+
+.minerFeeDot {
+  flex-shrink: 0;
+  width: var(--spacing-2);
+  height: var(--spacing-2);
+  border-radius: var(--radius-full);
+}
+
+.minerFeeDotSuccess {
+  background: var(--status-success);
+}
+
+.minerFeeDotWarning {
+  background: var(--status-warning);
+}
+
+.minerFeeDotDanger {
+  background: var(--status-danger);
+}
+
+.minerFeeOptionName {
+  color: var(--text-base-primary);
   font-size: var(--eds-body-medium-size);
+  font-weight: var(--eds-body-medium-weight);
   line-height: var(--eds-body-medium-line-height);
+}
+
+.minerFeeEthRange {
+  margin-top: var(--spacing-1);
+  color: var(--text-base-primary);
+  font-size: var(--eds-footnote-strong-size);
+  font-weight: var(--eds-footnote-strong-weight);
+  line-height: var(--eds-footnote-strong-line-height);
+}
+
+.minerFeeUsdRange {
+  color: var(--text-base-secondary);
+  font-size: var(--eds-footnote-size);
+  font-weight: var(--eds-footnote-weight);
+  line-height: var(--eds-footnote-line-height);
 }

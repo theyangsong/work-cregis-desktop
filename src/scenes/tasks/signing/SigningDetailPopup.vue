@@ -7,6 +7,7 @@ import { buildSigningDetailSections } from './buildSigningDetailSections';
 import type { SigningDetail } from './types';
 import styles from './SigningDetailPopup.module.css';
 import ApprovalRemarkPopover from '../approval/ApprovalRemarkPopover.vue';
+import remarkTriggerStyles from '../shared/remarkPopoverTrigger.module.css';
 
 const props = withDefaults(
   defineProps<{
@@ -116,24 +117,37 @@ function onDetailClose() {
       <template #toolbar-actions>
         <ApprovalRemarkPopover
           boundary-selector=".eds-popup"
-          :title="ui('Signature Reject')"
+          :title="ui('Remark')"
           :remark="remark"
           :on-before-open="onRemarkBeforeOpen"
           @update:remark="emit('update:remark', $event)"
           @confirm="emit('rejectConfirm')"
           @dismiss="onRemarkDismiss"
         >
-          <template #trigger="{ onClick }">
-            <EgButton tone="danger" variant="text" size="md" @click.stop="onClick">
-              {{ ui('Reject') }}
-            </EgButton>
+          <template #trigger="{ active, onClick }">
+            <span
+              :class="[
+                remarkTriggerStyles.remarkTrigger,
+                active && remarkTriggerStyles.remarkTriggerRejectPressed,
+              ]"
+            >
+              <EgButton
+                tone="danger"
+                variant="text"
+                size="md"
+                :aria-expanded="active"
+                @click.stop="onClick"
+              >
+                {{ ui('Reject') }}
+              </EgButton>
+            </span>
           </template>
         </ApprovalRemarkPopover>
 
         <ApprovalRemarkPopover
           v-if="!isMultiSign"
           boundary-selector=".eds-popup"
-          :title="ui('Signed')"
+          :title="ui('Gas fee')"
           :remark="remark"
           show-miner-fee
           :on-before-open="onRemarkBeforeOpen"
@@ -141,10 +155,23 @@ function onDetailClose() {
           @confirm="emit('passConfirm')"
           @dismiss="onRemarkDismiss"
         >
-          <template #trigger="{ onClick }">
-            <EgButton tone="decor" variant="solid" size="md" @click.stop="onClick">
-              {{ ui('Sign') }}
-            </EgButton>
+          <template #trigger="{ active, onClick }">
+            <span
+              :class="[
+                remarkTriggerStyles.remarkTrigger,
+                active && remarkTriggerStyles.remarkTriggerPassPressed,
+              ]"
+            >
+              <EgButton
+                tone="decor"
+                variant="solid"
+                size="md"
+                :aria-expanded="active"
+                @click.stop="onClick"
+              >
+                {{ ui('Sign') }}
+              </EgButton>
+            </span>
           </template>
         </ApprovalRemarkPopover>
 

@@ -416,7 +416,7 @@ const displayBatchActions = computed(() => {
     : isSigningMenu.value
       ? [
           { key: 'reject', label: 'Reject', danger: true, popover: true, popoverTitle: 'Batch Reject' },
-          { key: 'pass', label: 'Sign', popover: true, popoverTitle: 'Batch Sign' },
+          { key: 'pass', label: 'Sign', popover: true, popoverTitle: 'Gas fee' },
         ]
       : dataListBatchActions;
   return actions.map((action) => ({

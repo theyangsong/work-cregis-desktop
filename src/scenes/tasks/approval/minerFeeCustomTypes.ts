@@ -1,0 +1,38 @@
+export type MinerFeeCustomMode = 'advanced' | 'normal';
+
+export type MinerFeeCustomDraft = {
+  mode: MinerFeeCustomMode;
+  maxFee: string;
+  maxPriorityFee: string;
+  gasPrice: string;
+  gasLimit: string;
+};
+
+export type MinerFeeCustomSaved = {
+  ethRange: string;
+  usdRange: string;
+};
+
+export const DEFAULT_MINER_FEE_CUSTOM_DRAFT: MinerFeeCustomDraft = {
+  mode: 'advanced',
+  maxFee: '59',
+  maxPriorityFee: '1.8',
+  gasPrice: '59',
+  gasLimit: '1.8',
+};
+
+export function buildMinerFeeCustomPreview(draft: MinerFeeCustomDraft): MinerFeeCustomSaved {
+  const gasLimit = Number.parseFloat(draft.gasLimit) || 1.8;
+  const feeBasis =
+    draft.mode === 'normal'
+      ? Number.parseFloat(draft.gasPrice) || 59
+      : Number.parseFloat(draft.maxFee) || 59;
+  const scale = (feeBasis / 59) * (gasLimit / 1.8);
+  const ethValue = 0.00023 * scale;
+  const usdValue = 0.56 * scale;
+
+  return {
+    ethRange: `${ethValue.toFixed(5)} ETH`,
+    usdRange: `≤$${usdValue.toFixed(2)}`,
+  };
+}

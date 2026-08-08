@@ -2,7 +2,7 @@ import { ref } from 'vue';
 import type { ApprovalDetail, ApprovalStatus } from './types';
 import { buildApprovalDetailRowFields } from './buildApprovalDetailRowFields';
 
-const MOCK_PASSWORD = '123456';
+const MOCK_PASSWORD = '111111';
 
 export const approvalStoreRevision = ref(0);
 

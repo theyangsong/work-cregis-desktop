@@ -3,7 +3,7 @@ import { isMultiSignRow } from '../list-field/tasksListFieldBusinessTypeRowData'
 import { buildSigningDetailRowFields } from './buildSigningDetailRowFields';
 import type { SigningDetail, SigningStatus } from './types';
 
-const MOCK_PASSWORD = '123456';
+const MOCK_PASSWORD = '111111';
 
 export const signingStoreRevision = ref(0);
 

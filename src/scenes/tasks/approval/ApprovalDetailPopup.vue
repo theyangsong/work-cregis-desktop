@@ -7,6 +7,7 @@ import { buildApprovalDetailSections } from './buildApprovalDetailSections';
 import type { ApprovalDetail } from './types';
 import styles from './ApprovalDetailPopup.module.css';
 import ApprovalRemarkPopover from './ApprovalRemarkPopover.vue';
+import remarkTriggerStyles from '../shared/remarkPopoverTrigger.module.css';
 
 const props = withDefaults(
   defineProps<{
@@ -109,33 +110,59 @@ function onDetailClose() {
       <template #toolbar-actions>
         <ApprovalRemarkPopover
           boundary-selector=".eds-popup"
-          :title="ui('Approval Reject')"
+          :title="ui('Remark')"
           :remark="remark"
           :on-before-open="onRemarkBeforeOpen"
           @update:remark="emit('update:remark', $event)"
           @confirm="emit('rejectConfirm')"
           @dismiss="onRemarkDismiss"
         >
-          <template #trigger="{ onClick }">
-            <EgButton tone="danger" variant="text" size="md" @click.stop="onClick">
-              {{ ui('Reject') }}
-            </EgButton>
+          <template #trigger="{ active, onClick }">
+            <span
+              :class="[
+                remarkTriggerStyles.remarkTrigger,
+                active && remarkTriggerStyles.remarkTriggerRejectPressed,
+              ]"
+            >
+              <EgButton
+                tone="danger"
+                variant="text"
+                size="md"
+                :aria-expanded="active"
+                @click.stop="onClick"
+              >
+                {{ ui('Reject') }}
+              </EgButton>
+            </span>
           </template>
         </ApprovalRemarkPopover>
 
         <ApprovalRemarkPopover
           boundary-selector=".eds-popup"
-          :title="ui('Approved')"
+          :title="ui('Remark')"
           :remark="remark"
           :on-before-open="onRemarkBeforeOpen"
           @update:remark="emit('update:remark', $event)"
           @confirm="emit('passConfirm')"
           @dismiss="onRemarkDismiss"
         >
-          <template #trigger="{ onClick }">
-            <EgButton tone="decor" variant="solid" size="md" @click.stop="onClick">
-              {{ ui('Pass') }}
-            </EgButton>
+          <template #trigger="{ active, onClick }">
+            <span
+              :class="[
+                remarkTriggerStyles.remarkTrigger,
+                active && remarkTriggerStyles.remarkTriggerPassPressed,
+              ]"
+            >
+              <EgButton
+                tone="decor"
+                variant="solid"
+                size="md"
+                :aria-expanded="active"
+                @click.stop="onClick"
+              >
+                {{ ui('Pass') }}
+              </EgButton>
+            </span>
           </template>
         </ApprovalRemarkPopover>
       </template>

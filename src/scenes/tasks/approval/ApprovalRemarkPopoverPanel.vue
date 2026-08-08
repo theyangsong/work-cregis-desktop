@@ -1,161 +1,298 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
 import {
   EgButton,
   EgComboTextareaItem,
   EgFormSubmission,
-  EgRadio,
-  EgTextarea,
+  MOTION_LAYOUT_DEFORM_CONTENT,
+  MOTION_LAYOUT_DEFORM_CONTENT_ENTERING,
+  MOTION_LAYOUT_DEFORM_CONTENT_EXITING,
+  useMotionLayoutDeformPageSwitch,
+  type MotionLayoutDeformPageSpec,
 } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
+import MinerFeeCustomPanel from './MinerFeeCustomPanel.vue';
+import MinerFeeListPanel, { type MinerFeeOptionId } from './MinerFeeListPanel.vue';
+import {
+  buildMinerFeeCustomPreview,
+  DEFAULT_MINER_FEE_CUSTOM_DRAFT,
+  type MinerFeeCustomDraft,
+  type MinerFeeCustomSaved,
+} from './minerFeeCustomTypes';
 import styles from './ApprovalRemarkPopoverPanel.module.css';
 
 const REMARK_MAX_LENGTH = 256;
 
-const MINER_FEE_OPTIONS = [
-  { id: 'slow', labelKey: 'Miner fee option slow' },
-  { id: 'normal', labelKey: 'Miner fee option normal' },
-  { id: 'fast', labelKey: 'Miner fee option fast' },
-  { id: 'custom', labelKey: 'Custom' },
-] as const;
+const MINER_FEE_CUSTOM_ID = 'custom' as const;
 
-type MinerFeeOptionId = (typeof MINER_FEE_OPTIONS)[number]['id'];
+type MinerFeeScreen = 'list' | 'custom';
 
-const props = defineProps<{
-  selectedCount: number;
-  remark: string;
-  showMinerFee?: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    selectedCount: number;
+    remark: string;
+    showMinerFee?: boolean;
+    placeholderKey?: string;
+    feedbackKey?: string;
+  }>(),
+  {
+    placeholderKey: 'Please enter',
+    feedbackKey: 'Optional, Max. 256 characters',
+  },
+);
 
 const emit = defineEmits<{
   'update:remark': [value: string];
+  'miner-fee-screen-change': [screen: MinerFeeScreen];
   confirm: [];
   cancel: [];
 }>();
 
 const { ui } = useAppI18n();
 
-const fieldRef = ref<HTMLElement | null>(null);
-const minerFee = ref<MinerFeeOptionId>('normal');
+const remarkFieldRef = ref<HTMLElement | null>(null);
+const listPanelRef = ref<InstanceType<typeof MinerFeeListPanel> | null>(null);
+const listMeasurePanelRef = ref<InstanceType<typeof MinerFeeListPanel> | null>(null);
+const customMeasurePanelRef = ref<InstanceType<typeof MinerFeeCustomPanel> | null>(null);
+const customPanelRef = ref<InstanceType<typeof MinerFeeCustomPanel> | null>(null);
+const minerFee = ref<MinerFeeOptionId | null>(null);
+const customFeeDraft = ref<MinerFeeCustomDraft>({ ...DEFAULT_MINER_FEE_CUSTOM_DRAFT });
+const customFeeSaved = ref<MinerFeeCustomSaved | null>(null);
+
+/** 自定义页预测量始终用高级模式（字段最多），Tab 切换不再改 shell 高。 */
+const customMeasureDraft = computed<MinerFeeCustomDraft>(() => ({
+  ...customFeeDraft.value,
+  mode: 'advanced',
+}));
+
+const pageSpecs = reactive<Record<MinerFeeScreen, MotionLayoutDeformPageSpec>>({
+  list: { shellHeight: 400 },
+  custom: { shellHeight: 360 },
+});
+
+const {
+  activePage,
+  shellHeight,
+  contentExiting,
+  contentEntering,
+  contentDirection,
+  switchTo,
+} = useMotionLayoutDeformPageSwitch<MinerFeeScreen>(pageSpecs, 'list');
+
+const minerFeeConfirmDisabled = computed(() => minerFee.value === null);
+
+const isMinerFeeCustomPage = computed(() => activePage.value === 'custom');
 
 const remarkModel = computed({
   get: () => props.remark,
   set: (value: string) => emit('update:remark', value.slice(0, REMARK_MAX_LENGTH)),
 });
 
-onMounted(async () => {
-  emit('update:remark', '');
-  if (!props.showMinerFee) {
-    await focusRemarkTextarea();
-  }
-});
-
-function getTextareaElement() {
-  return fieldRef.value?.querySelector('textarea') ?? null;
+function getListMeasureEl() {
+  return (
+    listPanelRef.value?.getMeasureEl() ??
+    listMeasurePanelRef.value?.getMeasureEl() ??
+    null
+  );
 }
 
-async function focusRemarkTextarea() {
+onMounted(async () => {
+  emit('update:remark', '');
+  if (props.showMinerFee) {
+    await ensurePageHeight('list');
+    await ensurePageHeight('custom');
+    shellHeight.value = pageSpecs.list.shellHeight;
+    return;
+  }
+  await focusRemarkInput();
+});
+
+function getCustomMeasureEl() {
+  return customMeasurePanelRef.value?.getMeasureEl() ?? null;
+}
+
+function measurePage(screen: MinerFeeScreen) {
+  const el = screen === 'list' ? getListMeasureEl() : getCustomMeasureEl();
+  if (!el) return;
+  const height = el.scrollHeight;
+  if (height > 0) {
+    pageSpecs[screen].shellHeight = height;
+  }
+}
+
+async function ensurePageHeight(screen: MinerFeeScreen) {
   await nextTick();
-  getTextareaElement()?.focus();
+  measurePage(screen);
+}
+
+watch(customFeeSaved, async () => {
+  await nextTick();
+  if (activePage.value !== 'list') return;
+  measurePage('list');
+  shellHeight.value = pageSpecs.list.shellHeight;
+});
+
+function getRemarkControlElement() {
+  return remarkFieldRef.value?.querySelector('input, textarea') as
+    | HTMLInputElement
+    | HTMLTextAreaElement
+    | null;
+}
+
+async function focusRemarkInput() {
+  await nextTick();
+  getRemarkControlElement()?.focus();
 
   window.requestAnimationFrame(() => {
-    getTextareaElement()?.focus();
+    getRemarkControlElement()?.focus();
   });
 
   window.setTimeout(() => {
-    getTextareaElement()?.focus();
+    getRemarkControlElement()?.focus();
   }, 120);
 }
 
-async function pasteFromClipboard() {
-  const textarea = getTextareaElement();
-  if (!textarea) return;
+function selectMinerFee(optionId: MinerFeeOptionId) {
+  minerFee.value = optionId;
+}
 
-  try {
-    const text = await navigator.clipboard.readText();
-    if (!text) {
-      textarea.focus();
-      return;
-    }
+watch(activePage, (screen) => {
+  emit('miner-fee-screen-change', screen);
+});
 
-    const current = props.remark;
-    const start = textarea.selectionStart ?? current.length;
-    const end = textarea.selectionEnd ?? current.length;
-    const merged = current.slice(0, start) + text + current.slice(end);
-    const next = merged.slice(0, REMARK_MAX_LENGTH);
-    emit('update:remark', next);
-
-    await nextTick();
-    const cursor = Math.min(start + text.length, next.length);
-    textarea.setSelectionRange(cursor, cursor);
-    textarea.focus();
-  } catch {
-    textarea.focus();
+async function setMinerFeeScreen(screen: MinerFeeScreen) {
+  if (
+    screen === activePage.value &&
+    !contentExiting.value &&
+    !contentEntering.value
+  ) {
+    return;
   }
+
+  await ensurePageHeight(screen);
+
+  switchTo(screen);
 }
 
-function onFieldCaptureClick(event: MouseEvent) {
-  const link = (event.target as HTMLElement).closest('a.eds-link');
-  if (link?.textContent?.trim() !== 'Paste') return;
-
-  event.preventDefault();
-  event.stopPropagation();
-  void pasteFromClipboard();
+function openCustomMinerFee() {
+  setMinerFeeScreen('custom');
 }
 
-function onClear() {
-  emit('update:remark', '');
-  void nextTick(() => getTextareaElement()?.focus());
+function goToMinerFeeList() {
+  setMinerFeeScreen('list');
 }
+
+async function onCustomSave(draft: MinerFeeCustomDraft) {
+  customFeeDraft.value = { ...draft };
+  customFeeSaved.value = buildMinerFeeCustomPreview(draft);
+  minerFee.value = MINER_FEE_CUSTOM_ID;
+  await nextTick();
+  await ensurePageHeight('list');
+  await setMinerFeeScreen('list');
+}
+
+function resetMinerFeeFlow() {
+  activePage.value = 'list';
+  contentExiting.value = false;
+  contentEntering.value = false;
+  contentDirection.value = null;
+  minerFee.value = null;
+  customFeeDraft.value = { ...DEFAULT_MINER_FEE_CUSTOM_DRAFT };
+  shellHeight.value = pageSpecs.list.shellHeight;
+}
+
+defineExpose({
+  resetMinerFeeFlow,
+});
 </script>
 
 <template>
-  <div :class="styles.root">
-    <section v-if="showMinerFee" :class="styles.minerFee">
-      <p :class="styles.sectionLabel">{{ ui('Miner Fee') }}</p>
-      <div role="radiogroup" :class="styles.minerFeeOptions" :aria-label="ui('Miner Fee')">
+  <template v-if="showMinerFee">
+    <div :class="styles.minerFeeRootWrap">
+      <div :class="styles.minerFeeMeasureHost" aria-hidden="true">
+        <MinerFeeCustomPanel
+          ref="customMeasurePanelRef"
+          :draft="customMeasureDraft"
+          measure-only
+        />
+      </div>
+
+      <div :class="styles.minerFeeMeasureHost" aria-hidden="true">
+        <MinerFeeListPanel
+          ref="listMeasurePanelRef"
+          measure-only
+          :miner-fee="minerFee"
+          :custom-fee-saved="customFeeSaved"
+          :remark="remark"
+          :placeholder-key="placeholderKey"
+          :feedback-key="feedbackKey"
+          :confirm-disabled="minerFeeConfirmDisabled"
+        />
+      </div>
+
+      <div
+        class="motion-layout-deform"
+        :class="styles.minerFeeDeformShell"
+        data-miner-fee-popover
+        :data-miner-fee-screen="activePage"
+        :style="{ height: `${shellHeight}px` }"
+      >
         <div
-          v-for="option in MINER_FEE_OPTIONS"
-          :key="option.id"
-          role="radio"
-          :aria-checked="minerFee === option.id"
-          :class="styles.minerFeeOption"
-          tabindex="0"
-          @click="minerFee = option.id"
-          @keydown.enter.prevent="minerFee = option.id"
-          @keydown.space.prevent="minerFee = option.id"
+          :class="[
+            MOTION_LAYOUT_DEFORM_CONTENT,
+            contentDirection,
+            contentExiting && MOTION_LAYOUT_DEFORM_CONTENT_EXITING,
+            contentEntering && MOTION_LAYOUT_DEFORM_CONTENT_ENTERING,
+          ]"
         >
-          <EgRadio
-            :model-value="minerFee === option.id"
-            @update:model-value="() => { minerFee = option.id; }"
+            <MinerFeeCustomPanel
+              v-if="isMinerFeeCustomPage"
+              ref="customPanelRef"
+              :draft="customFeeDraft"
+              @back="goToMinerFeeList"
+              @cancel="goToMinerFeeList"
+              @save="onCustomSave"
+            />
+
+          <MinerFeeListPanel
+            v-else
+            ref="listPanelRef"
+            :miner-fee="minerFee"
+            :custom-fee-saved="customFeeSaved"
+            v-model:remark="remarkModel"
+            :placeholder-key="placeholderKey"
+            :feedback-key="feedbackKey"
+            :confirm-disabled="minerFeeConfirmDisabled"
+            @select-miner-fee="selectMinerFee"
+            @open-custom="openCustomMinerFee"
+            @confirm="emit('confirm')"
           />
-          <span :class="styles.minerFeeOptionLabel">{{ ui(option.labelKey) }}</span>
         </div>
       </div>
-    </section>
+    </div>
+  </template>
 
-    <EgComboTextareaItem
-      feedback
-      :label="showMinerFee ? ui('Remark') : ''"
-      :class="[styles.field, showMinerFee && styles.fieldWithSectionLabel]"
-      :placeholder="ui('Please enter remark')"
+  <div v-else :class="styles.root">
+    <div
+      ref="remarkFieldRef"
+      :class="[styles.remarkField, styles.remarkFieldNoLabel]"
     >
-      <div ref="fieldRef" @click.capture="onFieldCaptureClick">
-        <EgTextarea
-          v-model="remarkModel"
-          width-mode="full"
-          :placeholder="ui('Please enter remark')"
-          @clear="onClear"
-        />
-      </div>
-      <template #feedback>
-        <EgFormSubmission
-          type="notes"
-          :text="ui('Optional, Max. 256 characters')"
-          :show-link="false"
-        />
-      </template>
-    </EgComboTextareaItem>
+      <EgComboTextareaItem
+        v-model="remarkModel"
+        feedback
+        :label="ui('Remark')"
+        :placeholder="ui(placeholderKey)"
+      >
+        <template #feedback>
+          <EgFormSubmission
+            type="notes"
+            :text="ui(feedbackKey)"
+            :show-link="false"
+          />
+        </template>
+      </EgComboTextareaItem>
+    </div>
+
     <EgButton
       :class="styles.confirm"
       tone="decor"
