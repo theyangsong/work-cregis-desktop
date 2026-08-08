@@ -3,8 +3,17 @@ import { computed, toRef } from 'vue';
 import { EgButton, EgPopup } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
 import { usePopupShellLifecycle } from '../shared/usePopupShellLifecycle';
+import {
+  buildSigningCustomPopupItems,
+  resolveSigningCustomPopupCurrencyMeta,
+} from './buildSigningCustomPopupItems';
+import { buildMultiSignWaitingPopupSteps } from './buildSigningCustomPopupProgressSteps';
+import SigningCustomPopupPanel from './SigningCustomPopupPanel.vue';
+import {
+  SIGNING_CUSTOM_POPUP_HEIGHT,
+  SIGNING_CUSTOM_POPUP_WIDTH,
+} from './signingCustomPopup.constants';
 import type { SigningDetail } from './types';
-import styles from './MultiSignWaitingPopup.module.css';
 
 const props = defineProps<{
   open: boolean;
@@ -29,24 +38,15 @@ const { popupMounted, popupOpen, onPopupClosed } = usePopupShellLifecycle({
   },
 });
 
-const requiredCount = computed(() => {
-  const threshold = props.detail?.signingThreshold ?? '2 / 3';
-  const match = /^(\d+)/.exec(threshold);
-  return match ? Number.parseInt(match[1], 10) : 2;
-});
-
-const statusTitle = computed(() =>
-  props.phase === 'waiting' ? ui('Waiting') : ui('Ready'),
+const currencyMeta = computed(() =>
+  props.detail ? resolveSigningCustomPopupCurrencyMeta(props.detail) : null,
 );
 
-const statusHint = computed(() => {
-  if (props.phase === 'waiting') {
-    return ui('Need {required} members to join, {joined} joined')
-      .replace('{required}', String(requiredCount.value))
-      .replace('{joined}', String(props.joinedCount));
-  }
-  return ui('Members joined, please start signing');
-});
+const items = computed(() =>
+  props.detail ? buildSigningCustomPopupItems(props.detail, ui) : [],
+);
+
+const progressSteps = computed(() => buildMultiSignWaitingPopupSteps(props.phase, ui));
 
 function onClose() {
   popupOpen.value = false;
@@ -59,44 +59,19 @@ function onClose() {
     v-if="popupMounted"
     v-model:open="popupOpen"
     uses="custom"
-    :box-width="460"
-    :box-height="560"
-    alert-vertical-align="padding-top-md"
+    :box-width="SIGNING_CUSTOM_POPUP_WIDTH"
+    :box-height="SIGNING_CUSTOM_POPUP_HEIGHT"
     @close="onPopupClosed"
   >
-    <div v-if="detail" :class="styles.root">
-      <header :class="styles.header">
-        <p :class="styles.status">{{ statusTitle }}</p>
-        <p :class="styles.hint">{{ statusHint }}</p>
-        <p :class="styles.threshold">
-          {{ ui('Signing threshold') }}: {{ detail.signingThreshold }}
-        </p>
-      </header>
-
-      <section :class="styles.section">
-        <h3 :class="styles.sectionTitle">{{ ui('Transaction') }}</h3>
-        <p :class="styles.line">{{ ui('Amount') }}: {{ detail.amountDisplay }}</p>
-        <p :class="styles.line">{{ ui('Type of Business') }}: {{ ui(detail.businessType) }}</p>
-        <p :class="styles.line">{{ ui('Initiated') }}: {{ detail.initiatorDisplay }}</p>
-        <p :class="styles.line">{{ ui('From Address') }}: {{ detail.senderSummary }}</p>
-        <p :class="styles.line">{{ ui('To Address') }}: {{ detail.receiverSummary }}</p>
-        <p :class="styles.line">{{ ui('Memo') }}: {{ detail.memo }}</p>
-      </section>
-
-      <section :class="styles.section">
-        <h3 :class="styles.sectionTitle">{{ ui('Members') }}</h3>
-        <p
-          v-for="signer in detail.signers.slice(0, joinedCount)"
-          :key="signer.emailMasked"
-          :class="styles.line"
-        >
-          {{ signer.name }} ({{ signer.emailMasked }}) · {{ ui('Joined') }}
-        </p>
-      </section>
-
-      <p :class="styles.network">{{ ui('Network') }}: 42ms</p>
-
-      <div :class="styles.actions">
+    <SigningCustomPopupPanel
+      v-if="detail && currencyMeta"
+      :items="items"
+      :progress-steps="progressSteps"
+      footer-latency-label="122ms"
+      :show-footer-actions="phase === 'ready'"
+      @close="onClose"
+    >
+      <template #actions>
         <EgButton tone="danger" variant="text" size="md" @click="onClose">
           {{ ui('Cancel') }}
         </EgButton>
@@ -109,7 +84,7 @@ function onClose() {
         >
           {{ ui('Sign') }}
         </EgButton>
-      </div>
-    </div>
+      </template>
+    </SigningCustomPopupPanel>
   </EgPopup>
 </template>

@@ -1,10 +1,19 @@
 <script setup lang="ts">
 import { computed, toRef } from 'vue';
-import { EgButton, EgPopup } from '@eds/desktop-components';
+import { EgPopup } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
 import { usePopupShellLifecycle } from '../shared/usePopupShellLifecycle';
+import {
+  buildSigningCustomPopupItems,
+  resolveSigningCustomPopupCurrencyMeta,
+} from './buildSigningCustomPopupItems';
+import { buildSigningProgressPopupSteps } from './buildSigningCustomPopupProgressSteps';
+import SigningCustomPopupPanel from './SigningCustomPopupPanel.vue';
+import {
+  SIGNING_CUSTOM_POPUP_HEIGHT,
+  SIGNING_CUSTOM_POPUP_WIDTH,
+} from './signingCustomPopup.constants';
 import type { SigningDetail, SigningProgressPhase } from './types';
-import styles from './SigningProgressPopup.module.css';
 
 const props = defineProps<{
   open: boolean;
@@ -27,22 +36,15 @@ const { popupMounted, popupOpen, onPopupClosed } = usePopupShellLifecycle({
   },
 });
 
-const phaseLabel = computed(() => {
-  switch (props.phase) {
-    case 'signing':
-      return ui('Signing in progress');
-    case 'sign-failed':
-      return ui('Sign Failed');
-    case 'broadcasting':
-      return ui('Broadcasting');
-    case 'broadcast-success':
-      return ui('Broadcast Success');
-    case 'broadcast-failed':
-      return ui('Broadcast Failed');
-    default:
-      return ui('Signing in progress');
-  }
-});
+const currencyMeta = computed(() =>
+  props.detail ? resolveSigningCustomPopupCurrencyMeta(props.detail) : null,
+);
+
+const items = computed(() =>
+  props.detail ? buildSigningCustomPopupItems(props.detail, ui) : [],
+);
+
+const progressSteps = computed(() => buildSigningProgressPopupSteps(props.phase, ui));
 
 function onClose() {
   popupOpen.value = false;
@@ -55,53 +57,16 @@ function onClose() {
     v-if="popupMounted"
     v-model:open="popupOpen"
     uses="custom"
-    :box-width="460"
-    :box-height="520"
-    alert-vertical-align="padding-top-md"
+    :box-width="SIGNING_CUSTOM_POPUP_WIDTH"
+    :box-height="SIGNING_CUSTOM_POPUP_HEIGHT"
     @close="onPopupClosed"
   >
-    <div v-if="detail" :class="styles.root">
-      <header :class="styles.header">
-        <p :class="styles.phase">{{ phaseLabel }}</p>
-        <p :class="styles.subPhase">
-          {{ ui('Signing in progress') }} — {{ ui('Broadcasting') }}
-        </p>
-      </header>
-
-      <dl :class="styles.fields">
-        <div :class="styles.field">
-          <dt>{{ ui('Currency') }}</dt>
-          <dd>{{ detail.amountDisplay.split(' ')[1] ?? detail.amountHeadline }}</dd>
-        </div>
-        <div :class="styles.field">
-          <dt>{{ ui('Amount') }}</dt>
-          <dd>{{ detail.amountDisplay }}</dd>
-        </div>
-        <div :class="styles.field">
-          <dt>{{ ui('Initiated') }}</dt>
-          <dd>{{ detail.initiatorDisplay }}</dd>
-        </div>
-        <div :class="styles.field">
-          <dt>{{ ui('From Address') }}</dt>
-          <dd>{{ detail.senderSummary }}</dd>
-        </div>
-        <div :class="styles.field">
-          <dt>{{ ui('To Address') }}</dt>
-          <dd>{{ detail.receiverSummary }}</dd>
-        </div>
-        <div :class="styles.field">
-          <dt>{{ ui('Memo') }}</dt>
-          <dd>{{ detail.memo }}</dd>
-        </div>
-        <div :class="styles.field">
-          <dt>{{ ui('Miner Fee') }}</dt>
-          <dd>{{ ui('Medium') }}</dd>
-        </div>
-      </dl>
-
-      <EgButton tone="decor" variant="solid" size="md" @click="onClose">
-        {{ ui('Close') }}
-      </EgButton>
-    </div>
+    <SigningCustomPopupPanel
+      v-if="detail && currencyMeta"
+      :items="items"
+      :progress-steps="progressSteps"
+      footer-latency-label="122ms"
+      @close="onClose"
+    />
   </EgPopup>
 </template>

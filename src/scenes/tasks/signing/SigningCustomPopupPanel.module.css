@@ -1,0 +1,220 @@
+.shell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.root {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.systemBarClose {
+  position: absolute;
+  top: var(--spacing-1);
+  right: var(--spacing-1);
+  z-index: 3;
+  display: inline-flex;
+  padding: var(--spacing-0);
+  cursor: pointer;
+}
+
+.systemBarClose :global(.eds-icon-button) {
+  background-color: var(--material-hide);
+}
+
+.systemBarClose :global(.eds-icon-button > span) {
+  color: var(--material-base-tertiary);
+}
+
+.systemBarClose :global(.eds-icon-button:hover:not(:disabled):not(.isDisabled)),
+.systemBarClose :global(.eds-icon-button:focus-visible:not(:disabled):not(.isDisabled)),
+.systemBarClose :global(.eds-icon-button:active:not(:disabled):not(.isDisabled)) {
+  background-color: var(--event-hover);
+}
+
+.systemBarClose :global(.eds-icon-button:hover:not(:disabled):not(.isDisabled) > span),
+.systemBarClose :global(.eds-icon-button:focus-visible:not(:disabled):not(.isDisabled) > span),
+.systemBarClose :global(.eds-icon-button:active:not(:disabled):not(.isDisabled) > span) {
+  color: var(--material-base-secondary);
+}
+
+.scroll {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+.scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* 对齐 Detail.module.css · itemList / item */
+.itemList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-05);
+  width: 100%;
+  padding: var(--spacing-5) var(--spacing-3) var(--spacing-3);
+  box-sizing: border-box;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-0);
+  width: 100%;
+}
+
+.toolbar {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  overflow: visible;
+  border-bottom-right-radius: var(--radius-md);
+  border-bottom-left-radius: var(--radius-md);
+  background: var(--box-page);
+  transition: var(--motion-recipe-scroll-fade-background);
+}
+
+/* 对齐 Detail · popupChromeScrim.module.css */
+.toolbarScrim {
+  position: relative;
+  isolation: isolate;
+}
+
+.toolbarScrimActive {
+  background: transparent;
+}
+
+.toolbarScrimActive::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-bottom-left-radius: inherit;
+  border-bottom-right-radius: inherit;
+  background: var(--effect-mask);
+  -webkit-backdrop-filter: var(--eds-blur-bg);
+  backdrop-filter: var(--eds-blur-bg);
+  pointer-events: none;
+}
+
+.toolbarScrimContent {
+  position: relative;
+  z-index: 1;
+  overflow: visible;
+}
+
+.toolbarPage {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+  overflow: visible;
+}
+
+/* 对齐 Detail · ComboAction.module.css divider */
+.toolbarDivider {
+  flex-shrink: 0;
+  width: 100%;
+  transition: var(--motion-recipe-scroll-fade);
+  opacity: 1;
+}
+
+.latencyFlotation {
+  display: inline-flex;
+  min-width: 0;
+}
+
+.latencyFlotation :global(.eds-flotation-trigger [class*='triggerTitle']) {
+  display: none;
+}
+
+.latencyFlotation :global(.eds-flotation-menu--list-header [class*='menuBodySticky']) {
+  gap: var(--spacing-1);
+}
+
+.latencyFlotation :global(.eds-flotation-trigger [class*='triggerSymbol']) {
+  color: var(--latency-status-color);
+}
+
+.latencyText {
+  color: var(--text-base-primary);
+  font-size: var(--eds-body-small-size);
+  font-weight: var(--eds-body-small-weight);
+  line-height: var(--eds-body-small-line-height);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.latencyMenuTitle {
+  margin: 0;
+  padding: var(--spacing-2) var(--spacing-2) 0;
+  color: var(--text-base-primary);
+  font-size: var(--eds-body-medium-strong-size);
+  font-weight: var(--eds-body-medium-strong-weight);
+  line-height: var(--eds-body-medium-strong-line-height);
+}
+
+.latencyMenuStatus {
+  font-size: var(--eds-body-small-size);
+  font-weight: var(--eds-body-small-weight);
+  line-height: var(--eds-body-small-line-height);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.toolbarBar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-3);
+  width: 100%;
+  min-width: 0;
+  padding: var(--spacing-3) var(--spacing-3);
+  box-sizing: border-box;
+}
+
+.toolbarStart {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  min-width: 0;
+}
+
+.toolbarActions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--spacing-1);
+}
+
+.toolbarActionsRight {
+  justify-content: flex-end;
+}

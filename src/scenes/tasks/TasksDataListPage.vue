@@ -152,18 +152,60 @@ const batchSelectedCount = ref(0);
 const dataListRemountKey = ref(0);
 
 const listToastText = ref('');
-const showListToast = ref(false);
+const listToastKeepMounted = ref(false);
+const listToastMotionActive = ref(false);
 const showEndFeedback = ref(false);
 const endFeedbackKey = ref(0);
 let listToastTimer: ReturnType<typeof setTimeout> | undefined;
+let listToastLeaveTimer: ReturnType<typeof setTimeout> | undefined;
 let endFeedbackTimer: ReturnType<typeof setTimeout> | undefined;
+
+function readListToastLeaveMs(el: HTMLElement): number {
+  const probe = document.createElement('div');
+  probe.className = 'motion-flotation';
+  el.appendChild(probe);
+  const seconds = Number.parseFloat(getComputedStyle(probe).transitionDuration);
+  el.removeChild(probe);
+  return Number.isFinite(seconds) && seconds > 0 ? Math.round(seconds * 1000) : 300;
+}
+
+function clearListToastLeaveTimer() {
+  if (listToastLeaveTimer !== undefined) {
+    clearTimeout(listToastLeaveTimer);
+    listToastLeaveTimer = undefined;
+  }
+}
+
+function syncListToastMotionEnter() {
+  clearListToastLeaveTimer();
+  listToastKeepMounted.value = true;
+  listToastMotionActive.value = false;
+  nextTick(() => {
+    requestAnimationFrame(() => {
+      if (listToastKeepMounted.value) {
+        listToastMotionActive.value = true;
+      }
+    });
+  });
+}
+
+function hideListToast() {
+  listToastMotionActive.value = false;
+  const anchor = document.querySelector('.app-preview') ?? document.documentElement;
+  const leaveMs = readListToastLeaveMs(anchor as HTMLElement);
+  clearListToastLeaveTimer();
+  listToastLeaveTimer = window.setTimeout(() => {
+    listToastKeepMounted.value = false;
+    listToastLeaveTimer = undefined;
+  }, leaveMs);
+}
 
 function showListError(message: string) {
   listToastText.value = message;
-  showListToast.value = true;
+  syncListToastMotionEnter();
   if (listToastTimer !== undefined) clearTimeout(listToastTimer);
   listToastTimer = window.setTimeout(() => {
-    showListToast.value = false;
+    hideListToast();
     listToastTimer = undefined;
   }, 3000);
 }
@@ -334,6 +376,7 @@ onBeforeUnmount(() => {
   registerApprovalFlow(null);
   registerSigningFlow(null);
   if (listToastTimer !== undefined) clearTimeout(listToastTimer);
+  clearListToastLeaveTimer();
   if (endFeedbackTimer !== undefined) clearTimeout(endFeedbackTimer);
 });
 
@@ -841,8 +884,13 @@ const displayBatchActions = computed(() => {
       <div v-if="showEndFeedback" :class="pageStyles.endFeedbackHost">
         <EgEndFeedbackCard :key="endFeedbackKey" text="Success" />
       </div>
-      <div v-if="showListToast" :class="pageStyles.listToastHost">
-        <EgToast type="result" :text="listToastText" />
+      <div
+        v-if="listToastKeepMounted"
+        :class="[pageStyles.listToastHost, listToastMotionActive && 'is-active']"
+      >
+        <div class="motion-flotation">
+          <EgToast type="result" :text="listToastText" />
+        </div>
       </div>
     </Teleport>
   </div>

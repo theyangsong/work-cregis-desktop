@@ -11,6 +11,7 @@ import {
   submitBatchSigningAction,
   submitSigningAction,
 } from './signingStore';
+import { SIGNING_PROGRESS_STEP_HOLD_MS } from './signingCustomPopup.constants';
 import type { SigningActionKind, SigningDetail, SigningProgressPhase } from './types';
 
 export const SIGNING_BATCH_MAX = 100;
@@ -49,6 +50,8 @@ export function useSigningFlow(options: {
 
   const detail = shallowRef<SigningDetail | null>(null);
   const pendingAutoAdvanceId = ref<string | null>(null);
+  /** Progress 关闭后待翻页目标；在 verify 成功时按 pending 导航序捕获（此时当前项仍 pending）。 */
+  const pendingDetailAdvanceAfterProgress = ref<string | null>(null);
 
   const currentIndex = computed(() => {
     if (!currentSigningId.value) return 0;
@@ -165,14 +168,14 @@ export function useSigningFlow(options: {
   }
 
   function startProgressPopup() {
-    progressPhase.value = 'signing';
+    progressPhase.value = 'broadcasting';
     progressOpen.value = true;
     window.setTimeout(() => {
-      progressPhase.value = 'broadcasting';
-    }, 1200);
+      progressPhase.value = 'on-chain-confirming';
+    }, SIGNING_PROGRESS_STEP_HOLD_MS);
     window.setTimeout(() => {
       progressPhase.value = 'broadcast-success';
-    }, 2400);
+    }, SIGNING_PROGRESS_STEP_HOLD_MS * 2);
   }
 
   function startMultiSignRoom() {
@@ -230,11 +233,32 @@ export function useSigningFlow(options: {
     if (!nextId) return;
     pendingAutoAdvanceId.value = null;
     const rowIndex = parseRowIndexFromSigningId(nextId);
-    if (checkSigningPending(nextId, rowIndex)) {
+    if (checkSigningPending(nextId, rowIndex) || nextId === currentSigningId.value) {
       loadDetail(nextId);
       return;
     }
     closeDetail();
+  }
+
+  function captureDetailAdvanceBeforeProgress() {
+    if (!currentSigningId.value || !detailOpen.value || batchMode.value) {
+      pendingDetailAdvanceAfterProgress.value = null;
+      return;
+    }
+    const currentId = currentSigningId.value;
+    const index = pendingIds.value.indexOf(currentId);
+    const nextId = index >= 0 ? pendingIds.value[index + 1] : undefined;
+    pendingDetailAdvanceAfterProgress.value = nextId ?? currentId;
+  }
+
+  function scheduleDetailResumeAfterProgress() {
+    if (!currentSigningId.value || !detailOpen.value) {
+      pendingDetailAdvanceAfterProgress.value = null;
+      return;
+    }
+    const targetId = pendingDetailAdvanceAfterProgress.value ?? currentSigningId.value;
+    pendingDetailAdvanceAfterProgress.value = null;
+    pendingAutoAdvanceId.value = targetId;
   }
 
   function onProgressClosed() {
@@ -243,14 +267,7 @@ export function useSigningFlow(options: {
     pendingAction.value = null;
     options.onRefreshList();
     syncPendingIds();
-    if (currentSigningId.value) {
-      const rowIndex = parseRowIndexFromSigningId(currentSigningId.value);
-      if (checkSigningPending(currentSigningId.value, rowIndex)) {
-        loadDetail(currentSigningId.value);
-      } else {
-        closeDetail();
-      }
-    }
+    scheduleDetailResumeAfterProgress();
   }
 
   function onMultiSignClosed() {
@@ -258,6 +275,7 @@ export function useSigningFlow(options: {
     pendingAction.value = null;
     options.onRefreshList();
     syncPendingIds();
+    pendingDetailAdvanceAfterProgress.value = null;
   }
 
   let multiSignClosingForProgress = false;
@@ -328,6 +346,8 @@ export function useSigningFlow(options: {
       finishRejectSuccess();
       return;
     }
+
+    captureDetailAdvanceBeforeProgress();
 
     if (detail.value?.signingMode === 'multi') {
       startMultiSignRoom();

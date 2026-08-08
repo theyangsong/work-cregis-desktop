@@ -55,6 +55,7 @@ export type SigningProgressPhase =
   | 'signing'
   | 'sign-failed'
   | 'broadcasting'
+  | 'on-chain-confirming'
   | 'broadcast-success'
   | 'broadcast-failed';
 

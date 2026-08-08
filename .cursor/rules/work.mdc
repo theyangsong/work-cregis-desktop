@@ -547,6 +547,93 @@ const {
 - `uses="verify"` + `verify-type="single-trade-password"`（328×416，不可改 Box 尺寸）
 - Alert 类 Popup（verify / reminder / custom 进度页等）默认 `alert-vertical-align="padding-top-md"`（未传时 DS 对 verify/reminder 亦默认顶边距）
 
+#### Signing Custom Popup（656×516 — 锁死）
+
+**适用**：签名流程中的广播进度（`SigningProgressPopup`）与多人签名等待（`MultiSignWaitingPopup`）。二者共用布局壳，**不是** Detail 弹窗（`SigningDetailPopup` 仍为旧 `uses="detail"`，另案对齐）。
+
+**挂载栈**（须在 `AppPopupOverlayHost` → `SigningFlowHost`，与 `EgContainer` 同级）：
+
+```text
+SigningFlowHost
+├─ SigningDetailPopup              ← uses=detail（旧壳，本次未重建）
+├─ TradePasswordVerifyPopup
+├─ MultiSignWaitingPopup           ← uses=custom 656×516
+├─ SigningProgressPopup            ← uses=custom 656×516
+└─ AddressViewMoreReminderPopup
+```
+
+**流程**：Detail 确认 → Verify → MultiSign（waiting → ready → Sign）→ Progress（signing → broadcasting → broadcast-success）。  
+`detailShellSuspended`：`verifyOpen` \|\| `viewMoreOpen` \|\| `progressOpen` \|\| `multiSignOpen`。
+
+##### 文件职责（真源）
+
+| 文件 | 职责 |
+|------|------|
+| `signingCustomPopup.constants.ts` | `656` × `516` Box 尺寸 |
+| `SigningCustomPopupPanel.vue` | 共享壳：TopBar 关闭 → 三步进度 → Hero 金额 + 币种 → 5 行明细 → 底部状态栏 |
+| `SigningCustomPopupProgress.vue` | 三步进度条（Signing / MultiSign 共用组件，步骤文案不同） |
+| `SigningCustomPopupItemRow.vue` | Apply_Item 行渲染（对齐 Detail 挂件，勿手改 `createDetailApplyItemRow` 输出） |
+| `buildSigningCustomPopupItems.ts` | 5 行：`initiated-by` / `text` / `sender` / `receiver` / `memo` |
+| `buildSigningCustomPopupProgressSteps.ts` | 进度步骤状态（Signing 与 MultiSign 各一套 builder） |
+| `signingCustomPopupHost.css` + `useSigningCustomPopupHost.ts` | 修复 EgPopup `alertPanelShell` 内容塌缩（见下） |
+| `SigningProgressPopup.vue` / `MultiSignWaitingPopup.vue` | 入口：`EgPopup uses="custom"` + `usePopupShellLifecycle` |
+
+##### EgPopup custom 塌缩修复（回归高发）
+
+`EgPopup` `alertPanelShell` 默认把插槽直子设为 `flex` + `center`（row），656×516 内容会被压成一条线，只剩关闭按钮 / 黑屏。
+
+| 项 | 约定 |
+|----|------|
+| Host class | `useSigningCustomPopupHost` 在 `.eds-popup-box-content` 挂 `eds-signing-custom-popup` |
+| CSS 覆写 | `signingCustomPopupHost.css`：`flex-direction: column; align-items: stretch`，直子 `.signing-custom-popup-shell` 撑满 `100%` |
+| 对齐参考 | 同 EgVerify `eds-verify`、EgReminder `eds-reminder` 的 Popup Box host 契约 |
+
+**禁止**：在业务页 subtree 挂 Popup；手搓平行 host CSS 而不复用 `signingCustomPopupHost.css`。
+
+##### 布局与 Token（勿混淆 token 名与像素）
+
+设计稿里的 **padding10 / gap4** 指 **spacing token 名**（如 `--spacing-10` = 40px），**不是**像素字面量（勿用 `--spacing-2-5` 当 10px）。
+
+| 区域 | 关键 token |
+|------|------------|
+| Progress | `padding: var(--spacing-10) var(--spacing-20) var(--spacing-6)`；背景 `--material-card-shallow`；节点图标 `--icon-lg`；done `--status-success` / active `--status-warning`；pending 3px 圆点 `--stroke-outline-shallow`（尺寸硬编码）；连接器圆点 trail，`margin: 0 var(--spacing-8)`（32px）；done→active 段 `--status-warning` marching 动效；首/末节点与左右 padding 对齐 |
+| Hero | padding 上/下/左右：`--spacing-6` / `--spacing-5` / `--spacing-3`；头像 `--avatar-xl`（40px）；金额 **`--eds-headline-*`**（25px，勿用不存在的 `--eds-title-small-*`）；头像↔金额 `--spacing-2`；分隔线 `EgDivider type="page"` |
+| Hero ↔ 明细 | `.scroll { gap: var(--spacing-4) }` |
+| 明细行 | DataList 风格行高 / hover；5 行字段见 `buildSigningCustomPopupItems` |
+| Footer 状态栏 | 默认：`122ms` + `eds-wifi-fill` + `eds-arrow-down-mini-ios`；**无** statusBar 背景色；MultiSign **`phase === 'ready'`** 时才 `:show-footer-actions="true"`（Cancel + Sign） |
+
+##### 进度条步骤（两套，共用 `SigningCustomPopupProgress`）
+
+**SigningProgress**（签名 → 广播 → 链上确认）：
+
+| state | 图标 | 颜色 |
+|-------|------|------|
+| done | `eds-enable-fill` | `--status-success` |
+| active | `eds-clocks-fill` | `--status-warning` |
+| pending | 3px 圆点（硬编码） | `--stroke-outline-shallow` |
+
+阶段映射（`buildSigningProgressPopupSteps`）：`signing` / `sign-failed` → 第 1 步 active；`broadcasting` / `broadcast-failed` → 第 2 步；`broadcast-success` → 全部 done（`activeIndex = 3`）。
+
+**MultiSignWaiting**（Waiting → Ready → Sign）：与 SigningProgress **步骤文案不同**，仍 3 列；`ready` 时第 1 步 done、第 2 步 active；第 3 步 Sign 在 ready 前为 pending。
+
+##### Detail 行（硬约束）
+
+5 行明细 **必须** `createDetailApplyItemRow(variantId, overrides)`（`@eds/desktop-components`）；**禁止** `showValueCopy: false` 等手改挂件。  
+映射参考：`buildSigningCustomPopupItems.ts` · `buildApprovalDetailSections.ts` · DS `detail-apply-item.md`。
+
+##### i18n 键（签名 custom 弹窗）
+
+`Signature step` · `Broadcast step` · `On-chain confirmation` · `Application payment` · `Outbound`（见 `uiTextZhCN.ts`）。
+
+##### Agent 改 Signing Custom Popup 前自检
+
+1. 656×516 是否完整显示（非仅关闭按钮）？→ 检查 `eds-signing-custom-popup` host + `signingCustomPopupHost.css`  
+2. 金额是否 ~25px？→ 必须 `--eds-headline-*`，非 title-small  
+3. Progress 上 padding 是否误用 `--spacing-2-5`？→ 应为 `--spacing-10`（token 名语义）  
+4. MultiSign waiting 是否误露 Cancel/Sign？→ 仅 `phase === 'ready'` 时 `show-footer-actions`  
+5. 明细行是否手搓而非 `createDetailApplyItemRow`？→ 改 builder，勿改 row 挂件  
+6. 是否从 showcase 复制 CSS？→ 禁止；仅 Desktop token + 本目录 module CSS
+
 #### Agent 改 Popup 前自检
 
 1. 是否仍用 CSS `.shellSuspended { visibility: hidden }`？→ 删，改 `suspended` 参数  
@@ -797,6 +884,7 @@ Showcase 外层是 **Website** `body-medium`（18px）。Desktop spec 中 ToolBa
 | 同步约定 | `eds-desktop/.cursor/rules/eds-sync-local-consumers.mdc` |
 | list-field crypto 校验 | `work-cregis-desktop/scripts/verify-list-field-crypto.mjs` |
 | EgPopup 叠层 lifecycle | `src/scenes/tasks/shared/usePopupShellLifecycle.ts` |
+| Signing custom popup（656×516） | `src/scenes/tasks/signing/SigningCustomPopupPanel.vue` · `signingCustomPopupHost.css` |
 | Layout Deform 多页切换 | `eds-desktop/packages/components/docs/layout-deform-page-switch.md` |
 | 客户端示例 | `work-cregis-desktop/AGENTS.md` |
 
@@ -811,6 +899,7 @@ Showcase 外层是 **Website** `body-medium`（18px）。Desktop spec 中 ToolBa
 | EgPopup 叠层动效 §7.1 | 2026-08-08 |
 | Popover 触发按钮点按态 §7.1 | 2026-08-08 |
 | Layout Deform 多页切换 §7.1 | 2026-08-08 |
+| Signing custom popup §7.1 | 2026-08-09 |
 | list-field sync 排除 | 2026-08-05 |
 | 维护 | EDS Desktop 维护者 |
 

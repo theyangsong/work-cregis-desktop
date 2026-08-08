@@ -19,7 +19,7 @@ const DETAIL_ITEM_TITLES = {
   memo: 'Memo',
 } as const;
 
-function buildSenderItem(
+export function buildSenderItem(
   detail: SigningDetail,
   translate: (key: string) => string,
 ): DetailItemData {
@@ -44,7 +44,7 @@ function buildSenderItem(
   });
 }
 
-function buildReceiverItem(
+export function buildReceiverItem(
   detail: SigningDetail,
   translate: (key: string) => string,
 ): DetailItemData {

@@ -1,0 +1,98 @@
+.itemRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  min-height: var(--scale-9);
+  padding: var(--spacing-2) var(--spacing-3);
+  border-radius: var(--radius-sm);
+  box-sizing: border-box;
+  composes: motion-ease is-hover from global;
+}
+
+.itemRow:hover {
+  background-color: var(--event-hover);
+}
+
+.itemTitle {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--spacing-1-5);
+  width: calc(var(--scale-30) + var(--scale-6));
+  min-width: calc(var(--scale-30) + var(--scale-6));
+}
+
+.itemTitleIcon {
+  flex-shrink: 0;
+  width: var(--icon-md);
+  height: var(--icon-md);
+  color: var(--stroke-base-secondary);
+}
+
+.itemTitleIcon :global(.eds-i-s) {
+  stroke-width: var(--stroke-md);
+}
+
+.itemTitleText {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--text-base-secondary);
+  font-size: var(--eds-body-small-size);
+  font-weight: var(--eds-body-small-weight);
+  line-height: var(--eds-body-small-line-height);
+  word-break: break-word;
+}
+
+.itemValue {
+  display: inline-flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-1-5);
+  min-width: 0;
+}
+
+.itemValueCrypto {
+  flex-shrink: 0;
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+}
+
+.itemValueText {
+  color: var(--text-base-primary);
+  font-size: var(--eds-body-small-size);
+  font-weight: var(--eds-body-small-weight);
+  line-height: var(--eds-body-small-line-height);
+  word-break: break-word;
+}
+
+.itemValueTextNowrap {
+  white-space: nowrap;
+}
+
+.itemValueTrailing {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--spacing-1);
+}
+
+/* 对齐 Detail · CryptoCombo.menuCopyButton */
+.copyButton {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.copyButtonCopied :global(.eds-icon-button .symbol) {
+  color: var(--status-success);
+}
+
+.copyButtonCopied :global(.eds-icon .eds-i-f),
+.copyButtonCopied :global(.eds-icon path) {
+  fill: var(--status-success);
+}
+
+.copyButtonCopied :global(.eds-icon .eds-i-s) {
+  stroke: var(--status-success);
+}

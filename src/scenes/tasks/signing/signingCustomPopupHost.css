@@ -1,0 +1,44 @@
+/**
+ * Signing custom popup — 对齐 EgVerify / EgReminder 的 Popup Box host 契约。
+ * EgPopup alertPanelShell 会把插槽直子设为 flex + center（默认 row），导致 656×516 内容塌缩；
+ * 在 `.eds-popup-box-content` 上挂 `eds-signing-custom-popup` 并覆写 host + 直子 layout。
+ */
+
+:global(.effect-popup-box.panelFlush:has(.eds-signing-custom-popup)) {
+  align-items: stretch !important;
+}
+
+:global(.eds-popup-box-content.eds-signing-custom-popup.eds-tooltip-panel) {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  align-self: stretch !important;
+  justify-content: flex-start !important;
+  box-sizing: border-box;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 100% !important;
+  padding: 0 !important;
+  overflow: hidden;
+  background: var(--material-base-primary);
+  color: var(--text-base-primary);
+}
+
+:global(.eds-popup-box-content.eds-signing-custom-popup) > :global(.signing-custom-popup-shell) {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  align-self: stretch !important;
+  justify-content: flex-start !important;
+  box-sizing: border-box;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+}
+
+/* Footer EgFlotation 浮层须叠在 EgPopup overlay（z-index: 20）之上 */
+:global(body:has(.eds-signing-custom-popup)) :global(.floating.desktopTokens) {
+  z-index: 10000;
+}

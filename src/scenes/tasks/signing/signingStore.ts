@@ -39,9 +39,9 @@ function buildCustomDetailFields(id: string, rowIndex: number) {
   const signingMode = signingModeFromRow(rowIndex);
 
   const member: SigningDetail['approvalNodes'][number]['members'][number] = {
-    name: 'Name',
+    name: 'Ethan Davis',
     emailMasked: maskEmail('t******c@gmail.com'),
-    avatarName: 'Name',
+    avatarName: 'Ethan Davis',
   };
 
   return {
