@@ -30,10 +30,15 @@ export const RECORDS_AMOUNT_DATA_LIST_COLUMN_MIN_WIDTH = '180px';
 /** 尾列操作列 min-width（含 cell 左右 padding）。 */
 export const ACTION_DATA_LIST_COLUMN_MIN_WIDTH = '120px';
 
-/** ListFieldAction 主按钮文案。 */
-export const DATA_LIST_PRIMARY_ACTION_LABEL = 'Approval';
+/** ListFieldAction 主按钮 i18n key（英文展示 Approval；侧栏菜单项 Approval 仍为待审批）。 */
+export const DATA_LIST_PRIMARY_ACTION_LABEL = 'Approval action';
+export const DATA_LIST_PRIMARY_ACTION_LABEL_EN = 'Approval';
 
-export const DATA_LIST_FIGMA_ROW_COUNT = 103;
+export const DATA_LIST_APPROVAL_ROW_COUNT = 68;
+export const DATA_LIST_SIGNING_ROW_COUNT = 128;
+
+/** Approval 默认条数；其它待办列表未单独配置时同此值。 */
+export const DATA_LIST_FIGMA_ROW_COUNT = DATA_LIST_APPROVAL_ROW_COUNT;
 
 export const DATA_LIST_FIGMA_PAGE_SIZE_OPTIONS = ['20', '50', '100'] as const;
 
@@ -48,7 +53,7 @@ export const DATA_LIST_FIGMA_TOOLBAR = {
 } as const;
 
 export const DATA_LIST_FIGMA_PAGINER = {
-  dataVolumeCount: '103',
+  dataVolumeCount: '68',
   dataVolumeTotal: 'Total',
   dataVolumeResults: 'Results',
   showStatistics: false,
@@ -145,6 +150,12 @@ export const TASKS_MODULE_MENU_ITEMS_WITH_DATA_LIST = [
 export type TasksDataListMenuItemLabel = (typeof TASKS_MODULE_MENU_ITEMS_WITH_DATA_LIST)[number];
 
 export const DEFAULT_TASKS_DATA_LIST_MENU_ITEM: TasksDataListMenuItemLabel = 'Approval';
+
+export function tasksDataListDefaultRowCount(menuItem: string | undefined): number {
+  if (menuItem === 'Signing') return DATA_LIST_SIGNING_ROW_COUNT;
+  if (menuItem === 'Approval') return DATA_LIST_APPROVAL_ROW_COUNT;
+  return DATA_LIST_APPROVAL_ROW_COUNT;
+}
 
 export function isTasksDataListMenuItem(label: string): label is TasksDataListMenuItemLabel {
   return (TASKS_MODULE_MENU_ITEMS_WITH_DATA_LIST as readonly string[]).includes(label);
@@ -385,7 +396,7 @@ export function paginerPaginationDefaults(): Record<string, string | boolean> {
 
 export const tasksDataListCustomizeDefaults = {
   columnHeight: '66',
-  dataVolume: '103',
+  dataVolume: '68',
   loading: false,
   initing: false,
   empty: false,

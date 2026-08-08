@@ -1,16 +1,19 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import {
   EgDataList,
   EgDataListCellOverflow,
   EgDataListColumn,
   EgDivider,
+  EgEndFeedbackCard,
   EgIcon,
   EgIconButtonPro,
   EgLayout,
   EgPaginer,
   EgPaginationItem,
+  EgToast,
   EgToolBar,
+  POPOVER_PRESET_WIDTH_BASE,
 } from '@eds/desktop-components';
 import TasksDataListColumnCell from './list-field/TasksDataListColumnCell.vue';
 import DataListHeaderSortTrigger from './DataListHeaderSortTrigger.vue';
@@ -20,6 +23,9 @@ import {
   DATA_LIST_FIGMA_PAGE_SIZE_OPTIONS,
   DATA_LIST_FIGMA_TOOLBAR,
   tasksDataListCustomizeDefaults,
+  tasksDataListDefaultRowCount,
+  DATA_LIST_PRIMARY_ACTION_LABEL,
+  DATA_LIST_PRIMARY_ACTION_LABEL_EN,
   tasksDataListPrimaryActionLabel,
   tasksDataListShowsActionColumn,
   tasksDataListShowsExport,
@@ -42,6 +48,18 @@ import {
   type TasksDataListCustomizeState,
 } from './tasksDataListPageData';
 import { useAppI18n } from '@/composables/useAppI18n';
+import ApprovalRemarkPopoverPanel from './approval/ApprovalRemarkPopoverPanel.vue';
+import { registerApprovalFlow } from './approval/approvalFlowContext';
+import {
+  APPROVAL_BATCH_MAX,
+  useApprovalFlow,
+} from './approval/useApprovalFlow';
+import { isMultiSignRow } from './list-field/tasksListFieldBusinessTypeRowData';
+import { registerSigningFlow } from './signing/signingFlowContext';
+import {
+  SIGNING_BATCH_MAX,
+  useSigningFlow,
+} from './signing/useSigningFlow';
 import { useTasksDataListPage } from './useTasksDataListPage';
 import type {
   TasksDataListActiveSort,
@@ -52,10 +70,13 @@ const props = defineProps<{
   toolbarTitle?: string;
 }>();
 
-const { ui } = useAppI18n();
+const { ui, locale } = useAppI18n();
 const activeSort = ref<TasksDataListActiveSort | null>(null);
 
-const customize = reactive({ ...tasksDataListCustomizeDefaults }) as TasksDataListCustomizeState;
+const customize = reactive({
+  ...tasksDataListCustomizeDefaults,
+  dataVolume: String(tasksDataListDefaultRowCount(props.toolbarTitle)),
+}) as TasksDataListCustomizeState;
 
 /** HMR / 旧会话：补齐新增的列配置字段（如 columnSecondaryLabel4）。 */
 onMounted(() => {
@@ -82,10 +103,18 @@ const showToolBarSectionForMenu = computed(() => showBatchButton.value);
 
 const primaryActionLabel = computed(() => tasksDataListPrimaryActionLabel(props.toolbarTitle));
 const showActionColumn = computed(() => tasksDataListShowsActionColumn(props.toolbarTitle));
+/** 批处理（selectMode）时隐藏 Action 列；尾列由 Amount 承接。 */
+const actionColumnHidden = computed(() => Boolean(customize.selectMode));
 const showGeneralStructureColumn = computed(() =>
   tasksDataListShowsGeneralStructureColumn(props.toolbarTitle),
 );
 const showStatusColumn = computed(() => tasksDataListShowsStatusColumn(props.toolbarTitle));
+/** 表头 / 单元格内容右对齐（批处理或已办类菜单）；列 align 保持 left，位移走 margin 过渡。 */
+const amountColumnContentAlignEnd = computed(
+  () =>
+    customize.selectMode
+    || tasksDataListAmountColumnAlign(props.toolbarTitle) === 'right',
+);
 const amountColumnAlign = computed(() => tasksDataListAmountColumnAlign(props.toolbarTitle));
 const statusColumnLabel = computed(() => tasksDataListStatusColumnLabel(props.toolbarTitle));
 const currencyColumnWidth = computed(() =>
@@ -103,8 +132,9 @@ const businessTypeColumnSecondaryLabel = computed(() =>
 const businessTypeColumnSecondarySortable = computed(() =>
   tasksDataListBusinessTypeColumnSecondarySortable(props.toolbarTitle),
 );
-const amountColumnFlexGrow = computed(() =>
-  tasksDataListAmountColumnFlexGrow(props.toolbarTitle),
+/** 批处理隐藏 Action 后，尾列 Amount 参与多余空间均分（承接原 Action 宽度）。 */
+const amountColumnFlexGrow = computed(
+  () => customize.selectMode || tasksDataListAmountColumnFlexGrow(props.toolbarTitle),
 );
 const generalStructureColumnMinWidth = computed(() =>
   tasksDataListGeneralStructureColumnMinWidth(props.toolbarTitle),
@@ -112,6 +142,133 @@ const generalStructureColumnMinWidth = computed(() =>
 const amountColumnMinWidth = computed(() =>
   tasksDataListAmountColumnMinWidth(props.toolbarTitle),
 );
+
+const isApprovalMenu = computed(() => props.toolbarTitle === 'Approval');
+const isSigningMenu = computed(() => props.toolbarTitle === 'Signing');
+
+const batchSelectedCount = ref(0);
+
+/** 批处理成功退出时 remount，避免勾选列退出动画与 Refresh 叠加。 */
+const dataListRemountKey = ref(0);
+
+const listToastText = ref('');
+const showListToast = ref(false);
+const showEndFeedback = ref(false);
+const endFeedbackKey = ref(0);
+let listToastTimer: ReturnType<typeof setTimeout> | undefined;
+let endFeedbackTimer: ReturnType<typeof setTimeout> | undefined;
+
+function showListError(message: string) {
+  listToastText.value = message;
+  showListToast.value = true;
+  if (listToastTimer !== undefined) clearTimeout(listToastTimer);
+  listToastTimer = window.setTimeout(() => {
+    showListToast.value = false;
+    listToastTimer = undefined;
+  }, 3000);
+}
+
+function showListSuccess() {
+  endFeedbackKey.value += 1;
+  showEndFeedback.value = true;
+  if (endFeedbackTimer !== undefined) clearTimeout(endFeedbackTimer);
+  endFeedbackTimer = window.setTimeout(() => {
+    showEndFeedback.value = false;
+    endFeedbackTimer = undefined;
+  }, 2500);
+}
+
+const allRowIndexes = computed(() => {
+  const count = Number.parseInt(
+    String(customize.dataVolume ?? tasksDataListDefaultRowCount(props.toolbarTitle)),
+    10,
+  );
+  return Array.from({ length: Math.max(0, count) }, (_, index) => index);
+});
+
+const approvalFlow = useApprovalFlow({
+  enabled: isApprovalMenu,
+  allRowIndexes,
+  onRefreshList: () => {
+    void nextTick(() => {
+      onToolbarActionClick('refresh');
+    });
+  },
+  onExitBatchMode: () => {
+    customize.selectMode = false;
+    dataListRemountKey.value += 1;
+  },
+  showError: (message) => showListError(message),
+  showSuccess: () => showListSuccess(),
+});
+
+const signingFlow = useSigningFlow({
+  enabled: isSigningMenu,
+  allRowIndexes,
+  onRefreshList: () => {
+    void nextTick(() => {
+      onToolbarActionClick('refresh');
+    });
+  },
+  onExitBatchMode: () => {
+    customize.selectMode = false;
+    dataListRemountKey.value += 1;
+  },
+  showError: (message) => showListError(message),
+  showSuccess: () => showListSuccess(),
+});
+
+function onDataListSelectedChange(rows: Array<Record<string, unknown> & { _index: number }>) {
+  batchSelectedCount.value = rows.length;
+  if (isApprovalMenu.value) {
+    approvalFlow.onSelectedChange(rows);
+  }
+  if (isSigningMenu.value) {
+    signingFlow.onSelectedChange(rows);
+  }
+}
+
+async function handleBatchLabelBeforeOpen(
+  key: string,
+  rows: Array<Record<string, unknown> & { _index: number }>,
+) {
+  if (isApprovalMenu.value) {
+    if (rows.length > APPROVAL_BATCH_MAX) {
+      throw new Error(`You can select up to ${APPROVAL_BATCH_MAX} items at a time.`);
+    }
+    await approvalFlow.prepareBatchRemarkOpen(key, rows);
+    return;
+  }
+  if (isSigningMenu.value) {
+    if (rows.length > SIGNING_BATCH_MAX) {
+      throw new Error(`You can select up to ${SIGNING_BATCH_MAX} items at a time.`);
+    }
+    await signingFlow.prepareBatchRemarkOpen(key, rows);
+  }
+}
+
+async function handleBatchAction(
+  key: string,
+  rows: Array<Record<string, unknown> & { _index: number }>,
+) {
+  if (isApprovalMenu.value) {
+    if (rows.length > APPROVAL_BATCH_MAX) {
+      throw new Error(`You can select up to ${APPROVAL_BATCH_MAX} items at a time.`);
+    }
+    approvalFlow.confirmBatchRemark();
+    return { preserveSelection: true };
+  }
+  if (isSigningMenu.value) {
+    if (rows.length > SIGNING_BATCH_MAX) {
+      throw new Error(`You can select up to ${SIGNING_BATCH_MAX} items at a time.`);
+    }
+    signingFlow.confirmBatchRemark();
+    return { preserveSelection: true };
+  }
+  await new Promise<void>((resolve) => {
+    window.setTimeout(resolve, 1200);
+  });
+}
 
 const {
   DATA_LIST_FIGMA_PAGINER,
@@ -152,7 +309,64 @@ const {
   statisticsItems,
   toolbarActionButtons,
   totalRowCount,
-} = useTasksDataListPage(customizeRef, undefined, activeSort);
+} = useTasksDataListPage(customizeRef, undefined, activeSort, handleBatchAction);
+
+watch(isApprovalMenu, (enabled) => {
+  registerApprovalFlow(enabled ? approvalFlow : null);
+  if (!enabled && customize.selectMode) {
+    customize.selectMode = false;
+  }
+});
+
+watch(isSigningMenu, (enabled) => {
+  registerSigningFlow(enabled ? signingFlow : null);
+  if (!enabled && customize.selectMode) {
+    customize.selectMode = false;
+  }
+});
+
+onMounted(() => {
+  if (isApprovalMenu.value) registerApprovalFlow(approvalFlow);
+  if (isSigningMenu.value) registerSigningFlow(signingFlow);
+});
+
+onBeforeUnmount(() => {
+  registerApprovalFlow(null);
+  registerSigningFlow(null);
+  if (listToastTimer !== undefined) clearTimeout(listToastTimer);
+  if (endFeedbackTimer !== undefined) clearTimeout(endFeedbackTimer);
+});
+
+function onRowPrimaryAction(row: Record<string, unknown>) {
+  if (customize.selectMode) return;
+  if (isApprovalMenu.value) {
+    approvalFlow.openDetailForRow(row);
+    return;
+  }
+  if (isSigningMenu.value) {
+    signingFlow.openDetailForRow(row);
+  }
+}
+
+function onBatchError(message: string) {
+  showListError(message);
+}
+
+function onBatchPopoverDismiss() {
+  if (isApprovalMenu.value) {
+    approvalFlow.remark.value = '';
+  }
+  if (isSigningMenu.value) {
+    signingFlow.remark.value = '';
+  }
+}
+
+const displayDataList = computed(() => {
+  if (!isSigningMenu.value || !customize.selectMode) {
+    return paginatedDataList.value;
+  }
+  return paginatedDataList.value.filter((row) => !isMultiSignRow(Number(row.id)));
+});
 
 const createdTimeSortOrder = computed(() =>
   activeSort.value?.key === 'created-time' ? activeSort.value.order : '',
@@ -174,7 +388,13 @@ function onAmountSort(order: TasksDataListSortOrder | null) {
 const displayToolbarTitle = computed(() =>
   ui(props.toolbarTitle ?? DATA_LIST_FIGMA_TOOLBAR.title),
 );
-const displayPrimaryActionLabel = computed(() => ui(primaryActionLabel.value));
+const displayPrimaryActionLabel = computed(() => {
+  const label = primaryActionLabel.value;
+  if (label === DATA_LIST_PRIMARY_ACTION_LABEL) {
+    return locale.value === 'zh-CN' ? ui(label) : DATA_LIST_PRIMARY_ACTION_LABEL_EN;
+  }
+  return ui(label);
+});
 const displayStatusColumnLabel = computed(() => ui(statusColumnLabel.value));
 const displayBusinessTypeSecondaryLabel = computed(() =>
   ui(businessTypeColumnSecondaryLabel.value),
@@ -187,12 +407,25 @@ const displayStatisticsItems = computed(() =>
     text: ui(item.text),
   })),
 );
-const displayBatchActions = computed(() =>
-  dataListBatchActions.map((action) => ({
+const displayBatchActions = computed(() => {
+  const actions = isApprovalMenu.value
+    ? [
+        { key: 'reject', label: 'Reject', danger: true, popover: true, popoverTitle: 'Batch Reject' },
+        { key: 'pass', label: 'Pass', popover: true, popoverTitle: 'Batch Approved' },
+      ]
+    : isSigningMenu.value
+      ? [
+          { key: 'reject', label: 'Reject', danger: true, popover: true, popoverTitle: 'Batch Reject' },
+          { key: 'pass', label: 'Sign', popover: true, popoverTitle: 'Batch Sign' },
+        ]
+      : dataListBatchActions;
+  return actions.map((action) => ({
     ...action,
     label: ui(action.label),
-  })),
-);
+    popoverTitle: 'popoverTitle' in action && action.popoverTitle ? ui(action.popoverTitle) : undefined,
+  }));
+});
+
 </script>
 
 <template>
@@ -251,8 +484,9 @@ const displayBatchActions = computed(() =>
 
       <div :class="pageStyles.listRegion">
         <EgDataList
+          :key="dataListRemountKey"
           v-model:select-mode="customize.selectMode"
-          :data-list="paginatedDataList"
+          :data-list="displayDataList"
           :header-height="DATA_LIST_FIGMA_HEADER_HEIGHT"
           :column-height="columnHeight"
           :loading="Boolean(customize.loading)"
@@ -260,8 +494,46 @@ const displayBatchActions = computed(() =>
           :skid-open="skidOpen"
           :batch-actions="displayBatchActions"
           :on-batch-action="onBatchAction"
-          :primary-action="showActionColumn ? { label: displayPrimaryActionLabel } : undefined"
+          :on-batch-label-before-open="handleBatchLabelBeforeOpen"
+          batch-popover-width-mode="fixed"
+          :batch-popover-width="POPOVER_PRESET_WIDTH_BASE"
+          batch-popover-top-tool
+          batch-popover-top-tool-closable
+          :primary-action="
+            showActionColumn && !actionColumnHidden
+              ? { label: displayPrimaryActionLabel }
+              : undefined
+          "
+          @primary-action="onRowPrimaryAction"
+          @batch-error="onBatchError"
+          @batch-popover-dismiss="onBatchPopoverDismiss"
+          @selected-change="onDataListSelectedChange"
         >
+          <template
+            v-if="isApprovalMenu"
+            #batch-popover="{ selectedCount, confirm, close }"
+          >
+            <ApprovalRemarkPopoverPanel
+              :selected-count="selectedCount"
+              :remark="approvalFlow.remark.value"
+              @update:remark="approvalFlow.remark.value = $event"
+              @confirm="confirm"
+              @cancel="close"
+            />
+          </template>
+          <template
+            v-else-if="isSigningMenu"
+            #batch-popover="{ action, selectedCount, confirm, close }"
+          >
+            <ApprovalRemarkPopoverPanel
+              :selected-count="selectedCount"
+              :remark="signingFlow.remark.value"
+              :show-miner-fee="action.key === 'pass'"
+              @update:remark="signingFlow.remark.value = $event"
+              @confirm="confirm"
+              @cancel="close"
+            />
+          </template>
           <EgDataListColumn
             prop="primary"
             :label="ui(previewColumnSettings[0].label)"
@@ -440,7 +712,7 @@ const displayBatchActions = computed(() =>
               <div
                 :class="[
                   pageStyles.comboHeader,
-                  amountColumnAlign === 'right' && pageStyles.comboHeaderAlignEnd,
+                  amountColumnContentAlignEnd && pageStyles.comboHeaderAlignEnd,
                 ]"
               >
                 <div :class="pageStyles.comboHeaderSegment">
@@ -475,7 +747,7 @@ const displayBatchActions = computed(() =>
               <TasksDataListColumnCell
                 :data-source="previewColumnSettings[3].dataSource"
                 :column-min-width="amountColumnMinWidth"
-                :column-align="amountColumnAlign"
+                :column-align="amountColumnContentAlignEnd ? 'right' : 'left'"
                 :row-index="Number(data.id)"
               />
             </template>
@@ -488,6 +760,7 @@ const displayBatchActions = computed(() =>
             :min-width="previewColumnSettings[4].minWidth"
             align="right"
             :sortable="false"
+            :hidden="actionColumnHidden"
             is-action
           />
         </EgDataList>
@@ -563,5 +836,14 @@ const displayBatchActions = computed(() =>
         </EgPaginer>
       </template>
     </EgLayout>
+
+    <Teleport to=".app-preview">
+      <div v-if="showEndFeedback" :class="pageStyles.endFeedbackHost">
+        <EgEndFeedbackCard :key="endFeedbackKey" text="Success" />
+      </div>
+      <div v-if="showListToast" :class="pageStyles.listToastHost">
+        <EgToast type="result" :text="listToastText" />
+      </div>
+    </Teleport>
   </div>
 </template>

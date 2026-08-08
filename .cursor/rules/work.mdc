@@ -38,9 +38,11 @@
 
 ### 2.3 同步约定
 
+**单向边界（DS 改 → 业务跟；业务改 → 不污染 DS）：** 见 `.cursor/rules/eds-one-way-boundary.mdc`。本仓库 **只改** `src/**`；**禁止**在本会话改 `../eds-desktop/packages/**`（须切换 eds-desktop 仓库）。
+
 - 在 **eds-desktop** 说「同步」= `pnpm build:tokens && pnpm build:components` + 对所有 `link:` consumer 执行 `pnpm install`，并运行 `sync-list-field-currency.mjs`（list-field 运行时辅助）。
 - 在 **业务项目** 说「同步 eds-desktop」= 先在 `../eds-desktop` build，再本项目 `pnpm install`，**重启 dev server**。
-- 同步 **仅**传播 `packages/tokens`、`packages/components`，以及 **可 sync 的** list-field 辅助文件；**不包含** showcase、Website 包。
+- 同步 **仅**传播 `packages/tokens`、`packages/components`，以及 **可 sync 的** list-field 辅助文件；**不包含** showcase、Website 包；**无反向** sync（业务 `src/**` 不写回 DS）。
 
 ### 2.3.1 对齐引用库
 
@@ -49,6 +51,21 @@
 1. **组件逻辑 / 交互**（Tooltip、浮层边界、BatchBar、排序、地址 Menu…）→ 改 `packages/components`，不在 `work-cregis-desktop` 复刻。
 2. **业务薄封装**（`TasksListField*`）→ 按 Showcase `ListFieldPreviewPanel.vue` 选型：**普通文本**用 `EgListFieldOverflowText`，**哈希/编号**才用 `EgListFieldHashLikeLine`（含复制 Menu）。
 3. **先 diff 再改**：`rg` 引用库中组件名 / prop 名，再改业务文件。
+4. **引用库无现成能力时先询问用户**，确认方案后再改 `packages/**` 或业务侧，勿擅自扩展 DS API / token。
+
+### 2.3.2 引用库改动须 dev 实时生效
+
+本仓库 **dev 必须走 eds-desktop 源码 alias**（见根目录 `vite.config.ts`），**禁止**改 `packages/components/dist` 或 `@import '@eds/desktop-components/style.css'` 指望页面更新。
+
+| 项 | 约定 |
+|----|------|
+| **Alias** | `@eds/desktop-components` → `../eds-desktop/packages/components/src/index.ts` |
+| **监听** | `vite.config.ts` 内 `watchEdsDesktopPackages` 显式 `watcher.add` `packages/components` + `packages/tokens` |
+| **全局样式** | `src/styles/desktop-components-scope.css` 须 `@import` `interactionHoverTooltip.css` 等 DS glue（与 showcase 一致） |
+| **Agent 改 DS 后** | 确认 `pnpm dev` 在跑；保存后应 HMR；若无热更新则 **硬刷新** 或 **重启 dev server**，并在回复中说明 |
+| **同步 ≠ 实时** | 用户说「同步 eds-desktop」= build + install + **重启 dev**；日常改 `packages/**` 源码 **不需要** sync/build dist |
+
+**排查「改了引用库但页面没变」**：是否误改 dist、dev 是否 alias 源码、是否需重启 `pnpm dev`、浏览器是否硬刷新。
 
 ### 2.4 list-field 本地扩展（sync 禁止覆盖）
 
@@ -124,9 +141,10 @@ Dev 环境建议 Vite alias 指向 `eds-desktop/packages/components/src`，与 S
 ```
 #app                              ← 宿主布局（居中、预览框尺寸等业务约定）
 └─ .app-preview.desktopTokens     ← Desktop 真实边界（EgTooltip / effect-container-box）
-   └─ EgContainer
-      └─ EgLayout
-         └─ 业务页面
+   ├─ EgContainer
+   │  └─ EgLayout
+   │     └─ 业务页面
+   └─ AppPopupOverlayHost         ← EgPopup shell（与 Container 同级，禁止挂在业务页内）
 ```
 
 ### 4.2 规则
@@ -137,6 +155,8 @@ Dev 环境建议 Vite alias 指向 `eds-desktop/packages/components/src`，与 S
 | **禁止**把 `.desktopTokens` 打在 `Eg*` 组件根节点上 | PostCSS scoped 生成 `.desktopTokens .hash`，同元素匹配失败会导致尺寸异常 |
 | Desktop token 作用域 | 仅在 `.desktopTokens` 子树内生效 |
 | 业务根建立排版基线 | 避免继承宿主 `body` 错误字号（如 Website 18px body-medium 泄漏） |
+| **EgPopup 挂载** | Popup host 与 `EgContainer` 同级（见 `App.vue`）；遮罩须覆盖整块 `.app-preview`；**禁止**挂在 DataList / 列表页 subtree 内 |
+| **EgPopup 叠层动效** | 下层暂挂须走 EgPopup 出场/入场，**禁止** CSS `visibility:hidden`；懒挂载须 `usePopupShellLifecycle`（见 §7.1） |
 
 ### 4.3 业务-only 变量（非 DS token）
 
@@ -167,6 +187,20 @@ Dev 环境建议 Vite alias 指向 `eds-desktop/packages/components/src`，与 S
 | 拆改组件内部 DOM | 复制粘贴组件 template 再改结构 |
 | 样式逃逸 props | `inputClass`、`fieldStyle`、`panelRadius`（除非组件 API 已发布） |
 | 重新实现 DS 已有交互 | 手搓 `AnchoredTooltip + 菜单` 代替 `EgFlotation` |
+| 覆盖 Tooltip 默认面板宽度 | 传 `:max-width`；CSS 改 `.eds-tooltip-panel` 宽度（`.eds-anchored-tooltip` 仅约束 trigger 布局，见 §5.4） |
+
+### 5.4 Tooltip 默认宽度（继承引用库）
+
+溢出 Tooltip **不传** `maxWidth`，由 DS 组件默认值决定（与 showcase 一致）：
+
+| 组件 | 默认 `maxWidth` |
+|------|-----------------|
+| `EgListFieldOverflowText` / `EgTextOverflowTooltip` | 360（`TEXT_OVERFLOW_TOOLTIP_MAX_WIDTH`） |
+| `EgDataListCellOverflow` `context="header"` | 240（`DATA_LIST_HEADER_OVERFLOW_TOOLTIP_MAX_WIDTH`） |
+| `EgDataListCellOverflow` `context="cell"` | 480（`DATA_LIST_CELL_OVERFLOW_TOOLTIP_MAX_WIDTH`） |
+| 哈希 / 地址复制 Menu | 480（`COPYABLE_OVERFLOW_TOOLTIP_MAX_WIDTH`） |
+
+业务 CSS 可像 showcase `listFieldScene.module.css` 一样约束 **trigger**（如 `.amountSecondaryRow :global(.eds-anchored-tooltip) { max-width: 100% }`），**勿**额外覆盖 `.amountPreview` 等容器下的 tooltip 宽度。
 
 ### 5.3 正确示例
 
@@ -228,11 +262,112 @@ eds-desktop/packages/tokens/dist/json/tokens.json （机器可读清单）
 |------|----------|
 | 点击展开下拉 / 浮层菜单 | `EgFlotation` Combo（`#trigger` + Menu + Items） |
 | Data List 列单元格 | `EgDataListColumn` slot + List Field 场景组件 |
+| EgPopup / 全屏详情·弹窗 | `AppPopupOverlayHost`（`App.vue`，与 `EgContainer` 同级） |
 | Module Menu 标题下拉 | `EgFlotation` + `triggerKind: module-menu` |
 | Nav Bar 模块 / 图标 | `EgIcon size="md"` 对应容器 `--icon-lg`（勿混淆 prop 与 token） |
 | Data List 空态 | 默认 `eds-business-7`，非第三方 icon 包 |
 
 Showcase 文档页是**用法说明书**，不是可复制 CSS 库。
+
+### 7.1 EgPopup 叠层与动效（锁死 — 勿反复手改）
+
+**权威**：`eds-project.mdc` §7 EgPopup（外壳 vs 内容、`.motion-layout` + `shellKeepMounted`）；Showcase `PopupPreview.vue` 为**常驻挂载**只切 `v-model:open`。业务侧 **懒挂载**（`v-if` 宿主 / Detail 点行才 mount）须走 composable，否则入场/叠层动效必错。
+
+**真源实现**：`src/scenes/tasks/shared/usePopupShellLifecycle.ts`  
+**集成示例**：`ApprovalFlowHost.vue` / `SigningFlowHost.vue` · `TradePasswordVerifyPopup.vue` · `ApprovalDetailPopup.vue` · `AddressViewMoreReminderPopup.vue`
+
+#### 挂载与栈
+
+```
+.app-preview
+└─ AppPopupOverlayHost          ← 与 EgContainer 同级，absolute inset:0
+   └─ *FlowHost
+      ├─ DetailPopup            ← 下层（uses=detail）
+      ├─ TradePasswordVerifyPopup
+      ├─ AddressViewMoreReminderPopup / Progress / MultiSign …
+      └─ …
+```
+
+| 规则 | 说明 |
+|------|------|
+| 遮罩范围 | EgPopup 根 `100%×100%`，父级须为 `.app-preview` 内 overlay host |
+| 逻辑 open vs 视觉 open | flow 的 `detailOpen` / `verifyOpen` = **逻辑态**；EgPopup 的 `v-model:open` = **视觉态**（由 lifecycle 驱动） |
+| 叠层 suspend | 上层打开时下层 `suspended: true`，**不是**关 flow、**不是** CSS 隐藏 |
+
+#### `usePopupShellLifecycle` 契约
+
+```typescript
+usePopupShellLifecycle({
+  open,           // Ref / getter：逻辑上应保持打开（如 flow.detailOpen）
+  suspended?,     // Ref / getter：上层 Popup 打开时为 true
+  onBeforeOpen?,  // 如 closeAllAnchoredTooltips、resetVerify
+  onClosed,       // EgPopup 出场结束后：emit update:open false、popup-closed、popupMounted=false
+});
+```
+
+| 阶段 | 行为 |
+|------|------|
+| **入场** | `open && !suspended` → `popupMounted=true`（EgPopup `open=false`）→ `nextTick` → `requestAnimationFrame` → `popupOpen=true` |
+| **真关闭** | `open=false` → `popupOpen=false` → 出场动效 → `@close` → `onClosed()`（可卸数据） |
+| **暂挂（上层打开）** | `open=true && suspended=true` → `popupOpen=false` + `closingForSuspend=true` → 出场动效 → `@close` **不**调 `onClosed`（Detail 数据/翻页保留） |
+| **恢复（上层关闭）** | `suspended=false` 且 `open` 仍为 true → 再次走延迟入场 |
+| **watch** | 必须 `{ immediate: true }` — Detail 懒挂载首帧 `open=true` 时也要触发，否则点行无反应 |
+
+#### 禁止（回归高发）
+
+| 禁止 | 后果 |
+|------|------|
+| `visibility: hidden` / `pointer-events: none` 暂挂下层 | 下层瞬间消失，与上层 EgPopup 动效不同步 |
+| 懒挂载首帧 `open=true` 且无 lifecycle | 跳过 microFloat 入场；或 watch 不触发、点行无反应 |
+| 上层打开时 `v-if` 卸下层 | 跳过出场动效 |
+| suspend 触发的 `@close` 走 `popup-closed` 清数据 | Detail 被误关、翻页状态丢失 |
+| 在 FlowHost 手写 `verifyPopupMounted` 且与 EgPopup 内部 lifecycle 重复 | 双重卸载或动效竞态 |
+| 显式传 `micro-float`（可省略） | 非必须；EgPopup 默认 `microFloat: true` |
+
+#### Approval / Signing 叠层映射
+
+| 下层 | `shellSuspended` 条件 |
+|------|------------------------|
+| Detail | `verifyOpen` \|\| `viewMoreOpen`（Signing 另加 `progressOpen` \|\| `multiSignOpen`） |
+| 地址查看更多 Reminder | 其上有 Verify（Signing 另加 progress / multiSign） |
+
+Verify（`TradePasswordVerifyPopup`）为最上层之一，**不设** `suspended`；须 `useVerifySubmit` + i18n 文案 + `@cancel` / `@switch` 关闭。
+
+#### 验证成功 → 自动翻下一条（motion-page）
+
+Verify 打开时 Detail 会 **suspend 出场**（EgDetail 卸载）。若验证成功后在同一 tick 立刻 `loadDetail(nextId)`，恢复时已是新条目，**`motion-page` 翻页动效丢失**。
+
+| 步骤 | 行为 |
+|------|------|
+| 1 | `finishSuccess` / `finishRejectSuccess` 只写入 `pendingAutoAdvanceId`，**不**立即 `loadDetail` |
+| 2 | Verify 关闭 → Detail `suspended=false` → shell 延迟 `open=true` |
+| 3 | `onShellOpened` → `onDetailShellOpened()` → `loadDetail(nextId)` |
+| 4 | EgDetail 已挂载旧条目 → `toolbar-page-key` 变化 → DS `motion-page` forward |
+
+须传 `:toolbar-page-key="detail.id"`；手动翻页仍走 `navigateRelative` + toolbar `@next`（EgDetail 内建 `contentNavDirection`）。
+
+#### 批处理 Remark Popover 宽度（锁死 336）
+
+批处理 Pass/Reject 与 Detail 内 Remark **共用** `ApprovalRemarkPopoverPanel`，Popover 壳须 **fixed 336**（`POPOVER_PRESET_WIDTH_BASE`），与 `ApprovalRemarkPopover.vue` 一致。
+
+| 禁止 | 原因 |
+|------|------|
+| `POPOVER_PRESET_WIDTH_GUIDE`（256） | 用户已定稿 336；256 为引导档，Remark 表单太窄 |
+| 再改 panel 结构（EgReminder / 460 Popup 宽） | 已收敛为 ComboTextarea + topTool + Confirm |
+
+`EgDataList`：`batch-popover-width-mode="fixed"` + `:batch-popover-width="POPOVER_PRESET_WIDTH_BASE"` + `batch-popover-top-tool` + `batch-popover-top-tool-closable`。
+
+#### Verify 与 Popup 尺寸
+
+- `uses="verify"` + `verify-type="single-trade-password"`（328×416，不可改 Box 尺寸）
+- Alert 类 Popup（verify / reminder / custom 进度页等）默认 `alert-vertical-align="padding-top-md"`（未传时 DS 对 verify/reminder 亦默认顶边距）
+
+#### Agent 改 Popup 前自检
+
+1. 是否仍用 CSS `.shellSuspended { visibility: hidden }`？→ 删，改 `suspended` 参数  
+2. Detail 点行是否无反应？→ lifecycle `immediate: true` + 懒挂载延迟 open  
+3. 上层出现下层是否闪没？→ 应用 suspend 出场，勿硬隐藏  
+4. 对照 Showcase：Showcase **不**测懒挂载；业务必须用 lifecycle，不能照抄 `PopupPreview` 的常驻写法
 
 ---
 
@@ -401,6 +536,7 @@ PR 合并前逐项确认：
 - [ ] 下拉/浮层使用 `EgFlotation`，非手搓 Tooltip 菜单
 - [ ] 可滚动区域已做嵌套滚动边界（§6 eds-project）
 - [ ] click/focus 态无多余 transition（hover only）
+- [ ] EgPopup 叠层用 `usePopupShellLifecycle` + `suspended`，无 CSS 硬隐藏下层（§7.1）
 - [ ] 数字展示使用 `formatGroupedNumber`（如适用）
 - [ ] sync eds-desktop 后已重启 dev server 验证
 - [ ] `listFieldCryptoSampleAddresses.ts` 仍含业务扩展（`pnpm` 跑过 `verify-list-field-crypto` 或手动确认 `getPinnedAddressForRow` 存在）
@@ -424,8 +560,9 @@ alwaysApply: true
 4. var(--*) 不在白名单 → 停止改代码，询问：「变量 xxx 在设计系统里不存在，是否使用硬编码？」默认否。
 5. 禁止私造 --*、禁止用 --scale-* 冒充语义 token、禁止覆盖 Eg* 组件样式。
 6. 浮层统一 EgFlotation Combo；动效 hover only；嵌套滚动见 eds-project §6。
-7. 禁止 sync 或手动操作覆盖 listFieldCryptoSampleAddresses.ts 业务扩展；见 work.mdc §2.4。
-8. 权威约定：../eds-desktop/.cursor/rules/eds-project.mdc
+7. EgPopup 叠层/懒挂载须 usePopupShellLifecycle（§7.1），禁止 visibility 暂挂下层。
+8. 禁止 sync 或手动操作覆盖 listFieldCryptoSampleAddresses.ts 业务扩展；见 work.mdc §2.4。
+9. 权威约定：../eds-desktop/.cursor/rules/eds-project.mdc
 ```
 
 ---
@@ -456,6 +593,10 @@ Showcase 外层是 **Website** `body-medium`（18px）。Desktop spec 中 ToolBa
 
 **处理**：（1）运行 `node scripts/verify-list-field-crypto.mjs` 确认；（2）从 git 历史恢复业务扩展版；（3）确认 `sync-list-field-currency.mjs` 仍 skip 该文件（§2.4）。**不要**再次整文件从 showcase 复制。
 
+### Q: EgPopup 动效不对 / 点行无反应 / 上下层闪没？
+
+见 **§7.1**。常见根因：懒挂载首帧 `open=true`、CSS 暂挂下层、suspend 误触发 `popup-closed`。改前先读 `usePopupShellLifecycle.ts`，勿再手搓平行 lifecycle。
+
 ---
 
 ## 12. 参考文件索引
@@ -469,6 +610,7 @@ Showcase 外层是 **Website** `body-medium`（18px）。Desktop spec 中 ToolBa
 | Token 机器清单 | `@eds/desktop-tokens/json` |
 | 同步约定 | `eds-desktop/.cursor/rules/eds-sync-local-consumers.mdc` |
 | list-field crypto 校验 | `work-cregis-desktop/scripts/verify-list-field-crypto.mjs` |
+| EgPopup 叠层 lifecycle | `src/scenes/tasks/shared/usePopupShellLifecycle.ts` |
 | 客户端示例 | `work-cregis-desktop/AGENTS.md` |
 
 ---
@@ -477,8 +619,9 @@ Showcase 外层是 **Website** `body-medium`（18px）。Desktop spec 中 ToolBa
 
 | 字段 | 值 |
 |------|-----|
-| 文档版本 | 1.0 |
+| 文档版本 | 1.1 |
 | 对齐 eds-project | 2026-08-05 |
+| EgPopup 叠层动效 §7.1 | 2026-08-08 |
 | list-field sync 排除 | 2026-08-05 |
 | 维护 | EDS Desktop 维护者 |
 

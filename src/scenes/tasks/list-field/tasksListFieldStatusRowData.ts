@@ -37,7 +37,7 @@ const SIGNED_STATUS_SUCCESS: TasksListFieldStatusRow = {
 const SIGNED_STATUS_DEMO_ROWS: ReadonlyArray<TasksListFieldStatusRow> = [
   { status: 'ready', label: 'Pending' },
   { status: 'danger', label: 'Failed' },
-  { status: 'invalid', label: 'Cancel' },
+  { status: 'invalid', label: 'Canceled' },
 ];
 
 function buildApprovedStatusRowValues(rowIndex: number): TasksListFieldStatusRow {

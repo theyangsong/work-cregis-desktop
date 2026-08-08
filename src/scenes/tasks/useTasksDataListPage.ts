@@ -1,5 +1,5 @@
 import { computed, onBeforeUnmount, ref, watch, type ComputedRef, type Ref } from 'vue';
-import { SKID_PUSH_TRANSITION_MS } from '@eds/desktop-components';
+import { SKID_PUSH_TRANSITION_MS, type DataListBatchActionResult } from '@eds/desktop-components';
 import {
   buildManyPageItems,
   computeManyNextKeepWindow,
@@ -41,6 +41,10 @@ export function useTasksDataListPage(
   customize: CustomizeSource,
   layoutSkidOpen?: Ref<boolean | undefined>,
   activeSort?: Ref<TasksDataListActiveSort | null>,
+  batchActionHandler?: (
+    key: string,
+    rows: Array<Record<string, unknown> & { _index: number }>,
+  ) => Promise<void | DataListBatchActionResult> | void | DataListBatchActionResult,
 ) {
   const columnDataSources = computed(() =>
     Array.from({ length: DATA_LIST_PREVIEW_COLUMN_COUNT }, (_, offset) =>
@@ -243,10 +247,23 @@ export function useTasksDataListPage(
     { key: 'pass', label: 'Pass' },
   ] as const;
 
-  async function onBatchAction(_key: string, _rows: unknown) {
+  async function onBatchAction(
+    key: string,
+    rows: Array<Record<string, unknown> & { _index: number }>,
+  ): Promise<DataListBatchActionResult | void> {
+    if (batchActionHandler) {
+      return batchActionHandler(key, rows);
+    }
     await new Promise<void>((resolve) => {
       window.setTimeout(resolve, 1200);
     });
+  }
+
+  function refreshDataList() {
+    customize.value.loading = true;
+    window.setTimeout(() => {
+      customize.value.loading = false;
+    }, 600);
   }
 
   function clampPage(page: number) {
@@ -380,7 +397,7 @@ export function useTasksDataListPage(
 
   let refreshTimer: ReturnType<typeof setTimeout> | undefined;
 
-  function onRefreshClick() {
+  function onRefreshClick(onComplete?: () => void) {
     if (refreshTimer !== undefined) {
       clearTimeout(refreshTimer);
       refreshTimer = undefined;
@@ -389,12 +406,16 @@ export function useTasksDataListPage(
     refreshTimer = window.setTimeout(() => {
       customize.value.loading = false;
       refreshTimer = undefined;
+      onComplete?.();
     }, 2000);
   }
 
-  function onToolbarActionClick(key: ToolbarActionButton['key']) {
+  function onToolbarActionClick(
+    key: ToolbarActionButton['key'],
+    onComplete?: () => void,
+  ) {
     if (key === 'refresh') {
-      onRefreshClick();
+      onRefreshClick(onComplete);
     }
   }
 
@@ -421,6 +442,7 @@ export function useTasksDataListPage(
     onManyPageItemClick,
     onSettingsJump,
     onToolbarActionClick,
+    refreshDataList,
     paginatedDataList,
     pagePagination,
     prevNavDisabled,

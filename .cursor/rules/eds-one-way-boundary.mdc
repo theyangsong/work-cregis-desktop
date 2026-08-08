@@ -1,0 +1,42 @@
+---
+description: DS↔业务单向边界 — 只消费 eds-desktop，禁止在业务仓库改设计系统
+globs: **/*
+alwaysApply: true
+---
+
+# DS ↔ 业务 单向边界
+
+**模型：eds-desktop 改 → 本 App 实时跟；本 App 改 → 不污染 eds-desktop。**
+
+## 本仓库（work-cregis-desktop）只改什么
+
+| 范围 | 说明 |
+|------|------|
+| `src/**` | 业务页面、路由、场景、业务-only 样式 |
+| `token-allowlist.business.json` | 已批准的非 DS 宿主变量 |
+| `scripts/verify-*.mjs` | 业务校验 |
+
+## 禁止在本仓库改什么
+
+| 禁止 | 原因 |
+|------|------|
+| `../eds-desktop/packages/**` | 设计系统源码，属于 **eds-desktop** 仓库 |
+| `../eds-desktop/apps/showcase/**` | Showcase 混合壳，非客户端 |
+| 把业务逻辑「抄进」DS 包 | 污染设计系统 |
+
+需要改 Popover、token、组件 API 时：**切换到 eds-desktop 仓库改**，或明确告诉用户「这属于 DS，要在 eds-desktop 改」。
+
+## 如何消费 DS（只读）
+
+- `link:../eds-desktop/packages/{tokens,components}`
+- Dev：`vite.config.ts` alias `@eds/desktop-components` → DS **源码**（HMR）
+- Token spec 变更 → dev 自动触发 sibling `build:tokens` → 页面刷新
+
+## 同步方向
+
+- ✅ **eds-desktop → 本项目**：`同步 eds-desktop` = sibling build + 本仓库 `pnpm install`
+- ❌ **本项目 → eds-desktop**：无反向脚本；**禁止** Agent 在本会话写 sibling DS 文件
+
+## 权威约定
+
+`../eds-desktop/.cursor/rules/eds-sync-local-consumers.mdc` · `eds-project.mdc`

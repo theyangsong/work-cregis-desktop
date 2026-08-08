@@ -68,7 +68,7 @@ const listFieldCustomize = computed(() => {
 </script>
 
 <template>
-  <div v-if="dataSource === 'currency' && listFieldCustomize" :class="styles.listFieldCell" @click.stop>
+  <div v-if="dataSource === 'currency' && listFieldCustomize" :class="styles.listFieldCell">
     <TasksListFieldCurrency :customize="listFieldCustomize" />
   </div>
   <div v-else-if="dataSource === 'general-structure' && listFieldCustomize" :class="styles.listFieldCell">

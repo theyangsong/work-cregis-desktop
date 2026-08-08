@@ -135,6 +135,11 @@ export function buildPayoutWalletsColumnValues(rowIndex: number): PayoutWalletsC
   };
 }
 
+/** 出款钱包是否为多签（批量签名须排除）。 */
+export function isMultiSignRow(rowIndex: number): boolean {
+  return buildPayoutWalletsColumnValues(rowIndex).rightLabel === 'Multi-Sign';
+}
+
 /** 金额列副行：转账类型（Manual Transfer / Swap 等）。 */
 export function buildTransferTypeRowValues(rowIndex: number): TransferTypeRowValues {
   const preset = TRANSFER_TYPE_ROW_PRESETS[rowIndex];

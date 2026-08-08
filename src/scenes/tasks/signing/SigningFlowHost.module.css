@@ -1,0 +1,13 @@
+.viewMoreText {
+  margin: 0;
+  white-space: pre-wrap;
+  color: var(--text-base-primary);
+  font-family: inherit;
+  font-size: var(--eds-body-medium-size);
+  line-height: var(--eds-body-medium-line-height);
+}
+
+.shellSuspended {
+  visibility: hidden;
+  pointer-events: none;
+}

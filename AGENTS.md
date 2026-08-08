@@ -44,13 +44,35 @@
 ```
 #app                                    ← Vue 挂载 + flex 居中；不是客户端视口
 └─ .app-preview.desktopTokens          ← EgTooltip container（1280×800 预览框）
-   .effect-container-box               ← 真实 Desktop 客户端边界
-   └─ EgContainer → EgLayout → 业务页
+   ├─ EgContainer → EgLayout → 业务页
+   └─ AppPopupOverlayHost              ← EgPopup 客户端 shell（与 Container 同级）
 ```
 
 - **业务 UI、Desktop token、布局/滚动/浮层边界**：限定在 `.app-preview`（及其子树）内。
 - **`#app`**：仅负责把预览框居中、尺寸 clamp（见 `global.css` 的 `--app-preview-*`）；勿把 `#app` 当作业务根容器写样式或挂载全局浮层。
 - **预览框外圈**（`body` 的 `--cregis-shell-*` 网格/光晕）：模拟浏览器宿主环境，不属于客户端内容。
+
+## EgPopup 挂载（硬约束）
+
+`EgPopup` 根为 `width/height: 100%`，**遮罩范围 = 直接父容器大小**。
+
+| 规则 | 说明 |
+|------|------|
+| 覆盖范围 | 须铺满 **NavBar + ModuleMenu + 主内容** 整块客户端（`.app-preview`） |
+| 挂载位置 | Popup host（如 `AppPopupOverlayHost`）放在 **客户端 shell**，与 `EgContainer` 同级 |
+| 禁止 | 挂在列表页、ModuleMenu 内容区等业务 subtree 内（遮罩会被限制在主内容区） |
+| reminder / verify | `EgPopup` 须 `v-if="open"` 或 shell host 在关闭时卸载，避免空遮罩 |
+| detail 关闭 | `EgDetail @close` → `v-model:open=false`；业务数据清理在 `EgPopup @close`（`.motion-layout` 出场后），关闭动画期间勿 `v-if` 卸掉 detail |
+
+权威说明：`../eds-desktop/.cursor/rules/eds-project.mdc` §7 EgPopup。
+
+## EgDetail · Apply_Item（硬约束）
+
+标准 Detail 行 **必须** `createDetailApplyItemRow(variantId, overrides)`（`@eds/desktop-components`）；挂件由 DS catalog 锁死，**禁止** `showValueCopy: false` 等手改挂件。
+
+- **仅可覆盖**：`key` / `title` / `value` / `tag` / `valueSymbolCrypto` / `valueIcon` / `valueSymbolAvatarName`
+- **映射参考**：`src/scenes/tasks/approval/buildApprovalDetailSections.ts`
+- **详案**：`../eds-desktop/packages/components/docs/detail-apply-item.md` · 约定 `eds-project.mdc` §7
 
 ## 为何 Showcase 看起来对、这里却错？
 

@@ -1,0 +1,58 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.field :global([class*='label']) {
+  display: none;
+}
+
+.fieldWithSectionLabel :global([class*='label']) {
+  display: block;
+}
+
+.confirm {
+  width: 100%;
+}
+
+.minerFee {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.sectionLabel {
+  margin: 0;
+  color: var(--text-base-primary);
+  font-size: var(--eds-body-medium-size);
+  font-weight: var(--eds-body-medium-strong-weight);
+  line-height: var(--eds-body-medium-line-height);
+}
+
+.minerFeeOptions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.minerFeeOption {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-base-primary);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.minerFeeOptionLabel {
+  font-size: var(--eds-body-medium-size);
+  line-height: var(--eds-body-medium-line-height);
+}

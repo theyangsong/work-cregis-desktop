@@ -5,12 +5,14 @@
   align-items: flex-start;
   min-width: 0;
   max-width: 100%;
-  width: 100%;
+  width: auto;
   box-sizing: border-box;
+  margin-left: 0;
 }
 
 .amountPreviewAlignEnd {
   align-items: flex-end;
+  margin-left: auto;
 }
 
 .amountPreviewAlignEnd .amountSecondaryRow {
@@ -46,10 +48,6 @@
 .amountSecondaryRow :global(.eds-anchored-tooltip) {
   flex: 1 1 auto;
   min-width: 0;
-  max-width: 100%;
-}
-
-.amountPreview :global(.eds-anchored-tooltip) {
   max-width: 100%;
 }
 

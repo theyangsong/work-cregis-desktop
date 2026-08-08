@@ -34,13 +34,7 @@ const cregisTasksModuleMenuGroups: ModuleMenuPresetGroup[] = [
     title: 'To Do',
     items: [
       { label: 'Approval', icon: 'eds-stamp' },
-      {
-        label: 'Signing',
-        icon: 'eds-signature-pen',
-        message: '99+',
-        messageType: 'danger',
-        focusBackground: 'same-white',
-      },
+      { label: 'Signing', icon: 'eds-signature-pen' },
     ],
   },
   {

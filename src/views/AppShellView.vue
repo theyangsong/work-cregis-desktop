@@ -14,6 +14,7 @@ import { getCregisModuleMenuGroups } from '@/presets/module-menu/cregisModuleMen
 import { cregisNavBarDeclarativeAttrs } from '@/presets/nav/cregisNavBarDeclarative';
 import { resolveEnglishUiText } from '@/i18n/translateUiText';
 import TasksDataListPage from '@/scenes/tasks/TasksDataListPage.vue';
+import { useTasksModuleMenuGroups } from '@/scenes/tasks/useTasksModuleMenuGroups';
 import {
   DEFAULT_TASKS_DATA_LIST_MENU_ITEM,
   isTasksDataListMenuItem,
@@ -57,7 +58,14 @@ const showPreferencePage = computed(
   () => activeModuleTitle.value === 'Account Settings' && activeModuleMenuItem.value === 'Preference',
 );
 
-const moduleMenuGroups = computed(() => getCregisModuleMenuGroups(activeModuleTitle.value));
+const tasksModuleMenuGroups = useTasksModuleMenuGroups();
+
+const moduleMenuGroups = computed(() => {
+  if (activeModuleTitle.value === 'Tasks') {
+    return tasksModuleMenuGroups.value;
+  }
+  return getCregisModuleMenuGroups(activeModuleTitle.value);
+});
 
 watch(activeModuleTitle, (title) => {
   if (title === 'Tasks') {
