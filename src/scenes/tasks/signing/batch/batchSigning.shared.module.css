@@ -1,0 +1,922 @@
+.batchPopupContent {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.batchPopupContentFill {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
+.batchPopupMeasureHost {
+  position: absolute;
+  width: 100%;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+  clip-path: inset(100% 0 0 0);
+}
+
+.batchPopupMeasureHost > :global(*) {
+  height: auto;
+}
+
+.batchPopupContentDeform {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+.batchPopupContentDeformSummary {
+  flex: 0 0 auto;
+  height: auto;
+}
+
+.batchPopupContentDeformFill {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
+.batchPopupDeformContent {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+.batchPopupPageSummaryFill {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.batchPopupPageFill {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.batchPopupPage {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.batchPopupPageSummary {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.batchPopupSubPage {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: calc(100% + var(--eds-popup-slot-content-inset, var(--spacing-0)) * 2);
+  min-width: 0;
+  min-height: 0;
+  margin:
+    calc(-1 * var(--eds-popup-slot-content-inset, var(--spacing-0)))
+    calc(-1 * var(--eds-popup-slot-content-inset, var(--spacing-0)))
+    calc(-1 * var(--eds-popup-slot-content-inset, var(--spacing-0)));
+}
+
+/** 对齐 EgLayout bodyChromeOverlay：TopTool + DataList + Paginer 同容器叠层。 */
+.batchPopupSubPageBody {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.batchPopupSubPageContent {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.batchPopupSubPageContent > :global(*) {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.batchPopupSubPageTopOverlay {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.batchPopupSubPageTopOverlay > :global(*) {
+  pointer-events: auto;
+}
+
+.batchSummaryStack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.batchSummaryStack + .minerFeeSection {
+  margin-top: var(--spacing-1);
+}
+
+/** Popup Detail-Headline · Figma 2055-57762（scrollBody spacing-2 + 内层 spacing-4 = 24px 边距）。 */
+.detailHeadline {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  align-items: flex-start;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: var(--spacing-4);
+  gap: var(--spacing-5);
+}
+
+.detailHeadlineInner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch;
+  gap: var(--spacing-3);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.detailHeadlineTop {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch;
+  gap: var(--spacing-1-5);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.detailHeadlineTitleGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch;
+  gap: var(--spacing-1);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.detailHeadlineEyebrow {
+  color: var(--text-base-primary);
+  font-size: var(--eds-body-small-strong-size);
+  font-weight: var(--eds-body-small-strong-weight);
+  line-height: var(--eds-body-small-strong-line-height);
+  text-align: left;
+}
+
+.detailHeadlineText {
+  margin: 0;
+  color: var(--text-base-primary);
+  font-size: var(--eds-headline-size);
+  font-weight: var(--eds-headline-weight);
+  line-height: var(--eds-headline-line-height);
+  text-align: left;
+  word-break: break-word;
+}
+
+.detailHeadlineStreamer {
+  align-self: stretch;
+  width: 100%;
+}
+
+.detailHeadlineMenu {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  align-self: stretch;
+  gap: var(--spacing-1);
+  width: 100%;
+  min-width: 0;
+  padding-left: var(--spacing-1);
+  box-sizing: border-box;
+}
+
+.detailHeadlineBid {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  align-items: stretch;
+  align-self: stretch;
+  box-sizing: border-box;
+  width: 3px;
+  padding: var(--spacing-1) 0;
+}
+
+.detailHeadlineBidBar {
+  flex: 1 1 auto;
+  min-height: 0;
+  background: var(--material-card-moderate);
+}
+
+.detailHeadlineMenuBody {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-2);
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.detailHeadlineDataBox {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch;
+  gap: var(--spacing-2);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.detailHeadlineList {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.detailHeadlineRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  align-self: stretch;
+  gap: var(--spacing-1-5);
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--radius-sm);
+  composes: motion-ease is-hover from global;
+}
+
+.detailHeadlineRow:hover {
+  background-color: var(--event-hover);
+}
+
+.detailHeadlineRowLabel {
+  flex-shrink: 0;
+  color: var(--text-base-secondary);
+  font-size: var(--eds-footnote-size);
+  font-weight: var(--eds-footnote-weight);
+  line-height: var(--eds-footnote-line-height);
+}
+
+.detailHeadlineRowValue {
+  flex: 0 1 auto;
+  min-width: 0;
+  color: var(--text-base-primary);
+  font-size: var(--eds-footnote-size);
+  font-weight: var(--eds-footnote-weight);
+  line-height: var(--eds-footnote-line-height);
+}
+
+.detailHeadlineRowValueDanger {
+  color: var(--status-danger);
+}
+
+.detailHeadlineRowLink {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-brand-primary);
+  font-size: var(--eds-footnote-strong-size);
+  font-weight: var(--eds-footnote-strong-weight);
+  line-height: var(--eds-footnote-strong-line-height);
+}
+
+.detailHeadlineDivider,
+.batchPopupSectionDivider {
+  flex-shrink: 0;
+  align-self: stretch;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.detailHeadlineDivider::after {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 0;
+  border-top: var(--stroke-xs) dashed var(--stroke-divider-page);
+}
+
+.batchPopupSectionDivider::after {
+  content: '';
+  display: block;
+  width: 100%;
+  height: var(--stroke-xs);
+  background: var(--stroke-divider-page);
+}
+
+.detailHeadlineDivider {
+  padding: 0 var(--spacing-2);
+}
+
+.batchPopupSectionDivider {
+  padding: 0 var(--spacing-4);
+}
+
+.minerFeeSection {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  gap: var(--spacing-1);
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: var(--spacing-4) var(--spacing-4) var(--spacing-3);
+}
+
+.minerFeeCustomPage {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 0 var(--spacing-4) var(--spacing-4);
+}
+
+.minerFeeSectionTitle {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  color: var(--text-base-primary);
+  font-size: var(--eds-body-small-strong-size);
+  font-weight: var(--eds-body-small-strong-weight);
+  line-height: var(--eds-body-small-strong-line-height);
+}
+
+.ineligibleSection {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  gap: var(--spacing-2);
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: var(--spacing-4) var(--spacing-4) 0;
+}
+
+.batchPopupBody {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  min-height: 0;
+  padding: var(--spacing-5);
+  box-sizing: border-box;
+  overflow: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.batchPopupBody::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.batchPopupShell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.batchPopupFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-2);
+  padding: var(--spacing-4) var(--spacing-5);
+  border-top: 1px solid var(--stroke-base-quaternary);
+}
+
+.batchSectionTitle {
+  margin: 0;
+  color: var(--text-base-primary);
+  font-size: var(--eds-body-medium-strong-size);
+  font-weight: var(--eds-body-medium-strong-weight);
+  line-height: var(--eds-body-medium-strong-line-height);
+}
+
+.batchMuted {
+  margin: 0;
+  color: var(--text-base-primary);
+  font-size: var(--eds-footnote-size);
+  font-weight: var(--eds-footnote-weight);
+  line-height: var(--eds-footnote-line-height);
+}
+
+.batchLinkButton {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-brand-primary);
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+}
+
+.batchStatRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.batchDivider {
+  margin: 0;
+}
+
+.batchDetailDataList {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.batchDetailDataListFill {
+  flex: 1 1 auto;
+  flex-shrink: 1;
+  min-height: 0;
+  min-width: 0;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.batchDetailDataList :global(.eds-data-list) {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+.batchDetailDataListCell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-05);
+  width: 100%;
+  min-width: 0;
+}
+
+.batchDetailWalletComboCell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-05);
+  width: 100%;
+  min-width: 0;
+}
+
+.batchDetailAmountCell {
+  align-items: flex-end;
+}
+
+.ineligibleReasonFilterHeader {
+  justify-content: flex-end;
+  width: 100%;
+  min-width: 0;
+}
+
+.ineligibleReasonFilterLabelWrap {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.ineligibleReasonFilterLabel {
+  display: block;
+  width: 100%;
+  text-align: right;
+}
+
+.batchIneligibleReasonCell {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  min-width: 0;
+}
+
+.batchIneligibleReasonCellText {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--eds-body-medium-size);
+  font-weight: var(--eds-body-medium-weight);
+  line-height: var(--eds-body-medium-line-height);
+}
+
+.batchProgressStatusCell {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  min-width: 0;
+}
+
+.batchProgressStatusField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-05);
+  align-items: flex-end;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.batchProgressStatusField :global(.eds-tag) {
+  max-width: 100%;
+}
+
+.progressStatusHeader {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  min-width: 0;
+}
+
+.progressStatusHeaderLabel {
+  display: block;
+  width: 100%;
+  text-align: right;
+}
+
+.batchProgressAmountCell :global([class*='cryptoSymbolPlain']) {
+  display: none;
+}
+
+.batchDetailPanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  width: 100%;
+  min-width: 0;
+}
+
+.batchDetailPanelFill {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.batchDetailListRegion {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.batchDetailBodyChromeOverlay {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.batchDetailPaginerOverlay {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.batchDetailPaginerOverlay > :global(*) {
+  pointer-events: auto;
+}
+
+.batchPopupPaginerWrap {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.batchPopupPaginerBar {
+  width: 100%;
+  min-width: 0;
+}
+
+.batchPopupPaginerWrapWithActions :global(.nextPage) {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+}
+
+.batchPopupPaginerWrapWithActions .batchPopupPaginerBar :global(.nextPage) {
+  width: auto;
+}
+
+.batchPopupPaginerActions {
+  position: absolute;
+  right: var(--spacing-4);
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  height: var(--scale-13);
+  pointer-events: none;
+}
+
+.batchPopupPaginerActions > :global(*) {
+  pointer-events: auto;
+}
+
+.batchPopupPaginerBar :global(.nextPage) {
+  width: 100%;
+}
+
+.batchPopupPaginerBar > :global(.eds-frosted-page-chrome) {
+  padding-inline: var(--spacing-4) var(--spacing-4);
+}
+
+.reasonsTabRoot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  width: 100%;
+  min-width: 0;
+}
+
+.reasonsTabRootFill {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  padding-top: var(--eds-layout-chrome-inset-top, 0);
+  padding-inline: var(--spacing-4);
+  box-sizing: border-box;
+}
+
+.reasonsTabPanel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+}
+
+.reasonsTabPanelFill {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  --eds-layout-chrome-inset-top: 0;
+}
+
+.currencyRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-4);
+  padding: var(--spacing-3) 0;
+  border-bottom: 1px solid var(--stroke-base-quaternary);
+}
+
+.currencyRow:last-child {
+  border-bottom: 0;
+}
+
+.currencyMeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-05);
+  min-width: 0;
+}
+
+.currencyLabel {
+  color: var(--text-base-primary);
+  font-size: var(--eds-body-medium-size);
+  font-weight: var(--eds-body-medium-weight);
+  line-height: var(--eds-body-medium-line-height);
+}
+
+.currencyCount {
+  color: var(--text-base-secondary);
+  font-size: var(--eds-footnote-size);
+  font-weight: var(--eds-footnote-weight);
+  line-height: var(--eds-footnote-line-height);
+}
+
+.currencySymbols {
+  color: var(--text-base-tertiary);
+  font-size: var(--eds-footnote-size);
+  font-weight: var(--eds-footnote-weight);
+  line-height: var(--eds-footnote-line-height);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  word-break: break-word;
+}
+
+
+.flotationHeader {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: var(--spacing-2) var(--spacing-3) 0;
+  background: var(--material-hide);
+  isolation: isolate;
+  transition: var(--motion-recipe-scroll-fade-background);
+}
+
+.flotationHeaderContent {
+  position: relative;
+  z-index: 1;
+  padding-bottom: var(--spacing-1);
+}
+
+.flotationHeaderDivider {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  align-self: stretch;
+  width: 100%;
+}
+
+.flotationHeaderActive {
+  background: transparent;
+}
+
+.flotationHeaderActive::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: var(--effect-mask);
+  -webkit-backdrop-filter: var(--eds-blur-bg);
+  backdrop-filter: var(--eds-blur-bg);
+  pointer-events: none;
+}
+
+.networkRowGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-025);
+  width: 100%;
+  min-width: 0;
+}
+
+.networkRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: var(--spacing-2) var(--spacing-3);
+  border: none;
+  border-radius: var(--radius-sm);
+  background-color: var(--material-hide);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  composes: motion-ease is-hover from global;
+}
+
+.networkRow:hover {
+  background-color: var(--event-hover);
+}
+
+/**
+ * 标注 --avatar-md（32）。
+ * 宿主须写死宽高 + overflow；EgCrypto fit 铺满宿主。
+ */
+.networkIcon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--avatar-md);
+  height: var(--avatar-md);
+  max-width: var(--avatar-md);
+  max-height: var(--avatar-md);
+  overflow: hidden;
+}
+
+.networkIcon :global([role='img']) {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.networkIcon :global(.eds-crypto),
+.networkIcon :global(svg) {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.networkMeta {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--spacing-05);
+  min-width: 0;
+}
+
+.networkTitleRow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.networkTitle {
+  flex: 0 1 auto;
+  min-width: 0;
+  color: var(--text-base-primary);
+  font-size: var(--eds-body-medium-size);
+  font-weight: var(--eds-body-medium-weight);
+  line-height: var(--eds-body-medium-line-height);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.networkTag {
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.networkSubtitle {
+  color: var(--text-base-secondary);
+  font-size: var(--eds-footnote-size);
+  font-weight: var(--eds-footnote-weight);
+  line-height: var(--eds-footnote-line-height);
+}
+
+.networkSubtitleCount {
+  color: var(--text-base-secondary);
+  font-weight: var(--eds-footnote-strong-weight);
+}

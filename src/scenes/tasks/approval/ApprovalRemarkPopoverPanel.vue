@@ -27,11 +27,14 @@ const props = withDefaults(
     feedbackKey?: string;
     /** 为 true 时不展示「仅备注」fallback（多签等待页 Sign 等）。 */
     requireMinerFee?: boolean;
+    /** 为 true 时隐藏面板内确认按钮，由外层 Popup 工具栏承接。 */
+    hideInlineConfirm?: boolean;
   }>(),
   {
     placeholderKey: 'Please enter',
     feedbackKey: 'Optional, Max. 256 characters',
     requireMinerFee: false,
+    hideInlineConfirm: false,
   },
 );
 
@@ -46,6 +49,9 @@ const { ui } = useAppI18n();
 
 const remarkFieldRef = ref<HTMLElement | null>(null);
 const evmPanelRef = ref<InstanceType<typeof MinerFeeEvmPopoverPanel> | null>(null);
+const tonLikePanelRef = ref<InstanceType<typeof MinerFeeTonLikePanel> | null>(null);
+const tronPanelRef = ref<InstanceType<typeof MinerFeeTronPanel> | null>(null);
+const minerFeeScreen = ref<MinerFeeScreen>('list');
 
 const resolvedProfile = computed<MinerFeeProfile | null>(() => {
   if (props.minerFeeProfile) {
@@ -96,6 +102,7 @@ onMounted(async () => {
 });
 
 function onMinerFeeScreenChange(screen: MinerFeeScreen) {
+  minerFeeScreen.value = screen;
   emit('miner-fee-screen-change', screen);
 }
 
@@ -108,11 +115,62 @@ function onRemarkOnlyConfirm() {
 }
 
 function resetMinerFeeFlow() {
+  minerFeeScreen.value = 'list';
   evmPanelRef.value?.resetMinerFeeFlow();
 }
 
+function attemptCancelCustom() {
+  evmPanelRef.value?.attemptCancelCustom();
+}
+
+function attemptSaveCustom() {
+  evmPanelRef.value?.attemptSaveCustom();
+}
+
+function attemptConfirm() {
+  if (resolvedProfile.value?.kind === 'evm') {
+    evmPanelRef.value?.attemptConfirm();
+    return;
+  }
+  if (resolvedProfile.value?.kind === 'ton-xrp') {
+    tonLikePanelRef.value?.attemptConfirm();
+    return;
+  }
+  if (resolvedProfile.value?.kind === 'tron') {
+    tronPanelRef.value?.attemptConfirm();
+    return;
+  }
+  onRemarkOnlyConfirm();
+}
+
+function readConfirmDisabled(
+  disabled: boolean | { value: boolean } | undefined,
+): boolean {
+  if (typeof disabled === 'boolean') {
+    return disabled;
+  }
+  return disabled?.value ?? true;
+}
+
+const confirmDisabled = computed(() => {
+  if (resolvedProfile.value?.kind === 'evm') {
+    return readConfirmDisabled(evmPanelRef.value?.confirmDisabled);
+  }
+  return false;
+});
+
+const isMinerFeeCustomScreen = computed(
+  () => resolvedProfile.value?.kind === 'evm' && minerFeeScreen.value === 'custom',
+);
+
 defineExpose({
   resetMinerFeeFlow,
+  attemptConfirm,
+  attemptCancelCustom,
+  attemptSaveCustom,
+  confirmDisabled,
+  minerFeeScreen,
+  isMinerFeeCustomScreen,
 });
 </script>
 
@@ -125,6 +183,7 @@ defineExpose({
       :remark="remarkModel"
       :placeholder-key="placeholderKey"
       :feedback-key="feedbackKey"
+      :hide-inline-confirm="hideInlineConfirm"
       @update:remark="remarkModel = $event"
       @miner-fee-screen-change="onMinerFeeScreenChange"
       @confirm="onMinerFeeConfirm"
@@ -132,20 +191,24 @@ defineExpose({
 
     <MinerFeeTonLikePanel
       v-else-if="resolvedProfile.kind === 'ton-xrp'"
+      ref="tonLikePanelRef"
       :profile="resolvedProfile"
       :remark="remarkModel"
       :placeholder-key="placeholderKey"
       :feedback-key="feedbackKey"
+      :hide-inline-confirm="hideInlineConfirm"
       @update:remark="remarkModel = $event"
       @confirm="onMinerFeeConfirm"
     />
 
     <MinerFeeTronPanel
       v-else-if="resolvedProfile.kind === 'tron'"
+      ref="tronPanelRef"
       :profile="resolvedProfile"
       :remark="remarkModel"
       :placeholder-key="placeholderKey"
       :feedback-key="feedbackKey"
+      :hide-inline-confirm="hideInlineConfirm"
       @update:remark="remarkModel = $event"
       @confirm="onMinerFeeConfirm"
     />
@@ -173,6 +236,7 @@ defineExpose({
     </div>
 
     <EgButton
+      v-if="!hideInlineConfirm"
       :class="styles.confirm"
       tone="decor"
       variant="solid"

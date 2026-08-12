@@ -7,6 +7,8 @@ import {
   EgFlotationMenuItem,
   EgFlotationTrigger,
 } from '@eds/desktop-components';
+import comboActionStyles from '@eds/desktop-components/molecules/combo/ComboAction.module.css';
+import chromeScrimStyles from '@eds/desktop-components/styles/popupChromeScrim.module.css';
 import {
   SIGNING_FOOTER_LATENCY_MENU_TITLE,
   signingFooterLatencyNetworkItems,
@@ -20,12 +22,19 @@ const props = withDefaults(
     scrollOverflows?: boolean;
     showActions?: boolean;
     defaultLatencyIndex?: number;
+    /** true：module 分割线常驻（对齐 PopupCustomSlotChrome / 批处理确认弹窗）。 */
+    toolbarDividerPinned?: boolean;
   }>(),
   {
     scrollOverflows: false,
     showActions: false,
     defaultLatencyIndex: 0,
+    toolbarDividerPinned: true,
   },
+);
+
+const showToolbarDivider = computed(
+  () => props.scrollOverflows || props.toolbarDividerPinned,
 );
 
 const selectedLatencyIndex = ref(props.defaultLatencyIndex);
@@ -50,16 +59,22 @@ function selectLatencyNetwork(index: number, close: () => void) {
   <footer
     :class="[
       styles.toolbar,
-      styles.toolbarScrim,
-      scrollOverflows && styles.toolbarScrimActive,
+      !scrollOverflows && styles.toolbarSolid,
+      chromeScrimStyles.root,
+      scrollOverflows && chromeScrimStyles.active,
     ]"
   >
-    <div :class="styles.toolbarScrimContent">
+    <div :class="chromeScrimStyles.content">
       <div :class="styles.toolbarPage">
         <EgDivider
-          :class="styles.toolbarDivider"
+          :class="[
+            comboActionStyles.divider,
+            comboActionStyles.dividerAnimated,
+            !showToolbarDivider && comboActionStyles.dividerAnimatedHidden,
+          ]"
           type="module"
           direction="horizontal"
+          :hide="!showToolbarDivider"
         />
         <div :class="styles.toolbarBar">
           <div :class="styles.toolbarStart">

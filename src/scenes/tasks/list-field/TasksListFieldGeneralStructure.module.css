@@ -33,6 +33,23 @@
   max-width: 100%;
 }
 
+.titleTextSlot {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.titleTextSlot > span {
+  display: block;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.titleRow :global(.eds-tag) {
+  flex-shrink: 0;
+}
+
 .singleStack {
   display: flex;
   flex-direction: column;

@@ -43,7 +43,7 @@ const statusTitle = computed(() =>
 const statusSubtitle = computed(() => {
   const template = ui('Need {required} members to participate, {joined} joined');
   return template
-    .replace('{required}', formatGroupedNumber(props.model.thresholdRequired))
+    .replace('{required}', formatGroupedNumber(props.model.thresholdTotal))
     .replace('{joined}', formatGroupedNumber(props.model.joinedCount));
 });
 
@@ -133,13 +133,30 @@ watch([memberListRef, () => props.model.members.length], () => {
         <section :class="styles.main">
           <div :class="styles.statusBlock">
             <div :class="styles.statusIconShell">
-              <EgRipplePulse
-                :class="styles.statusIconRipple"
-                :active="phase === 'ready'"
-              />
-              <div :class="styles.statusIcon">
-                <EgIcon name="eds-tick-fill" size="md" />
-              </div>
+              <template v-if="phase === 'ready'">
+                <EgRipplePulse
+                  :class="styles.statusIconRipple"
+                  active
+                />
+                <div :class="[styles.statusIcon, styles.statusIconReady]">
+                  <EgIcon
+                    name="eds-tick-fill"
+                    size="md"
+                  />
+                </div>
+              </template>
+              <template v-else>
+                <EgRipplePulse
+                  :class="[styles.statusIconRipple, styles.statusIconRippleWaiting]"
+                  active
+                />
+                <div :class="styles.statusIconWaiting">
+                  <EgIcon
+                    name="eds-time-wait-fill"
+                    size="md"
+                  />
+                </div>
+              </template>
             </div>
             <div :class="styles.statusCopy">
               <h3 :class="styles.statusTitle">{{ statusTitle }}</h3>
@@ -188,6 +205,13 @@ watch([memberListRef, () => props.model.members.length], () => {
 
               <div :class="[styles.memberBody, member.muted && styles.memberBodyMuted]">
                 <div :class="styles.memberTitleRow">
+                  <EgTag
+                    v-if="member.isCurrentUser"
+                    size="sm"
+                    system-type="stroke-solid"
+                  >
+                    {{ ui('Me') }}
+                  </EgTag>
                   <span :class="styles.memberName">{{ member.name }}</span>
                   <EgTag
                     v-if="member.isInitiator"
@@ -197,7 +221,7 @@ watch([memberListRef, () => props.model.members.length], () => {
                     {{ ui('Initiator') }}
                   </EgTag>
                   <EgTag
-                    v-if="member.deviceLabel"
+                    v-if="member.joined && member.deviceLabel"
                     size="sm"
                     system-type="stroke-subtle"
                   >
@@ -208,8 +232,7 @@ watch([memberListRef, () => props.model.members.length], () => {
               </div>
 
               <EgTag
-                v-if="member.joined"
-                :class="styles.memberJoined"
+                :class="styles.memberStatusTag"
                 family="status"
                 size="lg"
                 status="success"
@@ -221,7 +244,7 @@ watch([memberListRef, () => props.model.members.length], () => {
 
           <SigningFooterLatencyToolbar
             :scroll-overflows="scrollOverflows"
-            :show-actions="phase === 'ready'"
+            show-actions
           >
             <template #actions>
               <slot name="actions" />

@@ -1,5 +1,16 @@
 import { buildAmountRowValues } from './tasksListFieldAmountRowData';
+import { buildStatusRowValues } from './tasksListFieldStatusRowData';
 import { buildTransferTypeRowValues } from './tasksListFieldBusinessTypeRowData';
+
+const COUNTDOWN_SUPPRESSED_STATUS_LABELS = new Set([
+  'Signature Passed',
+  'Signature Reject',
+]);
+
+function shouldShowAmountCountdown(rowIndex: number, menuItem?: string): boolean {
+  const status = buildStatusRowValues(rowIndex, menuItem);
+  return !COUNTDOWN_SUPPRESSED_STATUS_LABELS.has(status.label);
+}
 
 /** Showcase list-field-amount customizeDefaults — Data List 金额列。 */
 export const tasksListFieldAmountDefaults: Record<string, unknown> = {
@@ -19,6 +30,7 @@ export function buildTasksListFieldAmountCustomize(
   columnMinWidth = '',
   rowIndex?: number,
   columnAlign: 'left' | 'center' | 'right' = 'left',
+  menuItem?: string,
 ): Record<string, unknown> {
   const customize = { ...tasksListFieldAmountDefaults };
   const minWidth = columnMinWidthForAmountCustomize(columnMinWidth);
@@ -36,7 +48,10 @@ export function buildTasksListFieldAmountCustomize(
 
     const transferType = buildTransferTypeRowValues(rowIndex);
     customize.secondaryValue = transferType.value;
-    if (transferType.showCountdown) {
+    if (
+      transferType.showCountdown
+      && shouldShowAmountCountdown(rowIndex, menuItem)
+    ) {
       customize.showCountdown = true;
       customize.countdownMinutes = transferType.countdownMinutes;
       customize.countdownSeconds = transferType.countdownSeconds;

@@ -85,11 +85,15 @@
 }
 
 .statusIconShell {
+  /* icon-lg (scale-5) + spacing-2 × 2 → 与就绪 content-box 外径一致 */
+  --status-icon-outer-size: calc(9 * var(--scale-base));
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: var(--spacing-3);
+  width: var(--status-icon-outer-size);
+  height: var(--status-icon-outer-size);
+  margin-bottom: var(--spacing-4);
 }
 
 .statusIconRipple {
@@ -104,16 +108,50 @@
   pointer-events: none;
 }
 
+.statusIconRippleWaiting {
+  --ripple-pulse-color: var(--status-warning);
+}
+
 .statusIcon {
   position: relative;
   z-index: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: var(--icon-lg);
+  height: var(--icon-lg);
   padding: var(--spacing-2);
   border-radius: 50%;
+  box-sizing: content-box;
+}
+
+.statusIconReady {
   background: var(--status-success);
   color: var(--material-same-white-primary);
+}
+
+.statusIconWaiting {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--status-icon-outer-size);
+  height: var(--status-icon-outer-size);
+  box-sizing: border-box;
+  padding: 0;
+  border: 3px solid var(--status-warning);
+  border-radius: 50%;
+  background: var(--status-warning);
+  color: var(--material-same-white-primary);
+}
+
+.statusIconMotionProcessing {
+  --motion-processing-color: var(--material-same-white-primary);
+  --motion-processing-size: 9px;
+  --motion-processing-stroke: 1.6px;
+  flex-shrink: 0;
 }
 
 .statusTitle {
@@ -281,7 +319,7 @@
   white-space: nowrap;
 }
 
-.memberJoined {
+.memberStatusTag {
   flex-shrink: 0;
 }
 
@@ -329,7 +367,6 @@
   z-index: 3;
   display: inline-flex;
   padding: var(--spacing-0);
-  cursor: pointer;
 }
 
 .systemBarClose :global(.eds-icon-button) {

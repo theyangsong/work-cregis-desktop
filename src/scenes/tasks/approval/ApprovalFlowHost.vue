@@ -40,14 +40,8 @@ const detailShellSuspended = computed(
   () => props.flow.verifyOpen.value || props.flow.viewMoreOpen.value,
 );
 
-const viewMoreShellSuspended = computed(() => props.flow.verifyOpen.value);
-
 function onVerifyClosed(accepted: boolean) {
   props.flow.onVerifyPopupClosed(accepted);
-}
-
-function onViewMoreClosed() {
-  props.flow.viewMoreOpen.value = false;
 }
 </script>
 
@@ -70,20 +64,18 @@ function onViewMoreClosed() {
     @next="flow.navigateRelative(1)"
     @pass-confirm="flow.onDetailPassConfirm()"
     @reject-confirm="flow.onDetailRejectConfirm()"
-    @view-more-sender="flow.openViewMore('sender')"
-    @view-more-receiver="flow.openViewMore('receiver')"
+    @view-more="flow.openViewMore"
+  />
+
+  <AddressViewMoreReminderPopup
+    v-model:open="viewMoreOpen"
+    :shell-suspended="verifyOpen"
+    :text="flow.viewMoreText.value"
   />
 
   <TradePasswordVerifyPopup
     v-model:open="verifyOpen"
     :submit="(code) => flow.onVerifyConfirm(code)"
     @closed="onVerifyClosed"
-  />
-
-  <AddressViewMoreReminderPopup
-    v-model:open="viewMoreOpen"
-    :shell-suspended="viewMoreShellSuspended"
-    :text="flow.viewMoreText.value"
-    @closed="onViewMoreClosed"
   />
 </template>

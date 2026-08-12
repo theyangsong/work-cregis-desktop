@@ -1,3 +1,9 @@
+import { buildTransferTypeRowValues } from './tasksListFieldBusinessTypeRowData';
+import {
+  isWaasPayoutTransferType,
+  resolveWaasProjectNameForRow,
+} from '../shared/waasProjectNames';
+
 export type GeneralStructureRowValues = {
   value: string;
   secondaryValue: string;
@@ -107,6 +113,19 @@ function buildRandomGeneralStructureRowValues(rowIndex: number): GeneralStructur
 }
 
 export function buildGeneralStructureRowValues(rowIndex: number): GeneralStructureRowValues {
+  const transferType = buildTransferTypeRowValues(rowIndex);
   const preset = GENERAL_STRUCTURE_ROW_PRESETS[rowIndex];
-  return preset ?? buildRandomGeneralStructureRowValues(rowIndex);
+  const base = preset ?? buildRandomGeneralStructureRowValues(rowIndex);
+
+  if (isWaasPayoutTransferType(transferType.value)) {
+    return {
+      ...base,
+      value: resolveWaasProjectNameForRow(rowIndex),
+      showLeftTag: false,
+      leftLabel: undefined,
+      leftSystemType: undefined,
+    };
+  }
+
+  return base;
 }

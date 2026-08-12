@@ -12,6 +12,7 @@ import './styles/desktop-components-scope.css';
 import { initAppLocale } from './composables/useAppLocale';
 import App from './App.vue';
 import { router } from './router';
+import { installPageCopyGuard } from './utils/preventPageCopy';
 import './styles/global.css';
 import './styles/cregis-theme.css';
 
@@ -19,6 +20,7 @@ initLiquidGlass();
 initEdsDesktopRuntime();
 initThemeProvider();
 initAppLocale();
+installPageCopyGuard();
 
 createApp(App).use(router).mount('#app');
 

@@ -29,7 +29,6 @@
   z-index: 3;
   display: inline-flex;
   padding: var(--spacing-0);
-  cursor: pointer;
 }
 
 .systemBarClose :global(.eds-icon-button) {
@@ -96,37 +95,11 @@
   overflow: visible;
   border-bottom-right-radius: var(--radius-md);
   border-bottom-left-radius: var(--radius-md);
-  background: var(--box-page);
   transition: var(--motion-recipe-scroll-fade-background);
 }
 
-/* 对齐 Detail · popupChromeScrim.module.css */
-.toolbarScrim {
-  position: relative;
-  isolation: isolate;
-}
-
-.toolbarScrimActive {
-  background: transparent;
-}
-
-.toolbarScrimActive::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  border-bottom-left-radius: inherit;
-  border-bottom-right-radius: inherit;
-  background: var(--effect-mask);
-  -webkit-backdrop-filter: var(--eds-blur-bg);
-  backdrop-filter: var(--eds-blur-bg);
-  pointer-events: none;
-}
-
-.toolbarScrimContent {
-  position: relative;
-  z-index: 1;
-  overflow: visible;
+.toolbarSolid {
+  background: var(--box-page);
 }
 
 .toolbarPage {
@@ -136,14 +109,6 @@
   width: 100%;
   min-width: 0;
   overflow: visible;
-}
-
-/* 对齐 Detail · ComboAction.module.css divider */
-.toolbarDivider {
-  flex-shrink: 0;
-  width: 100%;
-  transition: var(--motion-recipe-scroll-fade);
-  opacity: 1;
 }
 
 .latencyFlotation {

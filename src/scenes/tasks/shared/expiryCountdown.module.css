@@ -1,0 +1,18 @@
+.countdown {
+  font-size: var(--eds-footnote-size);
+  font-weight: var(--eds-footnote-weight);
+  line-height: var(--eds-footnote-line-height);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.countdownTime {
+  display: inline-block;
+  color: var(--status-danger);
+  font-weight: var(--weight-medium);
+  min-width: 31px;
+}
+
+.countdownSuffix {
+  color: var(--text-base-secondary);
+}

@@ -3,15 +3,25 @@ import {
   type DetailItemData,
   type DetailSectionData,
 } from '@eds/desktop-components';
-import { formatGroupedAmountText, formatGroupedNumber } from '@/utils/formatGroupedDisplay';
 import { DATA_LIST_FIGMA_COLUMNS } from '../tasksDataListPageData';
+import {
+  buildDetailAddressSideItem,
+} from '../shared/buildDetailAddressSideItems';
+import { buildDetailCurrencyAmountItems } from '../shared/buildDetailCurrencyAmountItems';
+import {
+  buildDetailTransactionHashItem,
+  buildDetailTransactionStatusItem,
+} from '../shared/buildDetailTransactionOutcomeItems';
+import {
+  buildPayoutWalletDetailItem,
+  buildStrategyDetailItem,
+} from '../shared/buildDetailWalletStrategyItems';
+import { buildExpiryDetailItem } from '../shared/buildDetailExpiryItem';
 import type { ApprovalDetail } from './types';
 
 const DETAIL_ITEM_TITLES = {
-  amount: DATA_LIST_FIGMA_COLUMNS.amount.label,
-  businessType: DATA_LIST_FIGMA_COLUMNS.amount.secondaryLabel ?? 'Type of Business',
   expiry: 'Expiry',
-  appliedAt: DATA_LIST_FIGMA_COLUMNS.sortable.secondaryLabel ?? 'Created Time',
+  appliedAt: DATA_LIST_FIGMA_COLUMNS.sortable.secondaryLabel ?? 'Application Time',
   payoutWallet: DATA_LIST_FIGMA_COLUMNS.businessType.label,
   sender: 'From Address',
   receiver: DATA_LIST_FIGMA_COLUMNS.combo.secondaryLabel ?? 'To Address',
@@ -25,24 +35,14 @@ function buildSenderItem(
   translate: (key: string) => string,
 ): DetailItemData {
   const primary = detail.senders[0];
-  const address = primary?.address ?? detail.senderSummary;
-
-  if (detail.senderCount > 1) {
-    /** §7 例外：多地址「View more」暂无 Apply_Item 变体；仅展示字段 + Link。 */
-    return {
-      key: 'sender',
-      title: translate(DETAIL_ITEM_TITLES.sender),
-      value: `${address} (${formatGroupedNumber(detail.senderCount)})`,
-      showValueLink: true,
-      valueLinkLabel: translate('View more'),
-    };
-  }
-
-  return createDetailApplyItemRow('sender', {
+  return buildDetailAddressSideItem('sender', {
     key: 'sender',
     title: translate(DETAIL_ITEM_TITLES.sender),
-    value: address,
-    tag: primary?.alias || undefined,
+    primary,
+    summary: detail.senderSummary,
+    count: detail.senderCount,
+    entries: detail.senders,
+    expandLabel: translate('Expand {count}'),
   });
 }
 
@@ -51,24 +51,14 @@ function buildReceiverItem(
   translate: (key: string) => string,
 ): DetailItemData {
   const primary = detail.receivers[0];
-  const address = primary?.address ?? detail.receiverSummary;
-
-  if (detail.receiverCount > 1) {
-    /** §7 例外：多地址「View more」暂无 Apply_Item 变体；仅展示字段 + Link。 */
-    return {
-      key: 'receiver',
-      title: translate(DETAIL_ITEM_TITLES.receiver),
-      value: `${address} (${formatGroupedNumber(detail.receiverCount)})`,
-      showValueLink: true,
-      valueLinkLabel: translate('View more'),
-    };
-  }
-
-  return createDetailApplyItemRow('receiver', {
+  return buildDetailAddressSideItem('receiver', {
     key: 'receiver',
     title: translate(DETAIL_ITEM_TITLES.receiver),
-    value: address,
-    tag: primary?.alias || undefined,
+    primary,
+    summary: detail.receiverSummary,
+    count: detail.receiverCount,
+    entries: detail.receivers,
+    expandLabel: translate('Expand {count}'),
   });
 }
 
@@ -77,27 +67,17 @@ export function buildApprovalDetailSections(
   translate: (key: string) => string = (key) => key,
 ): DetailSectionData[] {
   const transactionItems: DetailItemData[] = [
-    createDetailApplyItemRow('amount', {
-      key: 'amount',
-      title: translate(DETAIL_ITEM_TITLES.amount),
-      value: formatGroupedAmountText(detail.amountDisplay),
-    }),
-    createDetailApplyItemRow('type', {
-      key: 'business-type',
-      title: translate(DETAIL_ITEM_TITLES.businessType),
-      value: translate(detail.businessType),
-    }),
+    ...buildDetailCurrencyAmountItems(detail, translate),
   ];
 
-  if (detail.expiryDisplay) {
-    const [countdownTime = detail.expiryDisplay] = detail.expiryDisplay.split(' Until Expiry');
-    transactionItems.push(
-      createDetailApplyItemRow('text', {
-        key: 'expiry',
-        title: translate(DETAIL_ITEM_TITLES.expiry),
-        value: `${countdownTime.trim()} ${translate('Until Expiry')}`.trim(),
-      }),
-    );
+  const transactionStatusItem = buildDetailTransactionStatusItem(detail, translate);
+  if (transactionStatusItem) {
+    transactionItems.push(transactionStatusItem);
+  }
+
+  const expiryItem = buildExpiryDetailItem(detail, translate);
+  if (expiryItem) {
+    transactionItems.push(expiryItem);
   }
 
   transactionItems.push(
@@ -106,18 +86,22 @@ export function buildApprovalDetailSections(
       title: translate(DETAIL_ITEM_TITLES.appliedAt),
       value: detail.appliedAtDisplay,
     }),
-    createDetailApplyItemRow('text', {
-      key: 'payout-wallet',
-      title: translate(DETAIL_ITEM_TITLES.payoutWallet),
-      value: detail.payoutWallet,
-    }),
+    buildPayoutWalletDetailItem(
+      detail,
+      translate,
+      DETAIL_ITEM_TITLES.payoutWallet,
+    ),
     buildSenderItem(detail, translate),
     buildReceiverItem(detail, translate),
-    createDetailApplyItemRow('text', {
-      key: 'strategy',
-      title: translate(DETAIL_ITEM_TITLES.strategy),
-      value: detail.strategy,
-    }),
+  );
+
+  const transactionHashItem = buildDetailTransactionHashItem(detail, translate);
+  if (transactionHashItem) {
+    transactionItems.push(transactionHashItem);
+  }
+
+  transactionItems.push(
+    buildStrategyDetailItem(detail, translate, DETAIL_ITEM_TITLES.strategy),
     createDetailApplyItemRow('tripartite-number', {
       key: 'third-party',
       title: translate(DETAIL_ITEM_TITLES.thirdParty),
@@ -134,7 +118,6 @@ export function buildApprovalDetailSections(
     {
       key: 'transaction',
       title: translate('Transaction'),
-      showDivider: true,
       items: transactionItems,
     },
   ];

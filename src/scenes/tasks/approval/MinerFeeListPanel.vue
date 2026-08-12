@@ -10,7 +10,8 @@ import {
   EgLink,
 } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
-import type { MinerFeeCustomSaved } from './minerFeeCustomTypes';
+import type { MinerFeeCustomDraft, MinerFeeCustomSaved } from './minerFeeCustomTypes';
+import MinerFeeCustomAnchoredPopover from './MinerFeeCustomAnchoredPopover.vue';
 import {
   minerFeeSpeedCryptoRangeKey,
   minerFeeSpeedUsdRangeKey,
@@ -42,9 +43,16 @@ const props = withDefaults(
     confirmDisabled: boolean;
     symbol?: string;
     measureOnly?: boolean;
+    hideInlineConfirm?: boolean;
+    customViaAnchoredPopover?: boolean;
+    customDraft?: MinerFeeCustomDraft;
+    customPopoverBoundary?: string;
   }>(),
   {
     symbol: 'ETH',
+    hideInlineConfirm: false,
+    customViaAnchoredPopover: false,
+    customPopoverBoundary: '.eds-popup',
   },
 );
 
@@ -52,12 +60,16 @@ const emit = defineEmits<{
   'update:remark': [value: string];
   'select-miner-fee': [optionId: MinerFeeOptionId];
   'open-custom': [];
+  'save-custom': [draft: MinerFeeCustomDraft];
+  'custom-popover-open': [];
+  'custom-popover-dismiss': [];
   confirm: [];
 }>();
 
 const { ui } = useAppI18n();
 
 const rootRef = ref<HTMLElement | null>(null);
+const customPopoverExpanded = ref(false);
 
 const shellVariant = computed(() => resolveMinerFeeEvmShellVariant(props.symbol));
 
@@ -92,18 +104,31 @@ function openSavedCustom() {
   emit('open-custom');
 }
 
+function openSavedCustomViaPopover(onClick: () => void) {
+  onClick();
+}
+
 defineExpose({
   getMeasureEl: () => rootRef.value,
 });
 </script>
 
 <template>
-  <div ref="rootRef" :class="styles.minerFeeListPage">
+  <div
+    ref="rootRef"
+    :class="[
+      styles.minerFeeListPage,
+      hideInlineConfirm && styles.minerFeeListPagePopupToolbar,
+    ]"
+  >
     <div :class="styles.minerFeeRoot" data-miner-fee-screen="list">
       <section :class="styles.minerFee">
         <div
           role="radiogroup"
-          :class="styles.minerFeeOptions"
+          :class="[
+            styles.minerFeeOptions,
+            customPopoverExpanded && styles.minerFeeOptionsPopoverOpen,
+          ]"
           :aria-label="ui('Gas fee')"
         >
           <button
@@ -129,6 +154,72 @@ defineExpose({
             <span :class="styles.minerFeeUsdRange">{{ ui(option.usdRangeKey) }}</span>
           </button>
 
+          <div
+            v-if="customViaAnchoredPopover && !measureOnly"
+            :class="styles.minerFeeCustomPopoverHost"
+          >
+            <MinerFeeCustomAnchoredPopover
+              :draft="customDraft"
+              :symbol="symbol"
+              :boundary-selector="customPopoverBoundary"
+              @open="customPopoverExpanded = true; emit('custom-popover-open')"
+              @dismiss="customPopoverExpanded = false; emit('custom-popover-dismiss')"
+              @save="(draft) => emit('save-custom', draft)"
+            >
+              <template #trigger="{ onClick, active }">
+                <div
+                  v-if="customFeeSaved"
+                  role="radio"
+                  :aria-checked="minerFee === MINER_FEE_CUSTOM_ID"
+                  tabindex="0"
+                  :class="[
+                    styles.minerFeeOption,
+                    styles.minerFeeSavedCustomOption,
+                    minerFee === MINER_FEE_CUSTOM_ID && styles.minerFeeOptionSelected,
+                    active && styles.minerFeeCustomOptionTriggerActive,
+                  ]"
+                  @click="openSavedCustomViaPopover(onClick)"
+                  @keydown.enter.prevent="openSavedCustomViaPopover(onClick)"
+                  @keydown.space.prevent="openSavedCustomViaPopover(onClick)"
+                >
+                  <span :class="styles.minerFeeSavedCustomMain">
+                    <span :class="styles.minerFeeOptionHeader">
+                      <span :class="styles.minerFeeOptionName">{{ ui('Custom') }}</span>
+                    </span>
+                    <span :class="styles.minerFeeEthRange">{{ customFeeSaved.cryptoRange }}</span>
+                    <span :class="styles.minerFeeUsdRange">{{ customFeeSaved.usdRange }}</span>
+                  </span>
+                  <EgLink
+                    :class="styles.minerFeeSavedCustomEdit"
+                    size="md"
+                    href="#"
+                    tabindex="-1"
+                    aria-hidden="true"
+                    @click.prevent.stop="openSavedCustomViaPopover(onClick)"
+                  >
+                    {{ ui('Edit') }}
+                  </EgLink>
+                </div>
+                <button
+                  v-else
+                  type="button"
+                  role="radio"
+                  :aria-checked="minerFee === MINER_FEE_CUSTOM_ID"
+                  :class="[
+                    styles.minerFeeCustomOption,
+                    minerFee === MINER_FEE_CUSTOM_ID && styles.minerFeeOptionSelected,
+                    active && styles.minerFeeCustomOptionTriggerActive,
+                  ]"
+                  @click.stop="onClick"
+                >
+                  <EgIcon name="eds-gear-fill" size="sm" />
+                  <span :class="styles.minerFeeOptionName">{{ ui('Custom') }}</span>
+                </button>
+              </template>
+            </MinerFeeCustomAnchoredPopover>
+          </div>
+
+          <template v-else>
           <div
             v-if="customFeeSaved"
             role="radio"
@@ -180,11 +271,23 @@ defineExpose({
             <EgIcon v-else name="eds-gear-fill" size="sm" />
             <span :class="styles.minerFeeOptionName">{{ ui('Custom') }}</span>
           </button>
+          </template>
         </div>
       </section>
     </div>
 
-    <EgDivider type="page" :class="styles.minerFeeDivider" />
+    <div
+      v-if="hideInlineConfirm"
+      :class="styles.minerFeeRemarkSectionDivider"
+      role="separator"
+      aria-orientation="horizontal"
+    />
+
+    <EgDivider
+      v-if="!hideInlineConfirm"
+      type="page"
+      :class="styles.minerFeeDivider"
+    />
 
     <div :class="styles.minerFeeFooter">
       <div :class="styles.remarkField">
@@ -205,6 +308,7 @@ defineExpose({
       </div>
 
       <EgComboActionPopupWindow
+        v-if="!hideInlineConfirm"
         tone="decor"
         :count="1"
         :confirm-label="ui('Confirm')"

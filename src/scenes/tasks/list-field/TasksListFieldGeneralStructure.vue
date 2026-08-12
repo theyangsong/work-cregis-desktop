@@ -142,11 +142,13 @@ const countdownTime = computed(() => formatCountdownTotal(countdownRemainingSeco
           >
             {{ leftTagLabel }}
           </EgTag>
-          <EgListFieldOverflowText
-            :text="value"
-            variant="primary"
-            :tooltip-trigger="tooltipTrigger"
-          />
+          <div :class="styles.titleTextSlot">
+            <EgListFieldOverflowText
+              :text="value"
+              variant="primary"
+              :tooltip-trigger="tooltipTrigger"
+            />
+          </div>
           <EgTag
             v-if="showRightTag"
             family="system"
@@ -171,11 +173,13 @@ const countdownTime = computed(() => formatCountdownTotal(countdownRemainingSeco
         >
           {{ leftTagLabel }}
         </EgTag>
-        <EgListFieldOverflowText
-          :text="value"
-          variant="primary"
-          :tooltip-trigger="tooltipTrigger"
-        />
+        <div :class="styles.titleTextSlot">
+          <EgListFieldOverflowText
+            :text="value"
+            variant="primary"
+            :tooltip-trigger="tooltipTrigger"
+          />
+        </div>
         <EgTag
           v-if="showRightTag"
           family="system"

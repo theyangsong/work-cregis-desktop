@@ -21,11 +21,21 @@ import {
   type MinerFeeEvmShellVariant,
 } from './minerFeeEvmShellVariant';
 
-const props = defineProps<{
-  draft?: MinerFeeCustomDraft;
-  symbol?: string;
-  measureOnly?: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    draft?: MinerFeeCustomDraft;
+    symbol?: string;
+    measureOnly?: boolean;
+    /** Popup 工具栏承接取消/保存时隐藏面板内 footer。 */
+    hideInlineFooter?: boolean;
+    /** 为 true 时 Teleport 顶栏不展示返回键（保留「自定义」标题）。 */
+    hideTopToolBack?: boolean;
+  }>(),
+  {
+    hideInlineFooter: false,
+    hideTopToolBack: false,
+  },
+);
 
 const emit = defineEmits<{
   back: [];
@@ -80,10 +90,20 @@ function onTabSelect(index: number) {
 }
 
 function resolveTopToolHost() {
+  const root = rootRef.value;
+  if (!root) {
+    topToolHost.value = null;
+    return;
+  }
+
   topToolHost.value =
-    (rootRef.value
-      ?.closest('.eds-popover-content')
-      ?.querySelector('[class*="topTool"]') as HTMLElement | null) ?? null;
+    (root
+      .closest('.eds-popover-content')
+      ?.querySelector('[class*="topTool"]') as HTMLElement | null)
+    ?? (root
+      .closest('[data-batch-popup-top-tool-host]')
+      ?.querySelector('[data-batch-popup-top-tool-slot]') as HTMLElement | null)
+    ?? null;
 }
 
 onMounted(async () => {
@@ -108,6 +128,7 @@ function onSave() {
 defineExpose({
   getMeasureEl: () => rootRef.value,
   getDraft: () => ({ ...form.value }),
+  save: onSave,
 });
 </script>
 
@@ -119,8 +140,19 @@ defineExpose({
     :data-miner-fee-screen="measureOnly ? undefined : 'custom'"
   >
     <Teleport v-if="!measureOnly && topToolHost" :to="topToolHost">
-      <div :class="styles.customTopTool">
-        <EgIconButton shape="square" size="sm" :label="ui('Back')" @click="emit('back')">
+      <div
+        :class="[
+          styles.customTopTool,
+          hideTopToolBack && styles.customTopToolTitleOnly,
+        ]"
+      >
+        <EgIconButton
+          v-if="!hideTopToolBack"
+          shape="square"
+          size="sm"
+          :label="ui('Back')"
+          @click="emit('back')"
+        >
           <EgIcon name="eds-arrow-left-mini-ios" fit />
         </EgIconButton>
         <span :class="styles.customTopToolTitle">{{ ui('Custom') }}</span>
@@ -211,7 +243,7 @@ defineExpose({
       </div>
     </div>
 
-    <div :class="styles.footer">
+    <div v-if="!hideInlineFooter" :class="styles.footer">
       <EgButton
         :class="styles.footerButton"
         tone="subtle"

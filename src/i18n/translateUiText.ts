@@ -5,13 +5,23 @@ const ENGLISH_BY_ZH = Object.fromEntries(
   Object.entries(UI_TEXT_ZH_CN).map(([english, chinese]) => [chinese, english]),
 ) as Record<string, string>;
 
+/** 中英文可共用的展示文案（如矿工费区间、金额），catalog 值不含 CJK。 */
+function isLocaleNeutralDisplayText(text: string): boolean {
+  return !/[\u3400-\u9fff\uf900-\ufaff]/.test(text);
+}
+
 /** 展示层翻译：英文 source → 当前 locale 文案。 */
 export function translateUiText(locale: AppLocale, text: string): string {
   const trimmed = text.trim();
-  if (!trimmed || locale === 'en') return text;
+  if (!trimmed) return text;
 
-  const translated = UI_TEXT_ZH_CN[trimmed];
-  if (translated) return translated;
+  const catalogValue = UI_TEXT_ZH_CN[trimmed];
+  if (catalogValue) {
+    if (locale === 'zh-CN') return catalogValue;
+    if (isLocaleNeutralDisplayText(catalogValue)) return catalogValue;
+  }
+
+  if (locale === 'en') return text;
 
   if (trimmed.startsWith('Sort ')) {
     const header = trimmed.slice('Sort '.length);

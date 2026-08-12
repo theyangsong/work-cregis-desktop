@@ -1,36 +1,20 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { computed } from 'vue';
 import { EgDivider, EgListFieldOverflowText } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
 import { formatGroupedDecimalAmount } from '@/utils/formatGroupedDisplay';
+import ExpiryCountdown from '../shared/ExpiryCountdown.vue';
 import styles from './TasksListFieldAmount.module.css';
 
 const props = defineProps<{
   customize: Record<string, unknown>;
 }>();
 
-const COUNTDOWN_LOOP_SECONDS = 60 * 60;
-
 function parsePreviewMinWidth(customize: Record<string, unknown>): number | undefined {
   const raw = String(customize.minWidth ?? '').trim();
   if (!raw) return undefined;
   const parsed = Number(raw);
   return parsed > 0 ? parsed : undefined;
-}
-
-function parseCountdownTotal(customize: Record<string, unknown>): number {
-  const minutes = Math.max(0, Number.parseInt(String(customize.countdownMinutes ?? '30'), 10) || 0);
-  const seconds = Math.max(
-    0,
-    Math.min(59, Number.parseInt(String(customize.countdownSeconds ?? '0'), 10) || 0),
-  );
-  return minutes * 60 + seconds;
-}
-
-function formatCountdownTotal(total: number): string {
-  const minutes = Math.floor(total / 60);
-  const seconds = total % 60;
-  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
 const amountType = computed(() => String(props.customize.amountType ?? 'conversion'));
@@ -59,60 +43,6 @@ const cellMinWidthStyle = computed(() => {
   if (!amountWidthConfigured.value) return undefined;
   return { width: '100%', maxWidth: '100%', minWidth: '0' };
 });
-
-const countdownRemainingSeconds = ref(0);
-let countdownTimer: ReturnType<typeof setInterval> | undefined;
-
-function resetCountdownFromCustomize() {
-  countdownRemainingSeconds.value = parseCountdownTotal(props.customize);
-}
-
-function clearCountdownTimer() {
-  if (countdownTimer !== undefined) {
-    clearInterval(countdownTimer);
-    countdownTimer = undefined;
-  }
-}
-
-function startCountdownTimer() {
-  clearCountdownTimer();
-  if (!showCountdown.value) return;
-  resetCountdownFromCustomize();
-  countdownTimer = setInterval(() => {
-    if (countdownRemainingSeconds.value <= 0) {
-      countdownRemainingSeconds.value = COUNTDOWN_LOOP_SECONDS;
-      return;
-    }
-    countdownRemainingSeconds.value -= 1;
-  }, 1000);
-}
-
-watch(
-  showCountdown,
-  (active) => {
-    if (active) {
-      startCountdownTimer();
-      return;
-    }
-    clearCountdownTimer();
-  },
-  { immediate: true },
-);
-
-watch(
-  () => [props.customize.countdownMinutes, props.customize.countdownSeconds],
-  () => {
-    if (showCountdown.value) {
-      resetCountdownFromCustomize();
-    }
-  },
-);
-
-onBeforeUnmount(() => {
-  clearCountdownTimer();
-});
-
-const countdownTime = computed(() => formatCountdownTotal(countdownRemainingSeconds.value));
 </script>
 
 <template>
@@ -160,10 +90,10 @@ const countdownTime = computed(() => formatCountdownTotal(countdownRemainingSeco
         :tooltip-trigger="tooltipTrigger"
       />
       <EgDivider type="page" direction="vertical" />
-      <span :class="styles.countdown">
-        <span :class="styles.countdownTime">{{ countdownTime }}</span>
-        <span :class="styles.countdownSuffix">{{ ui('Until Expiry') }}</span>
-      </span>
+      <ExpiryCountdown
+        :minutes="String(customize.countdownMinutes ?? '30')"
+        :seconds="String(customize.countdownSeconds ?? '00')"
+      />
     </div>
     <EgListFieldOverflowText
       v-else-if="useTransferTypeSecondary"

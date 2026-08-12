@@ -20,6 +20,11 @@
   min-width: 0;
 }
 
+/* 暂时隐藏「链上确认」步骤，后续可能恢复。 */
+.stepColumnTemporarilyHidden {
+  display: none;
+}
+
 .stepIconWrap {
   display: inline-flex;
   flex-shrink: 0;
@@ -46,6 +51,30 @@
   border: var(--stroke-xl) solid var(--status-success);
   border-radius: var(--radius-full);
   background: var(--status-success);
+}
+
+.stepIconWrapFailed {
+  box-sizing: border-box;
+  border: 3px solid var(--status-danger);
+  border-radius: var(--radius-full);
+  background: var(--status-danger);
+}
+
+.stepIconFailedClose {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--icon-md);
+  height: var(--icon-md);
+  color: var(--stroke-same-white-primary);
+}
+
+.stepIconFailedClose :global(.svgHost),
+.stepIconFailedClose :global(.svgHost svg) {
+  display: block;
+  width: var(--icon-md);
+  height: var(--icon-md);
 }
 
 .stepIconDoneTick {
@@ -87,6 +116,14 @@
   background-image: radial-gradient(
     circle,
     var(--status-success) 1.5px,
+    transparent 1.5px
+  );
+}
+
+.stepConnectorFailed {
+  background-image: radial-gradient(
+    circle,
+    var(--status-danger) 1.5px,
     transparent 1.5px
   );
 }

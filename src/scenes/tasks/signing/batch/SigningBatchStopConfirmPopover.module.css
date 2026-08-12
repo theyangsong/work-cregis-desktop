@@ -1,0 +1,26 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.message {
+  margin: 0;
+  color: var(--text-base-primary);
+  font-size: var(--eds-body-small-size);
+  font-weight: var(--eds-body-small-weight);
+  line-height: var(--eds-body-small-line-height);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* 仅停止签名 Popover：顶栏标题底 padding。 */
+:global(
+  .eds-popover:has([data-stop-sign-confirm-popover])
+    [class*='topToolTitle']
+) {
+  padding-bottom: var(--spacing-1);
+}

@@ -69,6 +69,8 @@ body::after {
   flex-shrink: 0;
   align-items: stretch;
   align-self: center;
+  user-select: none;
+  -webkit-user-select: none;
   width: clamp(
     var(--app-preview-min-width),
     var(--app-preview-width),
@@ -81,6 +83,22 @@ body::after {
   );
   max-width: var(--app-preview-width);
   max-height: var(--app-preview-height);
+}
+
+/* 输入态仍允许框内选区；业务页禁止 user-select: text 绕过 */
+.app-preview :is(input, textarea, [contenteditable='true']) {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/*
+ * EgFlotation / AnchoredTooltip 默认 teleport 到 body，不在 .app-preview 内。
+ * 与 shell 一致：浮层文本不可选、不可复制（§1.1 禁止复制）。
+ */
+body > [id^='eds-tooltip-v-'],
+.eds-flotation-menu {
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 /* 仅根容器 EgTooltip 的面板；勿用后代选择器，否则会覆盖 BatchBar 等嵌套 flotation 面板 */
@@ -107,6 +125,17 @@ body::after {
 }
 
 /* EgPopup shell host — 与 EgContainer 同级，absolute 铺满预览框，不参与 flex 分配 */
+.app-preview > .eds-tooltip-panel > .app-popup-overlay-root {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  flex: none;
+  width: auto;
+  height: auto;
+  max-height: none;
+  pointer-events: none;
+}
+
 .app-preview > .eds-tooltip-panel > .app-popup-overlay-host {
   position: absolute;
   inset: 0;
@@ -122,6 +151,33 @@ body::after {
   position: absolute;
   inset: 0;
   pointer-events: auto;
+}
+
+.app-popup-overlay-root > .app-popup-overlay-host > * {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+}
+
+/* 批量签名进度 host：收起为浮标时仅穿透，弹窗打开时由内部 EgPopup 接管点击 */
+.app-popup-overlay-host > .signing-batch-global-progress-host {
+  pointer-events: none;
+}
+
+/*
+ * 可点击态：默认箭头指针，不用手型（对齐 DS EgButton / motion-ease.is-hover）。
+ */
+.app-preview
+  :is(
+    button,
+    [role='button'],
+    [role='radio'],
+    [role='tab'],
+    a[href],
+    .motion-ease.is-hover,
+    .motion-ease.is-hover-enter-only
+  ):not(:disabled):not([aria-disabled='true']) {
+  cursor: default;
 }
 
 /* ── EgContainer ── */

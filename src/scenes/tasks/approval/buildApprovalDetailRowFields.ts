@@ -1,12 +1,15 @@
 import { buildAmountRowValues } from '../list-field/tasksListFieldAmountRowData';
 import {
   buildPayoutWalletsColumnValues,
+  buildPayoutWalletCode,
   buildTransferTypeRowValues,
 } from '../list-field/tasksListFieldBusinessTypeRowData';
 import { buildGeneralStructureRowValues } from '../list-field/tasksListFieldGeneralStructureRowData';
 import { buildTasksListFieldCurrencyCustomize } from '../list-field/tasksListFieldCurrencyDefaults';
 import { buildCurrencySideAddressData } from '../list-field/listFieldCurrencyAddressCustomize';
+import { buildCurrencyAddressTags } from '../list-field/listFieldCurrencyTagCustomize';
 import { getCurrencyRowPreset } from '../list-field/tasksListFieldCurrencyRowPresets';
+import { resolveCurrencyRowPreset } from '../list-field/tasksListFieldCurrencyRowData';
 import { DATA_LIST_FIGMA_COLUMNS } from '../tasksDataListPageData';
 import type { ApprovalAddressEntry } from './types';
 
@@ -25,9 +28,11 @@ export function formatApprovalCreatedTime(rowIndex: number): string {
 }
 
 export function formatApprovalPayoutWallet(rowIndex: number): string {
-  const wallet = buildPayoutWalletsColumnValues(rowIndex);
-  const signLabel = wallet.rightLabel ?? 'Single-Sign';
-  return `${wallet.value} · ${signLabel}`;
+  return buildPayoutWalletsColumnValues(rowIndex).value;
+}
+
+export function formatApprovalPayoutWalletSignLabel(rowIndex: number): string {
+  return buildPayoutWalletsColumnValues(rowIndex).rightLabel ?? 'Single-Sign';
 }
 
 export function formatApprovalExpiryDisplay(rowIndex: number): string | null {
@@ -57,6 +62,7 @@ function buildSideAddressEntries(
       alias,
       address,
       tags: [],
+      addressTags: buildCurrencyAddressTags(prefix, index, customize),
       amount: amountLabel,
     });
   }
@@ -66,6 +72,7 @@ function buildSideAddressEntries(
       alias: side.alias,
       address: side.address,
       tags: [],
+      addressTags: buildCurrencyAddressTags(prefix, 1, customize),
       amount: amountLabel,
     });
   }
@@ -82,14 +89,32 @@ export function buildApprovalDetailRowFields(rowIndex: number) {
   const receivers = buildSideAddressEntries('to', customize, rowIndex);
   const transferType = buildTransferTypeRowValues(rowIndex);
 
+  const amount = buildAmountRowValues(rowIndex);
+  const currencyPreset = resolveCurrencyRowPreset(rowIndex);
+  const networkLabel = String(
+    customize.networkLabel ?? currencyPreset.networkLabel ?? '',
+  ).trim();
+
   return {
     amountDisplay: formatApprovalAmountDisplay(rowIndex),
     amountColumnLabel: DATA_LIST_FIGMA_COLUMNS.amount.label,
-    amountHeadline: buildAmountRowValues(rowIndex).cryptoValue,
+    amountHeadline: `${amount.cryptoValue} ${amount.cryptoSymbol} ≈ ${amount.fiatValue}`,
+    amountRowValue: `${amount.cryptoValue} ≈ ${amount.fiatValue}`,
+    amountCryptoSymbol: amount.cryptoSymbol,
+    amountCryptoName: currencyPreset.cryptoName,
+    amountNetworkLabel: networkLabel,
     businessType: transferType.value,
     expiryDisplay: formatApprovalExpiryDisplay(rowIndex),
+    expiryCountdownMinutes: transferType.showCountdown
+      ? String(transferType.countdownMinutes ?? '30')
+      : undefined,
+    expiryCountdownSeconds: transferType.showCountdown
+      ? String(transferType.countdownSeconds ?? '00')
+      : undefined,
     appliedAtDisplay: formatApprovalCreatedTime(rowIndex),
     payoutWallet: formatApprovalPayoutWallet(rowIndex),
+    payoutWalletCode: buildPayoutWalletCode(rowIndex),
+    payoutWalletSignLabel: formatApprovalPayoutWalletSignLabel(rowIndex),
     senderSummary: fromSide.address,
     senderCount: fromSide.count,
     senders,

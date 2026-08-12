@@ -8,10 +8,12 @@ alwaysApply: true
 
 **在 work-cregis-desktop 内写代码或排查样式时，先读仓库根目录 `AGENTS.md`。**
 
+- **滚动顶底毛玻璃（Top & Bottom Mask）**：必读 `.cursor/rules/top&botton-mask.mdc`（`alwaysApply`）；Skid 用 `EgSkid`，自定义壳用 `useScrollChromeScrim`；禁止手搓 sticky + backdrop-filter。
 - 只用 `@eds/desktop-tokens`、`@eds/desktop-components`。
 - 禁止 `@eds/website-*`；禁止从 eds-desktop showcase 复制 CSS / token。
 - 排版变量必须在 `packages/tokens/spec` 中存在（如 `--eds-footnote-size`，勿用 `--eds-footnote-medium-*`）。
 - 同步 eds-desktop = 只消费 `packages/tokens` + `packages/components`，不同步 showcase。
 - **对齐引用库**：DS 行为以 `../eds-desktop/packages/**` 为准；业务 `TasksListField*` 对齐 Showcase 集成，勿保留已废弃 props、勿手搓 Tooltip。
+- **禁止复制**：所有页面（含后续新增）不得提供复制能力；shell `.app-preview` 全局 `user-select: none`（见 `AGENTS.md` §硬约束 7）。
 
 Showcase 预览可能靠 Website 壳继承 token；**本项目没有这层兜底。**

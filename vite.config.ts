@@ -93,11 +93,20 @@ export default defineConfig({
   base: process.env.VITE_BASE_PATH || '/',
   plugins: [vue(), watchEdsDesktopPackages()],
   resolve: {
-    alias: {
-      '@': resolve(__dirname, 'src'),
-      // Dev/build：走 DS 源码 + 各 SFC CSS Modules（只读 sibling，与 showcase 一致）
-      '@eds/desktop-components': EDS_COMPONENTS_SRC,
-    },
+    alias: [
+      {
+        find: '@eds/desktop-components/',
+        replacement: `${EDS_COMPONENTS_SRC_DIR}/`,
+      },
+      {
+        find: '@eds/desktop-components',
+        replacement: EDS_COMPONENTS_SRC,
+      },
+      {
+        find: '@',
+        replacement: resolve(__dirname, 'src'),
+      },
+    ],
   },
   optimizeDeps: {
     exclude: ['@eds/desktop-components'],

@@ -131,3 +131,145 @@
   max-height: var(--scale-2-5);
   background: var(--stroke-base-quaternary);
 }
+
+/**
+ * 批处理 Flotation 触发器：视觉同 EgIconButtonPro，但定位锚点仅 iconSlot
+ *（data-eds-trigger-metrics），避免 AnchoredTooltip 量到含文案的 button。
+ */
+.batchProTriggerRoot {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  width: max-content;
+  min-width: var(--scale-12);
+  border: none;
+  padding: 0;
+  background: none;
+  cursor: default;
+}
+
+.batchProTriggerDisabled {
+  cursor: not-allowed;
+}
+
+.batchProIconSlot {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.batchProIconSlot :global(.eds-icon-button) {
+  pointer-events: none;
+}
+
+.batchProTriggerRoot:hover:not(.batchProTriggerDisabled) .batchProIconSlot :global(.eds-icon-button),
+.batchProTriggerRoot:active:not(.batchProTriggerDisabled) .batchProIconSlot :global(.eds-icon-button) {
+  background-color: var(--event-hover);
+}
+
+.batchProTriggerRoot:hover:not(.batchProTriggerDisabled) .batchProIconSlot :global(.eds-icon) {
+  color: var(--stroke-base-primary);
+}
+
+.batchProTriggerRoot:active:not(.batchProTriggerDisabled) .batchProIconSlot :global(.eds-icon) {
+  color: var(--stroke-base-secondary);
+}
+
+.batchProTriggerDisabled .batchProIconSlot :global(.eds-icon) {
+  color: var(--stroke-base-quaternary);
+}
+
+/**
+ * Flotation 展开时保持 icon 聚焦态。
+ * 对齐 EgFlotationTrigger.expanded / EgIconButton :focus-visible（--event-focus）。
+ */
+.batchFlotationTriggerExpanded:not(.batchProTriggerDisabled) .batchProIconSlot :global(.eds-icon-button) {
+  background-color: var(--event-focus);
+}
+
+.batchFlotationTriggerExpanded:not(.batchProTriggerDisabled) .batchProIconSlot :global(.eds-icon) {
+  color: var(--stroke-base-secondary);
+}
+
+.batchProLabelWrap {
+  position: relative;
+  display: inline-block;
+  box-sizing: border-box;
+  overflow: hidden;
+  max-width: 100%;
+  color: var(--text-base-secondary);
+  text-align: center;
+}
+
+.batchProTriggerDisabled .batchProLabelWrap {
+  color: var(--text-base-quaternary);
+}
+
+.batchProLabelSizer {
+  display: block;
+  visibility: hidden;
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  font-size: var(--eds-bar-size);
+  font-weight: var(--eds-bar-weight);
+  line-height: var(--eds-bar-line-height);
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
+
+.batchProLabelPaint {
+  position: absolute;
+  top: 0;
+  left: 0;
+  box-sizing: border-box;
+  width: 200%;
+  padding: 0;
+  margin: 0;
+  font-size: calc(var(--eds-bar-size) * 2);
+  font-weight: var(--eds-bar-weight);
+  line-height: calc(var(--eds-bar-line-height) * 2);
+  transform: scale(0.5);
+  transform-origin: top left;
+  color: inherit;
+  text-align: center;
+  white-space: nowrap;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  pointer-events: none;
+}
+
+.batchProBadge {
+  position: absolute;
+  top: -3px;
+  left: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--scale-4);
+  padding: var(--spacing-025) var(--spacing-1);
+  border-radius: var(--radius-full);
+  background-color: var(--material-brand-primary);
+  color: var(--text-same-white-primary);
+}
+
+.batchProBadgeText {
+  font-size: var(--eds-bar-size);
+  font-weight: var(--eds-bar-weight);
+  line-height: var(--eds-bar-line-height);
+}
+
+.batchProReddot {
+  position: absolute;
+  top: 2px;
+  left: 28px;
+  width: var(--scale-2);
+  height: var(--scale-2);
+  border-radius: var(--radius-md);
+  background-color: var(--status-danger);
+}

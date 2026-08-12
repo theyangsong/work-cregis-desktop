@@ -1,0 +1,8 @@
+/**
+ * 自建 Flotation shell 内 sticky 顶栏毛玻璃：
+ * 外层 effect-flotation-box 的 backdrop-filter 会阻断内层二次 blur。
+ */
+.effect-flotation-box:has(.eds-flotation-inner-backdrop) {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}

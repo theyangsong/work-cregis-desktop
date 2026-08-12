@@ -4,7 +4,7 @@ import { moduleMenuDefaultGroups } from './moduleMenuDefaultGroups';
 export type ModuleMenuPresetAvatar = {
   name: string;
   colorIndex?: number;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 };
 
 export type ModuleMenuPresetSubItem = {
@@ -50,7 +50,7 @@ const cregisTasksModuleMenuGroups: ModuleMenuPresetGroup[] = [
       {
         label: 'Sent Request',
         icon: 'eds-list-square',
-        avatar: { name: 'Point', colorIndex: 10, size: 'sm' },
+        avatar: { name: 'Point', colorIndex: 10, size: 'xs' },
       },
     ],
   },

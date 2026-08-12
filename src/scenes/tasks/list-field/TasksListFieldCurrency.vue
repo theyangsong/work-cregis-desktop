@@ -6,7 +6,10 @@ import {
   type CryptoName,
 } from '@eds/desktop-components';
 import { resolveCryptoNameFromSymbol } from './listFieldCryptoResolve';
-import { buildCurrencySideAddressData } from './listFieldCurrencyAddressCustomize';
+import {
+  buildCurrencySideAddressData,
+  resolveCurrencySideVisible,
+} from './listFieldCurrencyAddressCustomize';
 import { buildCurrencySideTagsList } from './listFieldCurrencyTagCustomize';
 import styles from './TasksListFieldCurrency.module.css';
 
@@ -43,6 +46,16 @@ const addressTooltipTrigger = computed(
 
 const comboMode = computed(() => String(props.customize.comboMode ?? 'single-address'));
 
+const showFromSide = computed(() => resolveCurrencySideVisible('from', props.customize));
+const showToSide = computed(() => resolveCurrencySideVisible('to', props.customize));
+
+/** single 模式固定渲染 from；仅展示接收方时须 double + show-from=false。 */
+const resolvedAddressMode = computed((): 'single' | 'double' => {
+  if (comboMode.value === 'double-address') return 'double';
+  if (showFromSide.value && !showToSide.value) return 'single';
+  return 'double';
+});
+
 const currencyFromAddress = computed(() => buildCurrencySideAddressData('from', props.customize));
 const currencyToAddress = computed(() => buildCurrencySideAddressData('to', props.customize));
 </script>
@@ -57,7 +70,9 @@ const currencyToAddress = computed(() => buildCurrencySideAddressData('to', prop
       network-style="tag"
       :entry-badge="entryBadge"
       :content-type="comboMode === 'currency-only' ? 'unaddress' : 'address'"
-      :address-mode="comboMode === 'single-address' ? 'single' : 'double'"
+      :address-mode="resolvedAddressMode"
+      :show-from="showFromSide"
+      :show-to="showToSide"
       :from-address="currencyFromAddress.address"
       :from-alias="currencyFromAddress.alias || undefined"
       :to-address="currencyToAddress.address"

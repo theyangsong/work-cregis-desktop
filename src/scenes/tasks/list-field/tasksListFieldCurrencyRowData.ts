@@ -16,6 +16,7 @@ import {
   getCurrencyRowPreset,
   type CurrencyRowPreset,
 } from './tasksListFieldCurrencyRowPresets';
+import { resolveSigningBatchDemoCurrencyPreset } from '../signing/batch/signingBatchDemoRowDistribution';
 
 let randomCurrencyPoolCache: string[] | null = null;
 
@@ -83,6 +84,8 @@ function resolveRandomRowPreset(rowIndex: number): CurrencyRowPreset {
 
 /** 任意行的有效币种 preset（含随机池行与 addressFamily 推断）。 */
 export function resolveCurrencyRowPreset(rowIndex: number): CurrencyRowPreset {
+  const demo = resolveSigningBatchDemoCurrencyPreset(rowIndex);
+  if (demo) return demo;
   return getCurrencyRowPreset(rowIndex) ?? resolveRandomRowPreset(rowIndex);
 }
 

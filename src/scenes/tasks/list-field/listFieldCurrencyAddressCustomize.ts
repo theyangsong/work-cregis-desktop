@@ -11,6 +11,17 @@ import {
   parseCurrencyAddressCount,
 } from './listFieldCurrencyShared';
 
+export function currencySideVisibleKey(prefix: 'from' | 'to'): string {
+  return `${prefix}SideVisible`;
+}
+
+export function resolveCurrencySideVisible(
+  prefix: 'from' | 'to',
+  state: Record<string, unknown>,
+): boolean {
+  return state[currencySideVisibleKey(prefix)] !== false;
+}
+
 function resolveDefaultSideAddress(
   symbol: string,
   prefix: 'from' | 'to',
@@ -49,6 +60,7 @@ export function currencySideAddressDefaults(
   symbol = 'ZEC',
 ): Record<string, string | boolean> {
   const defaults: Record<string, string | boolean> = {
+    [currencySideVisibleKey(prefix)]: true,
     [`${prefix}AddressCount`]: '1',
   };
 

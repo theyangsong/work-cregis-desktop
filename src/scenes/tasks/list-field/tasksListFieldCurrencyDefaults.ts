@@ -19,6 +19,9 @@ export const tasksListFieldCurrencyDefaults: Record<string, unknown> = {
   comboMode: 'single-address',
   ...currencySideAddressDefaults('from', 'ZEC'),
   ...currencySideAddressDefaults('to', 'ZEC'),
+  /** Data List 首列表头第二段为 To Address（接收方），Body 只展示接收方。 */
+  fromSideVisible: false,
+  toSideVisible: true,
   ...currencyTagCustomizeDefaults(),
 };
 
@@ -36,9 +39,18 @@ export function buildTasksListFieldCurrencyCustomize(
     customize.minWidth = minWidth;
   }
   if (rowIndex != null) {
+    const fromSideVisible = customize.fromSideVisible;
+    const toSideVisible = customize.toSideVisible;
     customize = { ...customize, ...buildCurrencyRowPresetCustomize(rowIndex) };
     customize = applyCurrencyDemoRowOverrides(customize, rowIndex);
-    return applyCurrencyRowTagVisibility(customize, rowIndex);
+    customize = applyCurrencyRowTagVisibility(customize, rowIndex);
+    if (fromSideVisible !== undefined) {
+      customize.fromSideVisible = fromSideVisible;
+    }
+    if (toSideVisible !== undefined) {
+      customize.toSideVisible = toSideVisible;
+    }
+    return customize;
   }
   return customize;
 }

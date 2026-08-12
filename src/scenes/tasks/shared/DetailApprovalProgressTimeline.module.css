@@ -1,0 +1,199 @@
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--spacing-3);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.step {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: var(--spacing-3);
+  position: relative;
+  align-items: start;
+}
+
+.markerTrack {
+  position: relative;
+  flex-shrink: 0;
+  width: calc(1px + var(--spacing-1-5) + var(--spacing-2));
+  min-height: 100%;
+  align-self: stretch;
+}
+
+.markerLine {
+  position: absolute;
+  top: calc(5px + var(--spacing-2) + var(--spacing-1-5));
+  bottom: 0;
+  left: calc(1px + var(--spacing-1-5) + var(--spacing-2) / 2 - var(--stroke-xl) / 2);
+  width: var(--stroke-xl);
+  background: var(--stroke-outline-subtle);
+}
+
+.marker {
+  position: absolute;
+  top: 5px;
+  left: calc(1px + var(--spacing-1-5));
+  z-index: 1;
+  box-sizing: border-box;
+  width: var(--spacing-2);
+  height: var(--spacing-2);
+  border-radius: var(--radius-full);
+  background: var(--material-card-deep);
+}
+
+.markerCompleted {
+  background: var(--material-brand-primary);
+}
+
+.markerDanger {
+  background: var(--status-danger);
+}
+
+.step:last-child .markerLine {
+  display: none;
+}
+
+.stepBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  min-width: 0;
+  padding-bottom: var(--spacing-4);
+}
+
+.step:last-child .stepBody {
+  padding-bottom: 0;
+}
+
+.stepHeader {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.stepTitleCluster {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--spacing-2);
+  min-width: 0;
+}
+
+.stepTitleGroup {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-1);
+  min-width: 0;
+}
+
+.stepTitle {
+  color: var(--text-base-primary);
+  font-size: var(--eds-body-medium-size);
+  font-weight: var(--eds-body-medium-weight);
+  line-height: var(--eds-body-medium-line-height);
+}
+
+.stepTitleDanger {
+  color: var(--status-danger);
+}
+
+.stepSubtitle {
+  margin: 0;
+  color: var(--text-base-secondary);
+  font-size: var(--eds-body-medium-size);
+  font-weight: var(--eds-body-medium-weight);
+  line-height: var(--eds-body-medium-line-height);
+}
+
+.stepAt,
+.memberText {
+  color: var(--text-base-primary);
+  font-size: var(--eds-body-small-size);
+  font-weight: var(--eds-body-small-weight);
+  line-height: var(--eds-body-small-line-height);
+  white-space: nowrap;
+}
+
+.members {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-025);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.member {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-1);
+  min-width: 0;
+  padding: var(--spacing-1-5) var(--spacing-2);
+  border-radius: var(--radius-sm);
+  box-sizing: border-box;
+  composes: motion-ease is-hover from global;
+}
+
+.memberMain {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-3);
+  min-width: 0;
+}
+
+.member:hover:not(:has(.deviceInfoTooltip:hover)) {
+  background-color: var(--event-hover);
+}
+
+.member:has(.deviceInfoTooltip :global([data-eds-tooltip-open])) {
+  background-color: transparent;
+}
+
+.memberLead {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--spacing-1);
+  min-width: 0;
+}
+
+.memberLead :global(.eds-avatar) {
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+}
+
+.memberText {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-1);
+  white-space: normal;
+}
+
+.memberEmail {
+  color: var(--text-base-secondary);
+}
+
+.memberRemark {
+  margin: 0;
+  padding: var(--spacing-1) var(--spacing-1-5);
+  border-radius: var(--radius-0) var(--radius-xs) var(--radius-xs) var(--radius-xs);
+  background: var(--material-card-moderate);
+  color: var(--text-base-primary);
+  font-size: var(--eds-footnote-strong-size);
+  font-weight: var(--eds-footnote-strong-weight);
+  line-height: var(--eds-footnote-strong-line-height);
+  width: fit-content;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.stepAt {
+  flex-shrink: 0;
+}

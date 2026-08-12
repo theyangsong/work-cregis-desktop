@@ -2,6 +2,12 @@
 export const MULTI_SIGN_WAITING_POPUP_WIDTH = 780;
 export const MULTI_SIGN_WAITING_POPUP_HEIGHT = 560;
 
+/** 演示：第 2–(n-1) 名成员每次在 0–3s 内随机加入。 */
+export const MULTI_SIGN_MEMBER_JOIN_RANDOM_MAX_MS = 3_000;
+
+/** 演示：达到门限前的最后一名成员固定延迟 5s 后出现。 */
+export const MULTI_SIGN_MEMBER_JOIN_LAST_DELAY_MS = 5_000;
+
 export function parseSigningThreshold(threshold: string | null | undefined): {
   required: number;
   total: number;

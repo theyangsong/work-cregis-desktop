@@ -1,15 +1,27 @@
 <script setup lang="ts">
-import { computed, toRef } from 'vue';
-import { EgAvatar, EgButton, EgDetail, EgPopup } from '@eds/desktop-components';
+import { computed, ref, toRef, watch } from 'vue';
+import { EgButton, EgDetail, EgPopup, type TagStatus } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
 import {
-  formatGroupedDecimalAmount,
+  formatGroupedAmountText,
   formatGroupedThresholdString,
 } from '@/utils/formatGroupedDisplay';
+import { splitDetailAmountHeadline } from '../shared/splitDetailAmountHeadline';
+import {
+  applyDetailAddressExpand,
+  isDetailAddressExpandKey,
+} from '../shared/detailAddressExpand';
+import { buildDetailApprovalProgressSteps } from '../shared/buildDetailApprovalProgressSteps';
+import DetailApprovalProgressAppend from '../shared/DetailApprovalProgressAppend.vue';
+import { resolveDetailHeadlineStatus } from '../shared/resolveDetailHeadlineStatus';
 import { usePopupShellLifecycle } from '../shared/usePopupShellLifecycle';
+import { parseRowIndexFromApprovalId } from './approvalStore';
 import { buildApprovalDetailSections } from './buildApprovalDetailSections';
 import type { ApprovalDetail } from './types';
-import styles from './ApprovalDetailPopup.module.css';
+import detailChromeStyles from '../shared/detailPopupChrome.module.css';
+import DetailToolbarSlot from '../shared/DetailToolbarSlot.vue';
+import ExpiryCountdown from '../shared/ExpiryCountdown.vue';
+import { useTasksDetailToolbarGuide } from '../shared/useTasksDetailToolbarGuide';
 import ApprovalRemarkPopover from './ApprovalRemarkPopover.vue';
 import remarkTriggerStyles from '../shared/remarkPopoverTrigger.module.css';
 
@@ -22,11 +34,16 @@ const props = withDefaults(
   totalCount: number;
   prevDisabled: boolean;
   nextDisabled: boolean;
-  remark: string;
+  remark?: string;
+  readOnly?: boolean;
+  listStatusLabel?: string;
+  listStatusKind?: TagStatus;
   onRemarkBeforeOpen?: () => void | Promise<void>;
   }>(),
   {
     shellSuspended: false,
+    remark: '',
+    readOnly: false,
   },
 );
 
@@ -39,11 +56,11 @@ const emit = defineEmits<{
   next: [];
   passConfirm: [];
   rejectConfirm: [];
-  'view-more-sender': [];
-  'view-more-receiver': [];
+  'view-more': [side: 'sender' | 'receiver'];
 }>();
 
 const { ui } = useAppI18n();
+const { shouldShowGuide, markGuideSeen } = useTasksDetailToolbarGuide();
 
 const { popupMounted, popupOpen, onPopupClosed } = usePopupShellLifecycle({
   open: toRef(props, 'open'),
@@ -55,25 +72,65 @@ const { popupMounted, popupOpen, onPopupClosed } = usePopupShellLifecycle({
   },
 });
 
-const headline = computed(() =>
-  formatGroupedDecimalAmount(props.detail?.amountHeadline ?? ''),
+const guideActive = computed(
+  () => popupOpen.value && shouldShowGuide.value && Boolean(props.detail),
 );
+
+const headline = computed(() =>
+  formatGroupedAmountText(props.detail?.amountHeadline ?? ''),
+);
+const headlineParts = computed(() => splitDetailAmountHeadline(headline.value));
 const signingThresholdDisplay = computed(() =>
   formatGroupedThresholdString(props.detail?.signingThreshold ?? ''),
 );
-const eyebrow = computed(() => ui(props.detail?.amountColumnLabel ?? 'Amount'));
-const statusTag = computed(() => ui('Pending'));
-const sections = computed(() =>
-  props.detail ? buildApprovalDetailSections(props.detail, ui) : [],
+const eyebrow = computed(() => ui(props.detail?.businessType ?? ''));
+
+const expandedAddressKeys = ref(new Set<string>());
+
+watch(
+  () => props.detail?.id,
+  () => {
+    expandedAddressKeys.value = new Set();
+  },
 );
 
+const sections = computed(() => {
+  const base = props.detail ? buildApprovalDetailSections(props.detail, ui) : [];
+  return applyDetailAddressExpand(base, expandedAddressKeys.value);
+});
+const progressSteps = computed(() => {
+  if (!props.detail) return [];
+
+  const thresholdSubtitle = props.detail.signingThreshold
+    ? `${ui('Signing threshold')}: ${signingThresholdDisplay.value}`
+    : undefined;
+
+  return buildDetailApprovalProgressSteps(props.detail, {
+    thresholdSubtitle,
+    viewMode: props.readOnly ? 'record' : 'workflow',
+    listStatusLabel: props.readOnly ? props.listStatusLabel : undefined,
+    rowIndex:
+      !props.readOnly && props.detail
+        ? parseRowIndexFromApprovalId(props.detail.id)
+        : undefined,
+  });
+});
+
+const headlineStatus = computed(() => {
+  if (!progressSteps.value.length) return null;
+  const listStatus =
+    props.listStatusLabel && props.listStatusKind
+      ? { label: props.listStatusLabel, status: props.listStatusKind }
+      : undefined;
+  return resolveDetailHeadlineStatus(progressSteps.value, ui, listStatus);
+});
+const showStatusTag = computed(() => headlineStatus.value != null);
+const statusTag = computed(() => headlineStatus.value?.label ?? '');
+const statusTagStatus = computed(() => headlineStatus.value?.status ?? 'ready');
+
 function onItemValueLinkClick(key: string) {
-  if (key === 'sender') {
-    emit('view-more-sender');
-    return;
-  }
-  if (key === 'receiver') {
-    emit('view-more-receiver');
+  if (isDetailAddressExpandKey(key)) {
+    expandedAddressKeys.value = new Set([...expandedAddressKeys.value, key]);
   }
 }
 
@@ -93,18 +150,21 @@ function onDetailClose() {
     uses="detail"
     @close="onPopupClosed"
   >
+    <div :class="detailChromeStyles.detailHost">
     <EgDetail
       v-if="detail"
       :toolbar-page-key="detail.id"
       :eyebrow="eyebrow"
       :headline="headline"
+      :show-status-tag="showStatusTag"
       :status-tag="statusTag"
       status-tag-size="lg"
-      status-tag-status="ready"
+      :status-tag-status="statusTagStatus"
       :show-tabs="false"
       :sections="sections"
       show-toolbar
       show-toolbar-nav
+      toolbar-divider-pinned
       :toolbar-current="currentIndex"
       :toolbar-total="totalCount"
       :toolbar-prev-disabled="prevDisabled"
@@ -115,119 +175,97 @@ function onDetailClose() {
       @toolbar-next="emit('next')"
       @item-value-link-click="onItemValueLinkClick"
     >
-      <template #toolbar-actions>
-        <ApprovalRemarkPopover
-          boundary-selector=".eds-popup"
-          :title="ui('Remark')"
-          :remark="remark"
-          :on-before-open="onRemarkBeforeOpen"
-          @update:remark="emit('update:remark', $event)"
-          @confirm="emit('rejectConfirm')"
-          @dismiss="onRemarkDismiss"
+      <template #toolbar>
+        <DetailToolbarSlot
+          :toolbar-current="currentIndex"
+          :toolbar-total="totalCount"
+          :toolbar-prev-disabled="prevDisabled"
+          :toolbar-next-disabled="nextDisabled"
+          :guide-active="guideActive"
+          @toolbar-prev="emit('prev')"
+          @toolbar-next="emit('next')"
+          @guide-dismiss="markGuideSeen"
         >
-          <template #trigger="{ active, onClick }">
-            <span
-              :class="[
-                remarkTriggerStyles.remarkTrigger,
-                active && remarkTriggerStyles.remarkTriggerRejectPressed,
-              ]"
+          <template v-if="!readOnly" #actions>
+            <ApprovalRemarkPopover
+              boundary-selector=".eds-popup"
+              :title="ui('Remark')"
+              :remark="remark"
+              :on-before-open="onRemarkBeforeOpen"
+              @update:remark="emit('update:remark', $event)"
+              @confirm="emit('rejectConfirm')"
+              @dismiss="onRemarkDismiss"
             >
-              <EgButton
-                tone="danger"
-                variant="text"
-                size="md"
-                :aria-expanded="active"
-                @click.stop="onClick"
-              >
-                {{ ui('Reject') }}
-              </EgButton>
-            </span>
-          </template>
-        </ApprovalRemarkPopover>
+              <template #trigger="{ active, onClick }">
+                <span
+                  :class="[
+                    remarkTriggerStyles.remarkTrigger,
+                    active && remarkTriggerStyles.remarkTriggerRejectPressed,
+                  ]"
+                >
+                  <EgButton
+                    tone="danger"
+                    variant="text"
+                    size="md"
+                    :aria-expanded="active"
+                    @click.stop="onClick"
+                  >
+                    {{ ui('Reject') }}
+                  </EgButton>
+                </span>
+              </template>
+            </ApprovalRemarkPopover>
 
-        <ApprovalRemarkPopover
-          boundary-selector=".eds-popup"
-          :title="ui('Remark')"
-          :remark="remark"
-          :on-before-open="onRemarkBeforeOpen"
-          @update:remark="emit('update:remark', $event)"
-          @confirm="emit('passConfirm')"
-          @dismiss="onRemarkDismiss"
-        >
-          <template #trigger="{ active, onClick }">
-            <span
-              :class="[
-                remarkTriggerStyles.remarkTrigger,
-                active && remarkTriggerStyles.remarkTriggerPassPressed,
-              ]"
+            <ApprovalRemarkPopover
+              boundary-selector=".eds-popup"
+              :title="ui('Remark')"
+              :remark="remark"
+              :on-before-open="onRemarkBeforeOpen"
+              @update:remark="emit('update:remark', $event)"
+              @confirm="emit('passConfirm')"
+              @dismiss="onRemarkDismiss"
             >
-              <EgButton
-                tone="decor"
-                variant="solid"
-                size="md"
-                :aria-expanded="active"
-                @click.stop="onClick"
-              >
-                {{ ui('Pass') }}
-              </EgButton>
-            </span>
+              <template #trigger="{ active, onClick }">
+                <span
+                  :class="[
+                    remarkTriggerStyles.remarkTrigger,
+                    active && remarkTriggerStyles.remarkTriggerPassPressed,
+                  ]"
+                >
+                  <EgButton
+                    tone="decor"
+                    variant="solid"
+                    size="md"
+                    :aria-expanded="active"
+                    @click.stop="onClick"
+                  >
+                    {{ ui('Pass') }}
+                  </EgButton>
+                </span>
+              </template>
+            </ApprovalRemarkPopover>
           </template>
-        </ApprovalRemarkPopover>
+        </DetailToolbarSlot>
+      </template>
+
+      <template v-if="detail?.expiryCountdownMinutes" #item-value-expiry>
+        <ExpiryCountdown
+          :minutes="detail.expiryCountdownMinutes"
+          :seconds="detail.expiryCountdownSeconds ?? '00'"
+        />
+      </template>
+
+      <template #headline-text>
+        {{ headlineParts.primary }}<span
+          v-if="headlineParts.fiat"
+          :class="detailChromeStyles.headlineFiat"
+        >{{ headlineParts.fiat }}</span>
       </template>
 
       <template #append>
-        <section :class="styles.progress">
-          <h3 :class="styles.progressTitle">{{ ui('Approval Progress') }}</h3>
-
-          <div :class="styles.progressBlock">
-            <p :class="styles.progressLabel">{{ ui('Initiated') }}</p>
-            <p :class="styles.progressValue">{{ detail.initiatorDisplay }}</p>
-            <p :class="styles.progressSecondary">{{ detail.initiatorNote }}</p>
-            <p :class="styles.progressSecondary">{{ detail.initiatorAtDisplay }}</p>
-          </div>
-
-          <div
-            v-for="node in detail.approvalNodes"
-            :key="node.title"
-            :class="styles.progressBlock"
-          >
-            <p :class="styles.progressLabel">
-              {{ node.title }} · {{ node.statusLabel }}
-            </p>
-            <div :class="styles.memberRow">
-              <div
-                v-for="member in node.members"
-                :key="`${node.title}-${member.emailMasked}`"
-                :class="styles.member"
-              >
-                <EgAvatar size="sm" :name="member.avatarName" />
-                <span :class="styles.memberText">
-                  {{ member.name }} ({{ member.emailMasked }})
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div :class="styles.progressBlock">
-            <p :class="styles.progressLabel">{{ ui('Signature step') }}</p>
-            <p v-if="detail.signingThreshold" :class="styles.progressSecondary">
-              {{ ui('Signing threshold') }}: {{ signingThresholdDisplay }}
-            </p>
-            <div :class="styles.memberRow">
-              <div
-                v-for="signer in detail.signers"
-                :key="signer.emailMasked"
-                :class="styles.member"
-              >
-                <EgAvatar size="sm" :name="signer.avatarName" />
-                <span :class="styles.memberText">
-                  {{ signer.name }} ({{ signer.emailMasked }})
-                </span>
-              </div>
-            </div>
-          </div>
-        </section>
+        <DetailApprovalProgressAppend :steps="progressSteps" />
       </template>
     </EgDetail>
+    </div>
   </EgPopup>
 </template>

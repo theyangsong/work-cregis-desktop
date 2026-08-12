@@ -25,6 +25,7 @@ type DataListRow = Record<string, unknown> & { id?: number };
 export function useApprovalFlow(options: {
   enabled: Ref<boolean>;
   allRowIndexes: Ref<number[]>;
+  selectMode: Ref<boolean>;
   onRefreshList: () => void;
   onExitBatchMode: () => void;
   showError: (message: string) => void;
@@ -45,6 +46,17 @@ export function useApprovalFlow(options: {
   const detail = shallowRef<ApprovalDetail | null>(null);
   /** 验证成功后暂存下一项 id，待 Detail shell 恢复后再 loadDetail（保留 motion-page 翻页）。 */
   const pendingAutoAdvanceId = ref<string | null>(null);
+
+  watch(
+    () => options.selectMode.value,
+    (enabled, wasEnabled) => {
+      if (!wasEnabled || enabled || verifyOpen.value) return;
+      batchMode.value = false;
+      batchSelectedIds.value = [];
+      remark.value = '';
+      pendingAction.value = null;
+    },
+  );
 
   const currentIndex = computed(() => {
     if (!currentApprovalId.value) return 0;

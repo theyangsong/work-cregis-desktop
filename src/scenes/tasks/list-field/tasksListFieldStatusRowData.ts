@@ -14,33 +14,86 @@ const GENERIC_STATUS_ROW_VALUES: ReadonlyArray<TasksListFieldStatusRow> = [
   { status: 'invalid', label: 'Expired' },
 ];
 
-const APPROVED_STATUS_SIGNED: TasksListFieldStatusRow = {
+const APPROVED_STATUS_PASSED: TasksListFieldStatusRow = {
   status: 'success',
-  label: 'Signed',
+  label: 'Approval Passed',
 };
 
-/** Approved 模块前五行演示各状态；其余行默认 Signed。 */
+const APPROVED_STATUS_REJECT: TasksListFieldStatusRow = {
+  status: 'danger',
+  label: 'Approval Reject',
+};
+
+/** 已审批模块：固定第 2 行演示审批驳回。 */
+const APPROVED_REJECT_DEMO_ROW_INDEX = 1;
+
+/** 已审批列表：仅审批通过 / 审批驳回。 */
+function buildApprovedModuleStatusRowValues(rowIndex: number): TasksListFieldStatusRow {
+  if (rowIndex === APPROVED_REJECT_DEMO_ROW_INDEX) {
+    return APPROVED_STATUS_REJECT;
+  }
+  return APPROVED_STATUS_PASSED;
+}
+
+const APPROVED_DETAIL_WAITING_SIGNATURE: TasksListFieldStatusRow = {
+  status: 'warning',
+  label: 'Waiting for signature',
+};
+
+/** 已审批详情：第 1、3、4 条（index 0、2、3）分别演示签名三态。 */
+const APPROVED_DETAIL_SIGNATURE_DEMO_ROWS = new Map<number, TasksListFieldStatusRow>([
+  [0, APPROVED_DETAIL_WAITING_SIGNATURE],
+  [2, { status: 'danger', label: 'Signature Reject' }],
+  [3, { status: 'success', label: 'Signature Passed' }],
+]);
+
+/** 已审批详情进度：与列表 Status 列解耦，保留签名链路演示。 */
+export function buildApprovedModuleDetailStatusRowValues(
+  rowIndex: number,
+): TasksListFieldStatusRow {
+  if (rowIndex === APPROVED_REJECT_DEMO_ROW_INDEX) {
+    return APPROVED_STATUS_REJECT;
+  }
+  return APPROVED_DETAIL_SIGNATURE_DEMO_ROWS.get(rowIndex) ?? APPROVED_DETAIL_WAITING_SIGNATURE;
+}
+
+const SIGNATURE_PASSED_STATUS: TasksListFieldStatusRow = {
+  status: 'success',
+  label: 'Signature Passed',
+};
+
+/** All Records / Sent Request 等模块默认行状态。 */
+const APPROVED_STATUS_SIGNED = SIGNATURE_PASSED_STATUS;
+
+/** All Records / Sent Request 前四行演示各状态；第 5 行（index 4）演示已撤回。 */
 const APPROVED_STATUS_DEMO_ROWS: ReadonlyArray<TasksListFieldStatusRow> = [
-  { status: 'warning', label: 'Approving' },
+  { status: 'warning', label: 'Pending Approval' },
   { status: 'danger', label: 'Approval Reject' },
-  { status: 'ready', label: 'Waiting for signature' },
+  { status: 'warning', label: 'Waiting for signature' },
   { status: 'danger', label: 'Signature Reject' },
   { status: 'invalid', label: 'Withdrawn' },
 ];
 
-const SIGNED_STATUS_SUCCESS: TasksListFieldStatusRow = {
-  status: 'success',
-  label: 'Success',
+/** All Records / Sent Request：第 5 行（index 4）固定已撤回。 */
+export const WITHDRAWN_DEMO_ROW_INDEX = 4;
+
+const SIGNED_STATUS_PASSED = SIGNATURE_PASSED_STATUS;
+
+const SIGNED_STATUS_REJECT: TasksListFieldStatusRow = {
+  status: 'danger',
+  label: 'Signature Reject',
 };
 
-/** Signed 模块前三行演示各状态；其余行默认 Success。 */
-const SIGNED_STATUS_DEMO_ROWS: ReadonlyArray<TasksListFieldStatusRow> = [
-  { status: 'ready', label: 'Pending' },
-  { status: 'danger', label: 'Failed' },
-  { status: 'invalid', label: 'Canceled' },
-];
+/** 已签名模块：固定第 2 行演示签名驳回。 */
+const SIGNED_REJECT_DEMO_ROW_INDEX = 1;
+
+/** All Records / Sent Request / 已签名：固定第 8 行（index 7）演示系统签名驳回。 */
+export const SYSTEM_SIGNATURE_REJECT_ROW_INDEX = 7;
 
 function buildApprovedStatusRowValues(rowIndex: number): TasksListFieldStatusRow {
+  if (rowIndex === SYSTEM_SIGNATURE_REJECT_ROW_INDEX) {
+    return SIGNED_STATUS_REJECT;
+  }
   return APPROVED_STATUS_DEMO_ROWS[rowIndex] ?? APPROVED_STATUS_SIGNED;
 }
 
@@ -49,7 +102,13 @@ function usesApprovedStatusData(menuItem?: string): boolean {
 }
 
 function buildSignedStatusRowValues(rowIndex: number): TasksListFieldStatusRow {
-  return SIGNED_STATUS_DEMO_ROWS[rowIndex] ?? SIGNED_STATUS_SUCCESS;
+  if (
+    rowIndex === SIGNED_REJECT_DEMO_ROW_INDEX
+    || rowIndex === SYSTEM_SIGNATURE_REJECT_ROW_INDEX
+  ) {
+    return SIGNED_STATUS_REJECT;
+  }
+  return SIGNED_STATUS_PASSED;
 }
 
 function buildGenericStatusRowValues(rowIndex: number): TasksListFieldStatusRow {
@@ -60,6 +119,9 @@ export function buildStatusRowValues(
   rowIndex: number,
   menuItem?: string,
 ): TasksListFieldStatusRow {
+  if (menuItem === 'Approved') {
+    return buildApprovedModuleStatusRowValues(rowIndex);
+  }
   if (usesApprovedStatusData(menuItem)) {
     return buildApprovedStatusRowValues(rowIndex);
   }
@@ -70,11 +132,14 @@ export function buildStatusRowValues(
 }
 
 export function defaultStatusRowValues(menuItem?: string): TasksListFieldStatusRow {
+  if (menuItem === 'Approved') {
+    return APPROVED_STATUS_PASSED;
+  }
   if (usesApprovedStatusData(menuItem)) {
     return APPROVED_STATUS_SIGNED;
   }
   if (menuItem === 'Signed') {
-    return SIGNED_STATUS_SUCCESS;
+    return SIGNED_STATUS_PASSED;
   }
   return GENERIC_STATUS_ROW_VALUES[0];
 }

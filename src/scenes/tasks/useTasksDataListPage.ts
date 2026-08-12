@@ -45,6 +45,8 @@ export function useTasksDataListPage(
     key: string,
     rows: Array<Record<string, unknown> & { _index: number }>,
   ) => Promise<void | DataListBatchActionResult> | void | DataListBatchActionResult,
+  /** 返回 true 保留行；批处理多选时用于按网络过滤全量列表（勿只滤当前页）。 */
+  rowFilter?: ComputedRef<((row: Record<string, unknown>) => boolean) | null>,
 ) {
   const columnDataSources = computed(() =>
     Array.from({ length: DATA_LIST_PREVIEW_COLUMN_COUNT }, (_, offset) =>
@@ -81,8 +83,9 @@ export function useTasksDataListPage(
 
   const sortedDataList = computed(() => {
     const sort = activeSort?.value;
-    if (!sort) return allDataList.value;
-    return sortDataListRows(allDataList.value, sort);
+    const sorted = sort ? sortDataListRows(allDataList.value, sort) : allDataList.value;
+    const filter = rowFilter?.value;
+    return filter ? sorted.filter(filter) : sorted;
   });
 
   const columnHeight = computed(() => parseDataListColumnHeight(customize.value));
@@ -402,6 +405,10 @@ export function useTasksDataListPage(
       clearTimeout(refreshTimer);
       refreshTimer = undefined;
     }
+    if (activeSort) {
+      activeSort.value = null;
+    }
+    navigateManyPage(1);
     customize.value.loading = true;
     refreshTimer = window.setTimeout(() => {
       customize.value.loading = false;

@@ -1,4 +1,4 @@
-export type SigningCustomPopupStepState = 'done' | 'active' | 'pending';
+export type SigningCustomPopupStepState = 'done' | 'active' | 'pending' | 'failed';
 
 export type SigningCustomPopupProgressStep = {
   key: string;

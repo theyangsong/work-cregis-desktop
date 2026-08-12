@@ -25,13 +25,6 @@ const verifyOpen = computed({
   },
 });
 
-const viewMoreOpen = computed({
-  get: () => props.flow.viewMoreOpen.value,
-  set: (value: boolean) => {
-    props.flow.viewMoreOpen.value = value;
-  },
-});
-
 const progressOpen = computed({
   get: () => props.flow.progressOpen.value,
   set: (value: boolean) => {
@@ -46,6 +39,13 @@ const multiSignOpen = computed({
   },
 });
 
+const viewMoreOpen = computed({
+  get: () => props.flow.viewMoreOpen.value,
+  set: (value: boolean) => {
+    props.flow.viewMoreOpen.value = value;
+  },
+});
+
 const detailPopupMounted = computed(
   () => props.flow.detailOpen.value || props.flow.detail.value != null,
 );
@@ -53,16 +53,9 @@ const detailPopupMounted = computed(
 const detailShellSuspended = computed(
   () =>
     props.flow.verifyOpen.value
-    || props.flow.viewMoreOpen.value
     || props.flow.progressOpen.value
-    || props.flow.multiSignOpen.value,
-);
-
-const viewMoreShellSuspended = computed(
-  () =>
-    props.flow.verifyOpen.value
-    || props.flow.progressOpen.value
-    || props.flow.multiSignOpen.value,
+    || props.flow.multiSignOpen.value
+    || props.flow.viewMoreOpen.value,
 );
 
 function onVerifyClosed(accepted: boolean) {
@@ -75,10 +68,6 @@ function onProgressPopupClosed() {
 
 function onMultiSignPopupClosed() {
   props.flow.onMultiSignPopupClosed();
-}
-
-function onViewMoreClosed() {
-  props.flow.viewMoreOpen.value = false;
 }
 </script>
 
@@ -101,8 +90,13 @@ function onViewMoreClosed() {
     @next="flow.navigateRelative(1)"
     @pass-confirm="flow.onDetailPassConfirm($event)"
     @reject-confirm="flow.onDetailRejectConfirm()"
-    @view-more-sender="flow.openViewMore('sender')"
-    @view-more-receiver="flow.openViewMore('receiver')"
+    @view-more="flow.openViewMore"
+  />
+
+  <AddressViewMoreReminderPopup
+    v-model:open="viewMoreOpen"
+    :shell-suspended="verifyOpen || progressOpen || multiSignOpen"
+    :text="flow.viewMoreText.value"
   />
 
   <TradePasswordVerifyPopup
@@ -130,12 +124,5 @@ function onViewMoreClosed() {
     :phase="flow.progressPhase.value"
     :miner-fee-display="flow.selectedMinerFeeDisplay.value"
     @close="onProgressPopupClosed"
-  />
-
-  <AddressViewMoreReminderPopup
-    v-model:open="viewMoreOpen"
-    :shell-suspended="viewMoreShellSuspended"
-    :text="flow.viewMoreText.value"
-    @closed="onViewMoreClosed"
   />
 </template>

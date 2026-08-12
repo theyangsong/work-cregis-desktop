@@ -1,0 +1,105 @@
+.deviceInfoTooltip {
+  display: inline-flex;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+.infoButton {
+  flex-shrink: 0;
+}
+
+.infoButton:global(.eds-icon-button:hover),
+.infoButton:global(.eds-icon-button:active) {
+  background-color: var(--event-hover);
+}
+
+.infoButton:global(.eds-icon-button:focus-visible),
+.deviceInfoTooltip :global([data-eds-tooltip-open]) .infoButton:global(.eds-icon-button) {
+  background-color: var(--event-focus);
+}
+
+.iconOutline,
+.iconFill {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.iconFill {
+  display: none;
+}
+
+.infoButton:hover .iconOutline,
+.deviceInfoTooltip :global([data-eds-tooltip-open]) .iconOutline {
+  display: none;
+}
+
+.infoButton:hover .iconFill,
+.deviceInfoTooltip :global([data-eds-tooltip-open]) .iconFill {
+  display: inline-flex;
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-025);
+  box-sizing: border-box;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  min-width: 0;
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--radius-sm);
+  box-sizing: border-box;
+  cursor: pointer;
+  composes: motion-ease is-hover from global;
+}
+
+.row:hover {
+  background-color: var(--event-hover);
+}
+
+.label {
+  flex-shrink: 0;
+  color: var(--text-base-secondary);
+  font-size: var(--eds-body-medium-size);
+  font-weight: var(--eds-body-medium-weight);
+  line-height: var(--eds-body-medium-line-height);
+  white-space: nowrap;
+}
+
+.valueCluster {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  min-width: 0;
+}
+
+.value {
+  min-width: 0;
+  color: var(--text-base-primary);
+  font-size: var(--eds-body-medium-size);
+  font-weight: var(--eds-body-medium-weight);
+  line-height: var(--eds-body-medium-line-height);
+}
+
+.copyButton {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.copyButtonCopied :global(.eds-icon-button .symbol) {
+  color: var(--status-success);
+}
+
+.copyButtonCopied :global(.eds-icon .eds-i-f),
+.copyButtonCopied :global(.eds-icon path) {
+  fill: var(--status-success);
+}
+
+.copyButtonCopied :global(.eds-icon .eds-i-s) {
+  stroke: var(--status-success);
+}

@@ -8,6 +8,8 @@ export type MultiSignWaitingSidebarField = {
   value: string;
 };
 
+export type MultiSignWaitingMemberPresence = 'joined' | 'pending' | 'offline';
+
 export type MultiSignWaitingMemberView = {
   id: string;
   name: string;
@@ -15,6 +17,8 @@ export type MultiSignWaitingMemberView = {
   avatarName: string;
   deviceLabel?: string;
   isInitiator: boolean;
+  isCurrentUser: boolean;
+  presence: MultiSignWaitingMemberPresence;
   joined: boolean;
   muted: boolean;
   avatarColorIndex?: number;
@@ -69,17 +73,16 @@ function buildInitiatorSidebarField(detail: SigningDetail): MultiSignWaitingSide
   };
 }
 
-export function buildMultiSignWaitingMembers(
+function buildMultiSignWaitingMembers(
   detail: SigningDetail,
   joinedCount: number,
 ): MultiSignWaitingMemberView[] {
-  const { total } = parseSigningThreshold(detail.signingThreshold);
-  const memberTotal = Math.max(total, detail.signers.length, 4);
+  const { total, required } = parseSigningThreshold(detail.signingThreshold);
+  const memberTotal = Math.min(Math.max(total, detail.signers.length, required), 4);
   const initiatorMember = resolveInitiatorMember(detail);
 
-  return Array.from({ length: memberTotal }, (_, index) => {
+  const members = Array.from({ length: memberTotal }, (_, index) => {
     const signer = detail.signers[index];
-    const joined = index < joinedCount;
     const name = signer?.name ?? MEMBER_NAME_PRESETS[index] ?? `Signer ${index + 1}`;
     const emailMasked =
       signer?.emailMasked ?? MEMBER_EMAIL_PRESETS[index] ?? 'm******r@example.com';
@@ -97,11 +100,15 @@ export function buildMultiSignWaitingMembers(
       avatarName,
       deviceLabel: MEMBER_DEVICE_LABELS[index],
       isInitiator,
-      joined,
-      muted: !joined,
+      isCurrentUser: name === 'Ethan Chen',
+      presence: 'joined' as const,
+      joined: true,
+      muted: false,
       avatarColorIndex: isInitiator ? 10 : undefined,
     };
   });
+
+  return members.slice(0, Math.max(1, Math.min(joinedCount, members.length)));
 }
 
 export function buildMultiSignWaitingPanelModel(

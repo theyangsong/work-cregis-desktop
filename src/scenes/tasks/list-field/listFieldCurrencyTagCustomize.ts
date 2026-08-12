@@ -98,23 +98,34 @@ function defaultTagItemValue(
     if (slot === 'system') {
       return 'aml-danger';
     }
-    if (tagIndex === 1) return 'teal';
-    if (tagIndex === 2) return 'cobalt';
-    const extraCustomStyles = [
-      'aurora',
-      'vermilion',
-      'orange',
-      'amber',
-      'lime',
-      'mint',
-      'clear-sky',
-      'orchid',
-      'rose',
-      'peach',
-    ] as const;
-    return extraCustomStyles[(tagIndex - 3) % extraCustomStyles.length] ?? 'aurora';
+    return resolveCurrencyCustomTagStyle(tagIndex);
   }
   return 'apricot';
+}
+
+export function resolveCurrencyCustomTagStyle(tagIndex: number): TagCustomStyle {
+  if (tagIndex === 1) return 'teal';
+  if (tagIndex === 2) return 'cobalt';
+  const extraCustomStyles = [
+    'aurora',
+    'vermilion',
+    'orange',
+    'amber',
+    'lime',
+    'mint',
+    'clear-sky',
+    'orchid',
+    'rose',
+    'peach',
+  ] as const satisfies readonly TagCustomStyle[];
+  return extraCustomStyles[(tagIndex - 3) % extraCustomStyles.length] ?? 'aurora';
+}
+
+export function resolveCurrencyCustomTagStyleForLabel(label: string): TagCustomStyle {
+  const presetIndex = CURRENCY_CUSTOM_TAG_DEFAULT_LABELS.indexOf(
+    label as (typeof CURRENCY_CUSTOM_TAG_DEFAULT_LABELS)[number],
+  );
+  return resolveCurrencyCustomTagStyle(presetIndex >= 0 ? presetIndex + 1 : 1);
 }
 
 function createCurrencyTagItemDefaults(
@@ -270,6 +281,28 @@ export function currencyAddressCustomTagOverrides(
     [currencyTagShowKey(side, addressIndex, 'custom')]: enabled,
     ...createCurrencyTagItemDefaults(side, addressIndex, 'custom', 'custom', count, enabled),
   };
+}
+
+/** 指定自定义 Tag 文案（顺序与 labels 一致）。 */
+export function currencyAddressCustomTagLabelOverrides(
+  side: 'from' | 'to',
+  addressIndex: number,
+  labels: readonly string[],
+  enabled = true,
+): Record<string, unknown> {
+  const entries: Record<string, unknown> = {
+    [currencyTagShowKey(side, addressIndex, 'custom')]: enabled,
+    [currencyTagCountKey(side, addressIndex, 'custom')]: String(labels.length),
+  };
+
+  labels.forEach((label, index) => {
+    const tagIndex = index + 1;
+    entries[currencyTagItemKey(side, addressIndex, 'custom', 'Label', tagIndex)] = label;
+    entries[currencyTagItemKey(side, addressIndex, 'custom', 'CustomStyle', tagIndex)] =
+      resolveCurrencyCustomTagStyleForLabel(label);
+  });
+
+  return entries;
 }
 
 /** @deprecated 使用 currencyAddressRiskTagOverrides */

@@ -61,6 +61,7 @@ const listFieldCustomize = computed(() => {
       props.columnMinWidth,
       props.rowIndex,
       props.columnAlign,
+      props.menuItem,
     );
   }
   return null;

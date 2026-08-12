@@ -33,7 +33,7 @@
   padding: 0;
 }
 
-/** 自定义子页：隐藏 Popover 原标题，由 Teleport 注入 EgIconButton +「自定义」。仅看 deform shell，勿匹配离屏预测量节点。 */
+/** 自定义子页（内嵌 deform 翻页）：隐藏 Popover 原标题，由 Teleport 注入顶栏。 */
 :global(
   .eds-popover-content:has(.motion-layout-deform[data-miner-fee-screen='custom'])
     [class*='topToolTitle']
@@ -41,7 +41,7 @@
   display: none;
 }
 
-/** 自定义子页：topTool 下不显示 page 分割线（Teleport 标题行已含分隔语义）。 */
+/** 自定义子页（内嵌 deform 翻页）：topTool 下不显示 page 分割线。 */
 :global(
   .eds-popover-content:has(.motion-layout-deform[data-miner-fee-screen='custom'])
     > .eds-divider
@@ -73,6 +73,15 @@
   box-sizing: border-box;
 }
 
+.minerFeeDeformShell:global([data-miner-fee-popup-toolbar][data-miner-fee-screen='list']) {
+  height: auto;
+}
+
+:global(.motion-layout-deform[data-miner-fee-popup-toolbar][data-miner-fee-screen='custom']) .root {
+  height: auto;
+  min-height: 0;
+}
+
 .minerFeeDeformShell:global([data-miner-fee-screen='custom'])
   > :global(.motion-layout-deform-content) {
   height: 100%;
@@ -83,6 +92,21 @@
   flex-direction: column;
   gap: var(--spacing-2);
   width: 100%;
+}
+
+/** Popup 工具栏模式：选项与备注为一组，间距 spacing-5。 */
+.minerFeeListPagePopupToolbar {
+  gap: var(--spacing-5);
+}
+
+.minerFeeListPagePopupToolbar .minerFeeRoot {
+  flex: 0 0 auto;
+  overflow-y: visible;
+}
+
+.minerFeeListPagePopupToolbar .minerFeeFooter {
+  width: 100%;
+  margin: 0;
 }
 
 /** TON / TRON 等独立布局：选项区与备注区间距更大。 */
@@ -157,6 +181,72 @@
   width: 100%;
 }
 
+/** AnchoredPopover 默认 inline-flex；自定义入口须铺满选项行宽。 */
+.minerFeeCustomPopoverHost {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-self: stretch;
+}
+
+.minerFeeCustomPopoverHost > :global(*) {
+  display: flex;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+}
+
+.minerFeeCustomPopoverHost > :global(*) > :global(*) {
+  display: flex;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+}
+
+.minerFeeCustomPopoverHost :global([class*='trigger']) {
+  display: flex;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+}
+
+.minerFeeCustomPopoverHost :global([class*='trigger'] > *) {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+}
+
+.minerFeeCustomAnchoredPopoverHost {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+/** Popover 打开时盖住下层 EgPopup，拦截点击 / 悬浮；z-index 低于 AnchoredPopover 浮层 (1000)。 */
+.minerFeeCustomPopoverBlocker {
+  position: fixed;
+  z-index: 999;
+  box-sizing: border-box;
+  pointer-events: auto;
+  background: transparent;
+}
+
+/** 矿工费与备注之间（Popup 工具栏模式）：对齐 batchPopupSectionDivider 实线。 */
+.minerFeeRemarkSectionDivider {
+  flex-shrink: 0;
+  align-self: stretch;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.minerFeeRemarkSectionDivider::after {
+  content: '';
+  display: block;
+  width: 100%;
+  height: var(--stroke-xs);
+  background: var(--stroke-divider-page);
+}
+
 /** contentSlot 子节点：自定义与备注之间；相对选项区缩进至 spacing-4。 */
 .minerFeeDivider {
   flex-shrink: 0;
@@ -174,7 +264,6 @@
   border-radius: var(--radius-sm);
   background: var(--material-hide);
   color: var(--text-base-primary);
-  cursor: pointer;
   font: inherit;
   text-align: left;
   box-sizing: border-box;
@@ -194,6 +283,21 @@
 
 .minerFeeOptionSelected {
   background: var(--event-focus-brand-weaken);
+}
+
+/** Popover 已打开、尚未保存选中自定义时：触发器仅展示聚焦态，不改变 radio 选中项。 */
+.minerFeeCustomOptionTriggerActive:not(.minerFeeOptionSelected) {
+  background: var(--event-focus-brand-weaken);
+}
+
+.minerFeeCustomOptionTriggerActive:hover,
+.minerFeeCustomOptionTriggerActive:focus-visible {
+  background: var(--event-focus-brand-weaken);
+}
+
+/** Popover 打开时：速度档位保留选中语义，但不与自定义触发器同时高亮。 */
+.minerFeeOptionsPopoverOpen .minerFeeOption.minerFeeOptionSelected:not(.minerFeeSavedCustomOption) {
+  background: var(--material-hide);
 }
 
 .minerFeeOption {

@@ -1,3 +1,5 @@
+import { isSigningBatchDemoSingleSignRow } from '../signing/batch/signingBatchDemoRowDistribution';
+
 export type PayoutWalletsColumnValues = {
   value: string;
   rightLabel?: string;
@@ -31,25 +33,16 @@ const PAYOUT_WALLET_NAME_PREFIXES = [
   'Client',
 ] as const;
 
-const PAYOUT_WALLET_NAME_SUFFIXES = [
-  'Wallet',
-  'Hot Wallet',
-  'Cold Wallet',
-  'Payout Wallet',
-  'Fund',
-  'Pool',
-] as const;
-
-/** 前 8 行固定钱包名（0-based rowIndex 0–7）。 */
+/** 前 8 行固定钱包名（0-based rowIndex 0–7）；rowIndex 2 保留长文案用于列宽溢出演示。 */
 const PAYOUT_WALLET_NAME_PRESETS: readonly string[] = [
-  'Treasury Wallet',
-  'Operations Hot Wallet',
+  'Treasury',
+  'Operations',
   'Payroll Payout Wallet',
-  'USDT Reserve Wallet',
-  'Corporate Escrow Wallet',
-  'Liquidity Pool',
-  'Vendor Settlement Wallet',
-  'Marketing Fund Wallet',
+  'Reserve',
+  'Escrow',
+  'Liquidity',
+  'Vendor',
+  'Marketing',
 ] as const;
 
 const PAYOUT_WALLET_SIGN_TAGS = ['Single-Sign', 'Multi-Sign'] as const;
@@ -83,7 +76,7 @@ const TRANSFER_TYPE_ROW_PRESETS: readonly TransferTypeRowValues[] = [
   { value: 'Sub-Address Payout' },
   { value: 'Swap' },
   { value: 'Remittance' },
-  { value: 'Wallet Payout' },
+  { value: 'Manual Transfer' },
   { value: 'Swap' },
   { value: 'Manual Transfer' },
   { value: 'Wallet Payout' },
@@ -119,14 +112,27 @@ function buildRandomSignTagLabel(rowIndex: number): string {
 
 function buildRandomPayoutWalletName(rowIndex: number): string {
   const prefixIndex = Math.floor(seededFraction(rowIndex, 11) * PAYOUT_WALLET_NAME_PREFIXES.length);
-  const suffixIndex = Math.floor(seededFraction(rowIndex, 13) * PAYOUT_WALLET_NAME_SUFFIXES.length);
-  const prefix = PAYOUT_WALLET_NAME_PREFIXES[prefixIndex] ?? PAYOUT_WALLET_NAME_PREFIXES[0];
-  const suffix = PAYOUT_WALLET_NAME_SUFFIXES[suffixIndex] ?? PAYOUT_WALLET_NAME_SUFFIXES[0];
-  return `${prefix} ${suffix}`;
+  return PAYOUT_WALLET_NAME_PREFIXES[prefixIndex] ?? PAYOUT_WALLET_NAME_PREFIXES[0];
+}
+
+/** 出款钱包编号：QB + 年月日 + 8 位数字（按 rowIndex 稳定随机）。 */
+export function buildPayoutWalletCode(rowIndex: number): string {
+  const year = 2026;
+  const month = String((rowIndex % 12) + 1).padStart(2, '0');
+  const day = String((rowIndex % 28) + 1).padStart(2, '0');
+  const digits = String(Math.floor(seededFraction(rowIndex, 29) * 100_000_000)).padStart(8, '0');
+  return `QB${year}${month}${day}${digits}`;
 }
 
 /** 第三列 Payout Wallets 单元格。 */
 export function buildPayoutWalletsColumnValues(rowIndex: number): PayoutWalletsColumnValues {
+  if (isSigningBatchDemoSingleSignRow(rowIndex)) {
+    return {
+      value: buildRandomPayoutWalletName(rowIndex),
+      rightLabel: 'Single-Sign',
+    };
+  }
+
   const preset = PAYOUT_WALLET_NAME_PRESETS[rowIndex];
   const signPreset = PAYOUT_WALLET_SIGN_TAG_PRESETS[rowIndex];
   return {

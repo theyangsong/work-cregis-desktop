@@ -31,9 +31,11 @@ const props = withDefaults(
     placeholderKey: string;
     feedbackKey: string;
     symbol?: string;
+    hideInlineConfirm?: boolean;
   }>(),
   {
     symbol: 'ETH',
+    hideInlineConfirm: false,
   },
 );
 
@@ -51,7 +53,8 @@ const customMeasurePanelRef = ref<InstanceType<typeof MinerFeeCustomPanel> | nul
 const customPanelRef = ref<InstanceType<typeof MinerFeeCustomPanel> | null>(null);
 const shellVariant = computed(() => resolveMinerFeeEvmShellVariant(props.symbol));
 
-const minerFee = ref<MinerFeeOptionId | null>(null);
+const minerFee = ref<MinerFeeOptionId | null>('fast');
+const minerFeeBeforeCustomPopover = ref<MinerFeeOptionId | null>(null);
 const customFeeDraft = ref<MinerFeeCustomDraft>(
   defaultMinerFeeCustomDraft(shellVariant.value),
 );
@@ -78,6 +81,12 @@ const {
 
 const minerFeeConfirmDisabled = computed(() => minerFee.value === null);
 const isMinerFeeCustomPage = computed(() => activePage.value === 'custom');
+const deformShellStyle = computed(() => {
+  if (props.hideInlineConfirm && activePage.value === 'list') {
+    return undefined;
+  }
+  return { height: `${shellHeight.value}px` };
+});
 
 const remarkModel = computed({
   get: () => props.remark,
@@ -85,6 +94,9 @@ const remarkModel = computed({
 });
 
 function getListMeasureEl() {
+  if (props.hideInlineConfirm) {
+    return listPanelRef.value?.getMeasureEl() ?? listMeasurePanelRef.value?.getMeasureEl() ?? null;
+  }
   return (
     listPanelRef.value?.getMeasureEl()
     ?? listMeasurePanelRef.value?.getMeasureEl()
@@ -126,6 +138,9 @@ watch(customFeeSaved, async () => {
 watch(
   () => activePage.value,
   (screen) => {
+    if (props.hideInlineConfirm && screen === 'custom') {
+      return;
+    }
     emit('miner-fee-screen-change', screen);
   },
 );
@@ -134,12 +149,28 @@ function selectMinerFee(optionId: MinerFeeOptionId) {
   minerFee.value = optionId;
 }
 
+function onCustomPopoverOpen() {
+  minerFeeBeforeCustomPopover.value = minerFee.value;
+}
+
+function onCustomPopoverDismiss() {
+  if (minerFeeBeforeCustomPopover.value !== null) {
+    minerFee.value = minerFeeBeforeCustomPopover.value;
+    minerFeeBeforeCustomPopover.value = null;
+  }
+}
+
 async function setMinerFeeScreen(screen: MinerFeeScreen) {
   if (
     screen === activePage.value
     && !contentExiting.value
     && !contentEntering.value
   ) {
+    return;
+  }
+
+  if (props.hideInlineConfirm) {
+    activePage.value = screen;
     return;
   }
 
@@ -159,9 +190,12 @@ async function onCustomSave(draft: MinerFeeCustomDraft) {
   customFeeDraft.value = { ...draft };
   customFeeSaved.value = buildMinerFeeCustomPreview(draft, shellVariant.value);
   minerFee.value = MINER_FEE_CUSTOM_ID;
+  minerFeeBeforeCustomPopover.value = null;
   await nextTick();
   await ensurePageHeight('list');
-  await setMinerFeeScreen('list');
+  if (!props.hideInlineConfirm) {
+    await setMinerFeeScreen('list');
+  }
 }
 
 function resetMinerFeeFlow() {
@@ -169,7 +203,8 @@ function resetMinerFeeFlow() {
   contentExiting.value = false;
   contentEntering.value = false;
   contentDirection.value = null;
-  minerFee.value = null;
+  minerFee.value = 'fast';
+  minerFeeBeforeCustomPopover.value = null;
   customFeeDraft.value = defaultMinerFeeCustomDraft(shellVariant.value);
   customFeeSaved.value = null;
   shellHeight.value = pageSpecs.list.shellHeight;
@@ -188,8 +223,21 @@ function onListConfirm() {
   emit('confirm', { profileKind: 'evm', displayValue });
 }
 
+function attemptCancelCustom() {
+  goToMinerFeeList();
+}
+
+function attemptSaveCustom() {
+  customPanelRef.value?.save();
+}
+
 defineExpose({
   resetMinerFeeFlow,
+  attemptConfirm: onListConfirm,
+  attemptCancelCustom,
+  attemptSaveCustom,
+  confirmDisabled: minerFeeConfirmDisabled,
+  minerFeeScreen: activePage,
 });
 </script>
 
@@ -200,6 +248,7 @@ defineExpose({
         ref="customMeasurePanelRef"
         :draft="customMeasureDraft"
         :symbol="symbol"
+        :hide-inline-footer="hideInlineConfirm"
         measure-only
       />
     </div>
@@ -215,15 +264,39 @@ defineExpose({
         :placeholder-key="placeholderKey"
         :feedback-key="feedbackKey"
         :confirm-disabled="minerFeeConfirmDisabled"
+        :hide-inline-confirm="hideInlineConfirm"
       />
     </div>
 
+    <template v-if="hideInlineConfirm">
+      <MinerFeeListPanel
+        ref="listPanelRef"
+        :symbol="symbol"
+        :miner-fee="minerFee"
+        :custom-fee-saved="customFeeSaved"
+        v-model:remark="remarkModel"
+        :placeholder-key="placeholderKey"
+        :feedback-key="feedbackKey"
+        :confirm-disabled="minerFeeConfirmDisabled"
+        hide-inline-confirm
+        custom-via-anchored-popover
+        :custom-draft="customFeeDraft"
+        custom-popover-boundary=".eds-popup"
+        @select-miner-fee="selectMinerFee"
+        @custom-popover-open="onCustomPopoverOpen"
+        @custom-popover-dismiss="onCustomPopoverDismiss"
+        @save-custom="onCustomSave"
+        @confirm="onListConfirm"
+      />
+    </template>
+
     <div
+      v-else
       class="motion-layout-deform"
       :class="styles.minerFeeDeformShell"
       data-miner-fee-popover
       :data-miner-fee-screen="activePage"
-      :style="{ height: `${shellHeight}px` }"
+      :style="deformShellStyle"
     >
       <div
         :class="[

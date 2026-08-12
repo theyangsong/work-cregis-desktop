@@ -25,6 +25,10 @@
   padding-right: calc(var(--spacing-1) * 2 + var(--icon-md) + var(--spacing-4));
 }
 
+.customTopToolTitleOnly {
+  padding-right: calc(var(--spacing-1) * 2 + var(--icon-md) + var(--spacing-4));
+}
+
 .customTopToolTitle {
   color: var(--text-base-primary);
   font-size: var(--eds-body-medium-strong-size);

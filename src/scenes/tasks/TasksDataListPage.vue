@@ -1,12 +1,24 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
+import {
+  computed,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  reactive,
+  ref,
+  toRef,
+  watch,
+  type ComponentPublicInstance,
+} from 'vue';
 import {
   EgDataList,
   EgDataListCellOverflow,
   EgDataListColumn,
   EgDivider,
   EgEndFeedbackCard,
+  EgFlotation,
   EgIcon,
+  EgIconButton,
   EgIconButtonPro,
   EgLayout,
   EgPaginer,
@@ -50,19 +62,33 @@ import {
 import { useAppI18n } from '@/composables/useAppI18n';
 import { formatGroupedNumber } from '@/utils/formatGroupedDisplay';
 import ApprovalRemarkPopoverPanel from './approval/ApprovalRemarkPopoverPanel.vue';
-import type { MinerFeeSelection } from './shared/minerFeeProfile';
-import { isEvmMinerFeeShell } from './shared/minerFeeProfile';
+import { registerSigningBatchFlow } from './signing/batch/signingBatchFlowContext';
+import { setBatchSigningListRefreshHandler, suspendBatchSigningProgressPopup } from './signing/batch/batchSigningProgressUiStore';
+import { useSigningBatchFlow } from './signing/batch/useSigningBatchFlow';
+import SigningBatchNetworkPickerMenu from './signing/batch/SigningBatchNetworkPickerMenu.vue';
+import {
+  BATCH_CURRENCY_PICKER_MAX_HEIGHT,
+  BATCH_CURRENCY_PICKER_WIDTH,
+  BATCH_NETWORK_PICKER_CROSS_AXIS_OFFSET_PX,
+} from './signing/batch/batchSigning.constants';
+import type { BatchCurrencyGroup } from './signing/batch/types';
+import { registerRecordDetailFlow } from './shared/recordDetailFlowContext';
+import { useRecordDetailFlow } from './shared/useRecordDetailFlow';
 import { registerApprovalFlow } from './approval/approvalFlowContext';
 import {
   APPROVAL_BATCH_MAX,
   useApprovalFlow,
 } from './approval/useApprovalFlow';
-import { isMultiSignRow } from './list-field/tasksListFieldBusinessTypeRowData';
 import { registerSigningFlow } from './signing/signingFlowContext';
 import {
-  SIGNING_BATCH_MAX,
   useSigningFlow,
 } from './signing/useSigningFlow';
+import { useDataListSelectAllShortcut } from './shared/useDataListSelectAllShortcut';
+import { useDataListSelectModeEscape } from './shared/useDataListSelectModeEscape';
+import {
+  closeDataListSelectMode,
+  openDataListSelectMode,
+} from './shared/dataListSelectMode';
 import { useTasksDataListPage } from './useTasksDataListPage';
 import type {
   TasksDataListActiveSort,
@@ -148,8 +174,30 @@ const amountColumnMinWidth = computed(() =>
 
 const isApprovalMenu = computed(() => props.toolbarTitle === 'Approval');
 const isSigningMenu = computed(() => props.toolbarTitle === 'Signing');
+const isRecordMenu = computed(() => {
+  const title = props.toolbarTitle;
+  return (
+    title === 'Approved'
+    || title === 'Signed'
+    || title === 'All Records'
+    || title === 'Sent Request'
+  );
+});
 
 const batchSelectedCount = ref(0);
+const dataListRef = ref<ComponentPublicInstance | null>(null);
+
+function requestCloseDataListSelectMode() {
+  closeDataListSelectMode(dataListRef, () => {
+    customize.selectMode = false;
+  });
+}
+
+function requestOpenDataListSelectMode() {
+  openDataListSelectMode(dataListRef, () => {
+    customize.selectMode = true;
+  });
+}
 
 /** 批处理成功退出时 remount，避免勾选列退出动画与 Refresh 叠加。 */
 const dataListRemountKey = ref(0);
@@ -234,6 +282,26 @@ const allRowIndexes = computed(() => {
 const approvalFlow = useApprovalFlow({
   enabled: isApprovalMenu,
   allRowIndexes,
+  selectMode: toRef(customize, 'selectMode'),
+  onRefreshList: () => {
+    void nextTick(() => {
+      onToolbarActionClick('refresh');
+    });
+  },
+  onExitBatchMode: () => {
+    customize.selectMode = false;
+    dataListRemountKey.value += 1;
+  },
+  showError: (message) => showListError(message),
+  showSuccess: () => showListSuccess(),
+});
+
+const signingBatchFlow = useSigningBatchFlow({
+  enabled: isSigningMenu,
+  allRowIndexes,
+  selectMode: toRef(customize, 'selectMode'),
+  closeDataListSelect: requestCloseDataListSelectMode,
+  openDataListSelect: requestOpenDataListSelectMode,
   onRefreshList: () => {
     void nextTick(() => {
       onToolbarActionClick('refresh');
@@ -263,13 +331,18 @@ const signingFlow = useSigningFlow({
   showSuccess: () => showListSuccess(),
 });
 
+const recordDetailFlow = useRecordDetailFlow({
+  menuItem: computed(() => props.toolbarTitle),
+  allRowIndexes,
+});
+
 function onDataListSelectedChange(rows: Array<Record<string, unknown> & { _index: number }>) {
   batchSelectedCount.value = rows.length;
   if (isApprovalMenu.value) {
     approvalFlow.onSelectedChange(rows);
   }
   if (isSigningMenu.value) {
-    signingFlow.onSelectedChange(rows);
+    signingBatchFlow.onSelectedChange(rows);
   }
 }
 
@@ -285,10 +358,10 @@ async function handleBatchLabelBeforeOpen(
     return;
   }
   if (isSigningMenu.value) {
-    if (rows.length > SIGNING_BATCH_MAX) {
-      throw new Error(`You can select up to ${SIGNING_BATCH_MAX} items at a time.`);
+    if (key === 'reject') {
+      await signingBatchFlow.prepareBatchRejectAction(rows);
+      return;
     }
-    await signingFlow.prepareBatchRemarkOpen(key, rows);
   }
 }
 
@@ -304,10 +377,11 @@ async function handleBatchAction(
     return { preserveSelection: true };
   }
   if (isSigningMenu.value) {
-    if (rows.length > SIGNING_BATCH_MAX) {
-      throw new Error(`You can select up to ${SIGNING_BATCH_MAX} items at a time.`);
+    if (key === 'reject') {
+      signingBatchFlow.confirmBatchRejectRemark();
+    } else if (key === 'pass') {
+      signingBatchFlow.openBatchSignConfirm(rows);
     }
-    signingFlow.confirmBatchRemark();
     return { preserveSelection: true };
   }
   await new Promise<void>((resolve) => {
@@ -333,7 +407,6 @@ const {
   nextNavDisabled,
   nextPagination,
   onBatchAction,
-  onBatchClick,
   onManyPageItemClick,
   onSettingsJump,
   onToolbarActionClick,
@@ -354,30 +427,60 @@ const {
   statisticsItems,
   toolbarActionButtons,
   totalRowCount,
-} = useTasksDataListPage(customizeRef, undefined, activeSort, handleBatchAction);
+} = useTasksDataListPage(
+  customizeRef,
+  undefined,
+  activeSort,
+  handleBatchAction,
+  computed(() => {
+    if (!isSigningMenu.value || !customize.selectMode) return null;
+    return (row: Record<string, unknown>) =>
+      !signingBatchFlow.shouldFilterRow(Number(row.id));
+  }),
+);
 
 watch(isApprovalMenu, (enabled) => {
   registerApprovalFlow(enabled ? approvalFlow : null);
   if (!enabled && customize.selectMode) {
-    customize.selectMode = false;
+    requestCloseDataListSelectMode();
   }
 });
 
-watch(isSigningMenu, (enabled) => {
-  registerSigningFlow(enabled ? signingFlow : null);
-  if (!enabled && customize.selectMode) {
-    customize.selectMode = false;
+watch(isSigningMenu, () => {
+  registerSigningFlow(isSigningMenu.value ? signingFlow : null);
+  registerSigningBatchFlow(isSigningMenu.value ? signingBatchFlow : null);
+  if (!isSigningMenu.value && customize.selectMode) {
+    requestCloseDataListSelectMode();
   }
 });
+
+watch(isRecordMenu, (enabled) => {
+  registerRecordDetailFlow(enabled ? recordDetailFlow : null);
+});
+
+function refreshListFromToolbar() {
+  void nextTick(() => {
+    onToolbarActionClick('refresh');
+  });
+}
 
 onMounted(() => {
   if (isApprovalMenu.value) registerApprovalFlow(approvalFlow);
-  if (isSigningMenu.value) registerSigningFlow(signingFlow);
+  if (isSigningMenu.value) {
+    registerSigningFlow(signingFlow);
+    registerSigningBatchFlow(signingBatchFlow);
+  }
+  if (isRecordMenu.value) registerRecordDetailFlow(recordDetailFlow);
+  setBatchSigningListRefreshHandler(refreshListFromToolbar);
 });
 
 onBeforeUnmount(() => {
+  suspendBatchSigningProgressPopup();
   registerApprovalFlow(null);
   registerSigningFlow(null);
+  registerSigningBatchFlow(null);
+  registerRecordDetailFlow(null);
+  setBatchSigningListRefreshHandler(null);
   if (listToastTimer !== undefined) clearTimeout(listToastTimer);
   clearListToastLeaveTimer();
   if (endFeedbackTimer !== undefined) clearTimeout(endFeedbackTimer);
@@ -394,6 +497,13 @@ function onRowPrimaryAction(row: Record<string, unknown>) {
   }
 }
 
+function onRowClick(row: Record<string, unknown>) {
+  if (customize.selectMode) return;
+  if (isRecordMenu.value) {
+    recordDetailFlow.openDetailForRow(row);
+  }
+}
+
 function onBatchError(message: string) {
   showListError(message);
 }
@@ -403,25 +513,43 @@ function onBatchPopoverDismiss() {
     approvalFlow.remark.value = '';
   }
   if (isSigningMenu.value) {
-    signingFlow.remark.value = '';
-    signingFlow.batchMinerFeeProfile.value = null;
+    signingBatchFlow.remark.value = '';
   }
 }
 
-function onSigningBatchPopoverConfirm(
-  selection: MinerFeeSelection | null,
-  confirm: () => void,
-) {
-  signingFlow.onBatchRemarkConfirm(selection);
-  confirm();
+const displayToolbarTitle = computed(() =>
+  ui(props.toolbarTitle ?? DATA_LIST_FIGMA_TOOLBAR.title),
+);
+
+watch(
+  () => Boolean(isSigningMenu.value && customize.selectMode),
+  (active, wasActive) => {
+    if (active && !wasActive) {
+      goFirstPage();
+    }
+  },
+);
+
+const signingBatchUsesNetworkFlotation = computed(() =>
+  isSigningMenu.value && signingBatchFlow.shouldUseNetworkPickerFlotation(),
+);
+
+function onToolbarBatchClick() {
+  if (isSigningMenu.value) {
+    signingBatchFlow.onBatchButtonClick();
+    return;
+  }
+  if (customize.selectMode) {
+    requestCloseDataListSelectMode();
+    return;
+  }
+  requestOpenDataListSelectMode();
 }
 
-const displayDataList = computed(() => {
-  if (!isSigningMenu.value || !customize.selectMode) {
-    return paginatedDataList.value;
-  }
-  return paginatedDataList.value.filter((row) => !isMultiSignRow(Number(row.id)));
-});
+function onSigningBatchCurrencyProcess(group: BatchCurrencyGroup, close: () => void) {
+  close();
+  signingBatchFlow.onCurrencyGroupProcess(group);
+}
 
 const createdTimeSortOrder = computed(() =>
   activeSort.value?.key === 'created-time' ? activeSort.value.order : '',
@@ -440,9 +568,23 @@ function onAmountSort(order: TasksDataListSortOrder | null) {
   goFirstPage();
 }
 
-const displayToolbarTitle = computed(() =>
-  ui(props.toolbarTitle ?? DATA_LIST_FIGMA_TOOLBAR.title),
-);
+/** 批处理过滤已在 useTasksDataListPage.sortedDataList 全量应用，勿再滤当前页。 */
+const displayDataList = computed(() => paginatedDataList.value);
+
+useDataListSelectAllShortcut({
+  selectMode: computed(() => Boolean(customize.selectMode)),
+  dataListRef,
+  pageRowCount: computed(() => displayDataList.value.length),
+  selectedCount: computed(() => batchSelectedCount.value),
+});
+
+useDataListSelectModeEscape({
+  selectMode: computed(() => Boolean(customize.selectMode)),
+  closeSelectMode: requestCloseDataListSelectMode,
+  dataListRef,
+  enabled: showBatchButton,
+});
+
 const displayPrimaryActionLabel = computed(() => {
   const label = primaryActionLabel.value;
   if (label === DATA_LIST_PRIMARY_ACTION_LABEL) {
@@ -472,7 +614,7 @@ const displayBatchActions = computed(() => {
     : isSigningMenu.value
       ? [
           { key: 'reject', label: 'Reject', danger: true, popover: true, popoverTitle: 'Batch Reject' },
-          { key: 'pass', label: 'Sign', popover: true, popoverTitle: 'Gas fee' },
+          { key: 'pass', label: 'Sign' },
         ]
       : dataListBatchActions;
   return actions.map((action) => ({
@@ -496,13 +638,90 @@ const displayBatchActions = computed(() => {
           :show-section="showToolBarSectionForMenu"
         >
           <template v-if="showBatchButton" #functional>
+            <EgFlotation
+              v-if="signingBatchUsesNetworkFlotation"
+              :key="`signing-batch-currency-${signingBatchFlow.currencyGroups.value.length}`"
+              placement="bottom"
+              align="end"
+              width-mode="fixed"
+              :width="BATCH_CURRENCY_PICKER_WIDTH"
+              height-mode="adaptive"
+              :max-height="BATCH_CURRENCY_PICKER_MAX_HEIGHT"
+              :cross-axis-offset="BATCH_NETWORK_PICKER_CROSS_AXIS_OFFSET_PX"
+              :show-add="false"
+              :show-menu-divider="false"
+              boundary-selector=".app-preview"
+              flip
+              close-on-scroll
+              :disabled="skidContentLocked || batchButton.disabled"
+            >
+              <template #trigger="{ expanded }">
+                <!--
+                  勿把整颗 EgIconButtonPro（button）放进 #trigger：
+                  AnchoredTooltip 会优先量到 button，主轴锚在含文案的 48×38 上。
+                  仅 iconSlot 标 data-eds-trigger-metrics；文案仍在 trigger 内可点。
+                -->
+                <span
+                  :class="[
+                    pageStyles.batchProTriggerRoot,
+                    (skidContentLocked || batchButton.disabled) && pageStyles.batchProTriggerDisabled,
+                    expanded && pageStyles.batchFlotationTriggerExpanded,
+                  ]"
+                >
+                  <span
+                    data-eds-trigger-metrics
+                    :class="pageStyles.batchProIconSlot"
+                    :aria-expanded="expanded"
+                  >
+                    <EgIconButton
+                      as="span"
+                      shape="rectangular"
+                      size="sm"
+                      :label="ui(batchButton.label)"
+                      :disabled="skidContentLocked || batchButton.disabled"
+                    >
+                      <EgIcon :name="batchButton.icon" size="sm" />
+                    </EgIconButton>
+                    <span
+                      v-if="batchButton.showBadge"
+                      :class="pageStyles.batchProBadge"
+                      aria-hidden="true"
+                    >
+                      <span :class="pageStyles.batchProBadgeText">
+                        {{ formatGroupedNumber(batchButton.badge) }}
+                      </span>
+                    </span>
+                    <span
+                      v-else-if="batchButton.showReddot"
+                      :class="pageStyles.batchProReddot"
+                      aria-hidden="true"
+                    />
+                  </span>
+                  <span :class="pageStyles.batchProLabelWrap">
+                    <span :class="pageStyles.batchProLabelPaint" aria-hidden="true">
+                      {{ ui(batchButton.label) }}
+                    </span>
+                    <span :class="pageStyles.batchProLabelSizer">
+                      {{ ui(batchButton.label) }}
+                    </span>
+                  </span>
+                </span>
+              </template>
+              <template #content="{ close }">
+                <SigningBatchNetworkPickerMenu
+                  :groups="signingBatchFlow.currencyGroups.value"
+                  @process="onSigningBatchCurrencyProcess($event, close)"
+                />
+              </template>
+            </EgFlotation>
             <EgIconButtonPro
+              v-else
               :label="ui(batchButton.label)"
               :badge="batchButton.badge"
               :show-badge="batchButton.showBadge"
               :show-reddot="batchButton.showReddot"
               :disabled="skidContentLocked || batchButton.disabled"
-              @click="onBatchClick"
+              @click="onToolbarBatchClick"
             >
               <EgIcon :name="batchButton.icon" size="sm" />
             </EgIconButtonPro>
@@ -540,6 +759,7 @@ const displayBatchActions = computed(() => {
 
       <div :class="pageStyles.listRegion">
         <EgDataList
+          ref="dataListRef"
           :key="dataListRemountKey"
           v-model:select-mode="customize.selectMode"
           :data-list="displayDataList"
@@ -561,39 +781,31 @@ const displayBatchActions = computed(() => {
               : undefined
           "
           @primary-action="onRowPrimaryAction"
+          @row-click="onRowClick"
           @batch-error="onBatchError"
           @batch-popover-dismiss="onBatchPopoverDismiss"
           @selected-change="onDataListSelectedChange"
         >
           <template
-            v-if="isApprovalMenu"
+            v-if="isApprovalMenu || isSigningMenu"
             #batch-popover="{ selectedCount, confirm, close }"
           >
             <ApprovalRemarkPopoverPanel
+              v-if="isApprovalMenu"
               :selected-count="selectedCount"
               :remark="approvalFlow.remark.value"
+              placeholder-key="Please enter remark"
               @update:remark="approvalFlow.remark.value = $event"
               @confirm="confirm"
               @cancel="close"
             />
-          </template>
-          <template
-            v-else-if="isSigningMenu"
-            #batch-popover="{ action, selectedCount, confirm, close }"
-          >
             <ApprovalRemarkPopoverPanel
+              v-else
               :selected-count="selectedCount"
-              :remark="signingFlow.remark.value"
-              :show-miner-fee="
-                action.key === 'pass'
-                  && signingFlow.batchMinerFeeProfile.value != null
-                  && isEvmMinerFeeShell(signingFlow.batchMinerFeeProfile.value.kind)
-              "
-              :miner-fee-profile="
-                action.key === 'pass' ? signingFlow.batchMinerFeeProfile.value : null
-              "
-              @update:remark="signingFlow.remark.value = $event"
-              @confirm="onSigningBatchPopoverConfirm($event, confirm)"
+              :remark="signingBatchFlow.remark.value"
+              placeholder-key="Please enter remark"
+              @update:remark="signingBatchFlow.remark.value = $event"
+              @confirm="confirm"
               @cancel="close"
             />
           </template>

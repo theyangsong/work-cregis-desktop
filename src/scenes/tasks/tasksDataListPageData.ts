@@ -69,13 +69,13 @@ export const DATA_LIST_FIGMA_COLUMNS = {
     minWidth: '168px',
   },
   sortable: {
-    label: 'Initiator',
-    secondaryLabel: 'Created Time',
+    label: 'Initiating party',
+    secondaryLabel: 'Application Time',
     minWidth: '190px',
     align: 'left' as const,
   },
   businessType: {
-    label: 'Payout Wallets',
+    label: 'Outbound Wallet',
     minWidth: '160px',
     align: 'left' as const,
   },

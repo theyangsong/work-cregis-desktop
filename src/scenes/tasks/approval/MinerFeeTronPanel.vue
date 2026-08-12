@@ -19,12 +19,18 @@ import {
 } from './minerFeeTronDisplay';
 import styles from './ApprovalRemarkPopoverPanel.module.css';
 
-const props = defineProps<{
-  profile: MinerFeeProfile;
-  remark: string;
-  placeholderKey: string;
-  feedbackKey: string;
-}>();
+const props = withDefaults(
+  defineProps<{
+    profile: MinerFeeProfile;
+    remark: string;
+    placeholderKey: string;
+    feedbackKey: string;
+    hideInlineConfirm?: boolean;
+  }>(),
+  {
+    hideInlineConfirm: false,
+  },
+);
 
 const emit = defineEmits<{
   'update:remark': [value: string];
@@ -68,6 +74,11 @@ function onConfirm() {
     displayValue: buildTronMinerFeeDisplay(feeQuote.value),
   });
 }
+
+defineExpose({
+  attemptConfirm: onConfirm,
+  confirmDisabled: computed(() => false),
+});
 </script>
 
 <template>
@@ -155,6 +166,7 @@ function onConfirm() {
       </div>
 
       <EgComboActionPopupWindow
+        v-if="!hideInlineConfirm"
         tone="decor"
         :count="1"
         :confirm-label="ui('Confirm')"

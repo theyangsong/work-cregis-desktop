@@ -1,6 +1,6 @@
 import { ref } from 'vue';
-import { isMultiSignRow } from '../list-field/tasksListFieldBusinessTypeRowData';
 import type { ApprovalDetail, ApprovalStatus } from './types';
+import { buildMockDetailProgressFields } from '../shared/buildMockDetailProgressFields';
 import { buildApprovalDetailRowFields } from './buildApprovalDetailRowFields';
 
 const MOCK_PASSWORD = '111111';
@@ -15,61 +15,11 @@ type StoreEntry = ApprovalDetail & { processedAt?: number };
 
 const entries = new Map<string, StoreEntry>();
 
-function maskEmail(email: string): string {
-  const [local, domain] = email.split('@');
-  if (!local || !domain) return email;
-  const visible = local.slice(0, 1);
-  const tail = local.slice(-1);
-  return `${visible}******${tail}@${domain}`;
-}
-
-function formatUtcTimestamp(date: Date, offsetHours: number): string {
-  const sign = offsetHours >= 0 ? '+' : '-';
-  const abs = String(Math.abs(offsetHours)).padStart(2, '0');
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `UTC${sign}${abs}:00 ${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())} ${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}:${pad(date.getUTCSeconds())}`;
-}
-
-function buildCustomDetailFields(id: string, rowIndex: number) {
-  const appliedAt = new Date(Date.UTC(2026, 6, 17, 14, 8, 11));
-
-  const member: ApprovalDetail['approvalNodes'][number]['members'][number] = {
-    name: 'Name',
-    emailMasked: maskEmail('t******c@gmail.com'),
-    avatarName: 'Name',
-  };
-
-  return {
-    strategy: 'High Value Guard · #POL-0192',
-    thirdPartyRef: `TP-20260717-${String(rowIndex + 1).padStart(3, '0')}`,
-    memo: 'Monthly vendor settlement',
-    initiatorKind: rowIndex % 4 === 0 ? ('waas' as const) : ('member' as const),
-    initiatorDisplay:
-      rowIndex % 4 === 0
-        ? 'WaaS Project Alpha · IP 203.0.113.10'
-        : `${member.name} (${member.emailMasked}) · MacBook · DEV-019 · IP 198.51.100.8`,
+function buildCustomDetailFields(rowIndex: number) {
+  return buildMockDetailProgressFields(rowIndex, {
     initiatorNote: 'Please approve before cutoff.',
-    initiatorAtDisplay: formatUtcTimestamp(appliedAt, 8),
-    approvalNodes: [
-      {
-        title: 'Approval Node 1',
-        statusLabel: 'Pending (1/2)',
-        members: [member, { ...member, name: 'Reviewer', avatarName: 'Reviewer' }],
-      },
-      {
-        title: 'Approval Node 2',
-        statusLabel: 'Waiting',
-        members: [{ ...member, name: 'Auditor', avatarName: 'Auditor' }],
-      },
-    ],
-    signingMode: isMultiSignRow(rowIndex) ? ('multi' as const) : ('single' as const),
-    signingThreshold: isMultiSignRow(rowIndex) ? '2 / 3' : null,
-    signers: [
-      member,
-      { ...member, name: 'Signer B', avatarName: 'Signer B' },
-      { ...member, name: 'Signer C', avatarName: 'Signer C' },
-    ],
-  };
+    scenario: 'approval-workflow',
+  });
 }
 
 function buildDetail(id: string, rowIndex: number): StoreEntry {
@@ -78,12 +28,19 @@ function buildDetail(id: string, rowIndex: number): StoreEntry {
     status: 'pending',
     version: 1,
     ...buildApprovalDetailRowFields(rowIndex),
-    ...buildCustomDetailFields(id, rowIndex),
+    ...buildCustomDetailFields(rowIndex),
   };
 }
 
 function syncDetailFromRow(entry: StoreEntry, rowIndex: number) {
   Object.assign(entry, buildApprovalDetailRowFields(rowIndex));
+  Object.assign(
+    entry,
+    buildMockDetailProgressFields(rowIndex, {
+      initiatorNote: 'Please approve before cutoff.',
+      scenario: 'approval-workflow',
+    }),
+  );
 }
 
 function ensureEntry(id: string, rowIndex: number): StoreEntry {

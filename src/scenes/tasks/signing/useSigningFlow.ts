@@ -13,7 +13,11 @@ import {
   submitSigningAction,
 } from './signingStore';
 import { SIGNING_PROGRESS_STEP_HOLD_MS } from './signingCustomPopup.constants';
-import { parseSigningThreshold } from './multiSignWaiting.constants';
+import {
+  MULTI_SIGN_MEMBER_JOIN_LAST_DELAY_MS,
+  MULTI_SIGN_MEMBER_JOIN_RANDOM_MAX_MS,
+  parseSigningThreshold,
+} from './multiSignWaiting.constants';
 import type { MinerFeeProfile, MinerFeeSelection } from '../shared/minerFeeProfile';
 import { resolveMinerFeeProfile } from '../shared/minerFeeProfile';
 import type { SigningActionKind, SigningDetail, SigningProgressPhase } from './types';
@@ -172,21 +176,77 @@ export function useSigningFlow(options: {
   }
 
   function startProgressPopup() {
-    progressPhase.value = 'broadcasting';
+    const rowIndex = currentSigningId.value
+      ? parseRowIndexFromSigningId(currentSigningId.value)
+      : -1;
+    const isBroadcastFailedDemo = rowIndex === 0;
+
+    progressPhase.value = 'signing';
     progressOpen.value = true;
+
+    if (isBroadcastFailedDemo) {
+      window.setTimeout(() => {
+        progressPhase.value = 'broadcast-failed';
+      }, SIGNING_PROGRESS_STEP_HOLD_MS);
+      return;
+    }
+
     window.setTimeout(() => {
-      progressPhase.value = 'on-chain-confirming';
+      progressPhase.value = 'broadcasting';
     }, SIGNING_PROGRESS_STEP_HOLD_MS);
     window.setTimeout(() => {
-      progressPhase.value = 'broadcast-success';
+      progressPhase.value = 'on-chain-confirming';
     }, SIGNING_PROGRESS_STEP_HOLD_MS * 2);
+    window.setTimeout(() => {
+      progressPhase.value = 'broadcast-success';
+    }, SIGNING_PROGRESS_STEP_HOLD_MS * 3);
+  }
+
+  let multiSignJoinTimers: ReturnType<typeof window.setTimeout>[] = [];
+
+  function clearMultiSignJoinTimers() {
+    for (const timerId of multiSignJoinTimers) {
+      window.clearTimeout(timerId);
+    }
+    multiSignJoinTimers = [];
+  }
+
+  function randomMultiSignJoinDelayMs(): number {
+    return Math.floor(Math.random() * (MULTI_SIGN_MEMBER_JOIN_RANDOM_MAX_MS + 1));
+  }
+
+  function scheduleMultiSignMemberJoins() {
+    clearMultiSignJoinTimers();
+    const { required } = parseSigningThreshold(detail.value?.signingThreshold ?? null);
+    if (required <= 1) {
+      multiSignPhase.value = 'ready';
+      return;
+    }
+
+    let elapsedMs = 0;
+    for (let nextJoined = 2; nextJoined <= required; nextJoined += 1) {
+      const isLastJoin = nextJoined === required;
+      elapsedMs += isLastJoin
+        ? MULTI_SIGN_MEMBER_JOIN_LAST_DELAY_MS
+        : randomMultiSignJoinDelayMs();
+
+      const delayMs = elapsedMs;
+      const timerId = window.setTimeout(() => {
+        multiSignJoinedCount.value = nextJoined;
+        if (nextJoined >= required) {
+          multiSignPhase.value = 'ready';
+        }
+      }, delayMs);
+      multiSignJoinTimers.push(timerId);
+    }
   }
 
   function startMultiSignRoom() {
-    multiSignPhase.value = 'ready';
-    const { required } = parseSigningThreshold(detail.value?.signingThreshold ?? null);
-    multiSignJoinedCount.value = required;
+    clearMultiSignJoinTimers();
+    multiSignJoinedCount.value = 1;
+    multiSignPhase.value = 'waiting';
     multiSignOpen.value = true;
+    scheduleMultiSignMemberJoins();
   }
 
   function onMultiSignReadyConfirm(selection: MinerFeeSelection | null) {
@@ -278,6 +338,9 @@ export function useSigningFlow(options: {
   }
 
   function onMultiSignClosed() {
+    clearMultiSignJoinTimers();
+    multiSignPhase.value = 'waiting';
+    multiSignJoinedCount.value = 1;
     remark.value = '';
     pendingAction.value = null;
     options.onRefreshList();
@@ -288,6 +351,7 @@ export function useSigningFlow(options: {
   let multiSignClosingForProgress = ref(false);
 
   function requestMultiSignProgress() {
+    clearMultiSignJoinTimers();
     multiSignClosingForProgress.value = true;
     multiSignOpen.value = false;
   }
@@ -432,6 +496,7 @@ export function useSigningFlow(options: {
         verifyOpen.value = false;
         viewMoreOpen.value = false;
         progressOpen.value = false;
+        clearMultiSignJoinTimers();
         multiSignOpen.value = false;
       }
     },

@@ -70,6 +70,17 @@ const panelModel = computed(() =>
     : null,
 );
 
+const isSignEnabled = computed(() => props.phase === 'ready');
+
+const guardedPopupOpen = computed({
+  get: () => popupOpen.value,
+  set: (value: boolean) => {
+    if (value) {
+      popupOpen.value = true;
+    }
+  },
+});
+
 function onClose() {
   popupOpen.value = false;
 }
@@ -86,7 +97,7 @@ function onRemarkDismiss() {
 <template>
   <EgPopup
     v-if="popupMounted"
-    v-model:open="popupOpen"
+    v-model:open="guardedPopupOpen"
     uses="custom"
     :box-width="MULTI_SIGN_WAITING_POPUP_WIDTH"
     :box-height="MULTI_SIGN_WAITING_POPUP_HEIGHT"
@@ -98,9 +109,9 @@ function onRemarkDismiss() {
       :phase="phase"
       @close="onClose"
     >
-      <template v-if="phase === 'ready'" #actions>
+      <template #actions>
         <ApprovalRemarkPopover
-          v-if="minerFeeProfile"
+          v-if="isSignEnabled && minerFeeProfile"
           boundary-selector=".app-preview"
           :title="minerFeePopoverTitle"
           :remark="remark"
@@ -123,6 +134,16 @@ function onRemarkDismiss() {
             </EgButton>
           </template>
         </ApprovalRemarkPopover>
+        <EgButton
+          v-else
+          tone="decor"
+          variant="solid"
+          size="md"
+          :disabled="!isSignEnabled"
+          @click="isSignEnabled ? onReadyConfirm(null) : undefined"
+        >
+          {{ ui('Sign') }}
+        </EgButton>
       </template>
     </MultiSignWaitingPanel>
   </EgPopup>

@@ -45,6 +45,13 @@ function resolveMinerFeeDisplay(rowIndex: number): string {
   return formatGroupedAmountText(raw);
 }
 
+/** 签名进度弹窗：矿工费展示为绝对值（无 ≤ 前缀）。 */
+export function formatSigningProgressMinerFeeDisplay(display: string): string {
+  return formatGroupedAmountText(
+    display.replace(/≤/g, '').replace(/\s+/g, ' ').trim(),
+  );
+}
+
 /** Figma 656×516 签名 custom 弹窗 — 明细：币种 → 金额 → 发送方 → 接收方 → 矿工费 → Memo */
 export function buildSigningCustomPopupItems(
   detail: SigningDetail,
@@ -71,11 +78,17 @@ export function buildSigningCustomPopupItems(
       tag: '',
     }),
     buildSenderItem(detail, translate),
-    buildReceiverItem(detail, translate),
+    {
+      ...buildReceiverItem(detail, translate),
+      showValueAddressBook: false,
+      showValueAmlSearch: false,
+    },
     createDetailApplyItemRow('fee', {
       key: 'miner-fee',
       title: translate('Miner Fee'),
-      value: minerFeeDisplay ?? resolveMinerFeeDisplay(rowIndex),
+      value: minerFeeDisplay
+        ? formatSigningProgressMinerFeeDisplay(minerFeeDisplay)
+        : resolveMinerFeeDisplay(rowIndex),
     }),
     createDetailApplyItemRow('memo', {
       key: 'memo',
@@ -85,9 +98,6 @@ export function buildSigningCustomPopupItems(
   ];
 }
 
-export function formatSigningCustomPopupAmountHeadline(
-  detail: SigningDetail,
-  currency: SigningCustomPopupCurrencyMeta,
-): string {
-  return formatGroupedAmountText(`${detail.amountHeadline} ${currency.symbol}`.trim());
+export function formatSigningCustomPopupAmountHeadline(detail: SigningDetail): string {
+  return formatGroupedAmountText(detail.amountHeadline);
 }
