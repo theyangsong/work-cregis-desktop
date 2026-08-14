@@ -40,7 +40,7 @@ jobs:
           git log -1 --oneline
 
       - name: Verify ModuleMenu hover CSS
-        run: grep -q 'itemHover:hover:not(.itemFocused)' ../eds-desktop/packages/components/src/organisms/module-menu/ModuleMenu.module.css
+        run: grep -q '.item:hover:not(.itemFocused)' ../eds-desktop/packages/components/src/organisms/module-menu/ModuleMenu.module.css
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
