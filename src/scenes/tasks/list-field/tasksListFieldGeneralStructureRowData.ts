@@ -1,4 +1,5 @@
 import { buildTransferTypeRowValues } from './tasksListFieldBusinessTypeRowData';
+import { buildApplicationTimeSecondaryValue } from './businessTypeDisplay';
 import {
   isWaasPayoutTransferType,
   resolveWaasProjectNameForRow,
@@ -13,7 +14,15 @@ export type GeneralStructureRowValues = {
   rightLabel?: string;
   leftSystemType?: string;
   rightSystemType?: string;
+  initiatorIconKind?: 'avatar' | 'app' | 'none';
+  initiatorAppIcon?: string;
 };
+
+/** 当前登录用户（Me Tag 行统一展示同一发起人）。 */
+const CURRENT_USER_INITIATOR = {
+  displayName: 'Name',
+  email: 'testabc@gmail.com',
+} as const;
 
 function maskEmailLocalPart(local: string): string {
   const trimmed = local.trim();
@@ -33,12 +42,6 @@ function formatInitiatorValue(displayName: string, email: string): string {
   return `${displayName} (${maskEmailAddress(email)})`;
 }
 
-/** 当前登录用户（Me Tag 行统一展示同一发起人）。 */
-const CURRENT_USER_INITIATOR = {
-  displayName: 'Name',
-  email: 'testabc@gmail.com',
-} as const;
-
 function currentUserInitiatorValue(): string {
   return formatInitiatorValue(
     CURRENT_USER_INITIATOR.displayName,
@@ -46,42 +49,43 @@ function currentUserInitiatorValue(): string {
   );
 }
 
-function buildMeInitiatorRow(secondaryValue: string): GeneralStructureRowValues {
+function buildMeInitiatorRow(value: string): GeneralStructureRowValues {
   return {
-    value: currentUserInitiatorValue(),
-    secondaryValue,
+    value,
+    secondaryValue: '',
     showLeftTag: true,
     leftLabel: 'Me',
     leftSystemType: 'stroke-solid',
   };
 }
 
-const GENERAL_STRUCTURE_ROW_PRESETS: readonly GeneralStructureRowValues[] = [
+/** 发起方主行 demo（0–7）；副行申请时间见 APPLICATION_TIME_ROW_PRESETS。 */
+const INITIATOR_PRIMARY_PRESETS: readonly GeneralStructureRowValues[] = [
   {
-    value: formatInitiatorValue('Name', 'testabc@gmail.com'),
-    secondaryValue: '2026-07-19 14:30:00',
+    value: formatInitiatorValue('Treasury', 'treasury@cregis.com'),
+    secondaryValue: '',
   },
-  buildMeInitiatorRow('2026-07-18 09:15:42'),
-  buildMeInitiatorRow('2026-07-17 22:08:11'),
+  buildMeInitiatorRow(currentUserInitiatorValue()),
+  buildMeInitiatorRow(currentUserInitiatorValue()),
   {
     value: formatInitiatorValue('Ops Team', 'ops@cregis.com'),
-    secondaryValue: '2026-07-16 11:02:33',
+    secondaryValue: '',
   },
   {
     value: 'Ben (b******n@gmail.com)',
-    secondaryValue: '2026-07-15 16:44:05',
+    secondaryValue: '',
   },
   {
-    value: formatInitiatorValue('Treasury', 'treasury@cregis.com'),
-    secondaryValue: '2026-07-14 08:20:18',
+    value: formatInitiatorValue('Name', 'testabc@gmail.com'),
+    secondaryValue: '',
   },
   {
     value: 'Chris (c******s@proton.me)',
-    secondaryValue: '2026-07-13 19:55:27',
+    secondaryValue: '',
   },
   {
     value: formatInitiatorValue('Finance Bot', 'bot@cregis.com'),
-    secondaryValue: '2026-07-12 03:12:09',
+    secondaryValue: '',
   },
 ] as const;
 
@@ -91,15 +95,6 @@ function seededFraction(rowIndex: number, salt: number): number {
 }
 
 function buildRandomGeneralStructureRowValues(rowIndex: number): GeneralStructureRowValues {
-  const hour = String(Math.floor(seededFraction(rowIndex, 2) * 24)).padStart(2, '0');
-  const minute = String(Math.floor(seededFraction(rowIndex, 3) * 60)).padStart(2, '0');
-  const day = String((rowIndex % 27) + 1).padStart(2, '0');
-  const secondaryValue = `2026-07-${day} ${hour}:${minute}:00`;
-
-  if (rowIndex === 1 || rowIndex === 2) {
-    return buildMeInitiatorRow(secondaryValue);
-  }
-
   const names = ['Dana', 'Evan', 'Faye', 'Glen', 'Hana', 'Ivan', 'Jade', 'Kyle'];
   const domains = ['gmail.com', 'company.io', 'outlook.com', 'proton.me', 'cregis.com'];
   const name = names[rowIndex % names.length] ?? 'User';
@@ -108,14 +103,24 @@ function buildRandomGeneralStructureRowValues(rowIndex: number): GeneralStructur
 
   return {
     value: formatInitiatorValue(name, `${rawLocal}@${domain}`),
-    secondaryValue,
+    secondaryValue: buildApplicationTimeSecondaryValue(rowIndex),
   };
+}
+
+function resolveInitiatorPrimaryPreset(rowIndex: number): GeneralStructureRowValues {
+  const preset = INITIATOR_PRIMARY_PRESETS[rowIndex];
+  if (preset) {
+    return {
+      ...preset,
+      secondaryValue: buildApplicationTimeSecondaryValue(rowIndex),
+    };
+  }
+  return buildRandomGeneralStructureRowValues(rowIndex);
 }
 
 export function buildGeneralStructureRowValues(rowIndex: number): GeneralStructureRowValues {
   const transferType = buildTransferTypeRowValues(rowIndex);
-  const preset = GENERAL_STRUCTURE_ROW_PRESETS[rowIndex];
-  const base = preset ?? buildRandomGeneralStructureRowValues(rowIndex);
+  const base = resolveInitiatorPrimaryPreset(rowIndex);
 
   if (isWaasPayoutTransferType(transferType.value)) {
     return {
@@ -124,8 +129,12 @@ export function buildGeneralStructureRowValues(rowIndex: number): GeneralStructu
       showLeftTag: false,
       leftLabel: undefined,
       leftSystemType: undefined,
+      initiatorIconKind: 'none',
     };
   }
 
-  return base;
+  return {
+    ...base,
+    initiatorIconKind: 'avatar',
+  };
 }

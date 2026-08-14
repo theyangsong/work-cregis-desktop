@@ -9,6 +9,15 @@
   justify-content: center;
 }
 
+.statusFieldCellEnd {
+  justify-content: flex-end;
+}
+
+.receiverFieldCellEnd,
+.senderFieldCellEnd {
+  justify-content: flex-end;
+}
+
 .fieldItem {
   display: flex;
   flex-direction: column;

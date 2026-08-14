@@ -18,13 +18,11 @@ export function buildPayoutWalletDetailItem(
     titleIcon: 'eds-wallet',
     tagFamily: 'system',
     tagSystemType: 'gray',
-    showValueCopy: true,
     inlineValueEntries: true,
     valueEntries: [
       { value: detail.payoutWallet },
       { value: detail.payoutWalletCode, valueMuted: true },
     ],
-    valueCopyText: detail.payoutWalletCode,
   };
 }
 
@@ -34,7 +32,7 @@ export function buildStrategyDetailItem(
   titleKey: string,
 ): DetailItemData {
   return {
-    ...createDetailApplyItemRow('text', {
+    ...createDetailApplyItemRow('memo', {
       key: 'strategy',
       title: translate(titleKey),
       value: detail.strategy,

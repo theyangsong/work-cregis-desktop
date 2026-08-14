@@ -54,13 +54,9 @@ export function buildDetailTransactionHashItem(
   const hash = detail.transactionHash?.trim();
   if (!hash) return null;
 
-  return {
-    ...createDetailApplyItemRow('txid', {
-      key: 'transaction-hash',
-      title: translate('Transaction hash'),
-      value: hash,
-    }),
-    showValueCopy: false,
-    showValueBrowser: false,
-  };
+  return createDetailApplyItemRow('txid', {
+    key: 'transaction-hash',
+    title: translate('Transaction hash'),
+    value: hash,
+  });
 }

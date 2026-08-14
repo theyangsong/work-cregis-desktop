@@ -14,6 +14,7 @@ import { getCregisModuleMenuGroups } from '@/presets/module-menu/cregisModuleMen
 import { cregisNavBarDeclarativeAttrs } from '@/presets/nav/cregisNavBarDeclarative';
 import { resolveEnglishUiText } from '@/i18n/translateUiText';
 import TasksDataListPage from '@/scenes/tasks/TasksDataListPage.vue';
+import { setMultiSignCollaborationModuleActive } from '@/scenes/tasks/signing/multiSignInvitation/multiSignInvitationStore';
 import { useTasksModuleMenuGroups } from '@/scenes/tasks/useTasksModuleMenuGroups';
 import {
   DEFAULT_TASKS_DATA_LIST_MENU_ITEM,
@@ -77,7 +78,15 @@ watch(activeModuleTitle, (title) => {
     return;
   }
   activeModuleMenuItem.value = null;
-});
+}, { immediate: true });
+
+watch(
+  [activeModuleTitle, activeModuleMenuItem],
+  ([title, item]) => {
+    setMultiSignCollaborationModuleActive(title === 'Tasks' && item === 'Signing');
+  },
+  { immediate: true },
+);
 
 function onNavClick(event: MouseEvent) {
   const button = (event.target as HTMLElement | null)?.closest('button');

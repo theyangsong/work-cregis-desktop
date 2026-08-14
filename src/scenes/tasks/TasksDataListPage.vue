@@ -26,6 +26,7 @@ import {
   EgToast,
   EgToolBar,
   POPOVER_PRESET_WIDTH_BASE,
+  closeAllAnchoredTooltips,
 } from '@eds/desktop-components';
 import TasksDataListColumnCell from './list-field/TasksDataListColumnCell.vue';
 import DataListHeaderSortTrigger from './DataListHeaderSortTrigger.vue';
@@ -36,6 +37,8 @@ import {
   DATA_LIST_FIGMA_TOOLBAR,
   tasksDataListCustomizeDefaults,
   tasksDataListDefaultRowCount,
+  dataListColumnSettingDefaults,
+  migrateDataListColumnSettings,
   DATA_LIST_PRIMARY_ACTION_LABEL,
   DATA_LIST_PRIMARY_ACTION_LABEL_EN,
   tasksDataListPrimaryActionLabel,
@@ -47,22 +50,36 @@ import {
   tasksDataListAmountColumnFlexGrow,
   tasksDataListAmountColumnMinWidth,
   tasksDataListBusinessTypeColumnWidth,
+  tasksDataListBusinessTypeColumnMinWidth,
   tasksDataListBusinessTypeColumnShowsComboHeader,
   tasksDataListBusinessTypeColumnSecondaryLabel,
   tasksDataListBusinessTypeColumnSecondarySortable,
-  tasksDataListCurrencyColumnWidth,
+  tasksDataListCreatedTimeColumnMinWidth,
+  tasksDataListCreatedTimeColumnDisplayOrder,
+  tasksDataListShowsCreatedTimeColumn,
+  tasksDataListReceiverColumnWidth,
+  tasksDataListReceiverColumnMinWidth,
+  tasksDataListReceiverColumnDisplayOrder,
   tasksDataListGeneralStructureColumnMinWidth,
   tasksDataListStatusColumnLabel,
+  tasksDataListStatusColumnMinWidth,
+  tasksDataListStatusColumnWidth,
+  tasksDataListStatusColumnDisplayOrder,
+  tasksDataListBusinessTypeColumnDisplayOrder,
+  tasksDataListAmountColumnDisplayOrder,
+  tasksDataListActionColumnDisplayOrder,
   tasksDataListShowsGeneralStructureColumn,
-  STATUS_DATA_LIST_COLUMN_MIN_WIDTH,
-  STATUS_DATA_LIST_COLUMN_DISPLAY_ORDER,
-  BUSINESS_TYPE_DATA_LIST_COLUMN_DISPLAY_ORDER,
   type TasksDataListCustomizeState,
 } from './tasksDataListPageData';
 import { useAppI18n } from '@/composables/useAppI18n';
+import { useListRegionInteractionBlock } from '@/composables/useListRegionInteractionBlock';
 import { formatGroupedNumber } from '@/utils/formatGroupedDisplay';
 import ApprovalRemarkPopoverPanel from './approval/ApprovalRemarkPopoverPanel.vue';
-import { registerSigningBatchFlow } from './signing/batch/signingBatchFlowContext';
+import {
+  registerSigningBatchFlow,
+  setSigningBatchSelectModeActive,
+} from './signing/batch/signingBatchFlowContext';
+import { markSkipMultiSignInvitationAutoOpenOnce } from './signing/multiSignInvitation/multiSignInvitationStore';
 import { setBatchSigningListRefreshHandler, suspendBatchSigningProgressPopup } from './signing/batch/batchSigningProgressUiStore';
 import { useSigningBatchFlow } from './signing/batch/useSigningBatchFlow';
 import SigningBatchNetworkPickerMenu from './signing/batch/SigningBatchNetworkPickerMenu.vue';
@@ -90,6 +107,7 @@ import {
   openDataListSelectMode,
 } from './shared/dataListSelectMode';
 import { useTasksDataListPage } from './useTasksDataListPage';
+import { registerTasksDataListShellApi } from './tasksDataListShellApi';
 import type {
   TasksDataListActiveSort,
   TasksDataListSortOrder,
@@ -107,8 +125,10 @@ const customize = reactive({
   dataVolume: String(tasksDataListDefaultRowCount(props.toolbarTitle)),
 }) as TasksDataListCustomizeState;
 
-/** HMR / 旧会话：补齐新增的列配置字段（如 columnSecondaryLabel4）。 */
+/** HMR / 旧会话：补齐列配置并重排为发起方｜业务类型 → 金额｜申请时间 → 接收方 → 发送方。 */
 onMounted(() => {
+  migrateDataListColumnSettings(customize);
+  Object.assign(customize, dataListColumnSettingDefaults());
   for (const [key, value] of Object.entries(tasksDataListCustomizeDefaults)) {
     if (customize[key as keyof TasksDataListCustomizeState] === undefined) {
       (customize as Record<string, unknown>)[key] = value;
@@ -122,6 +142,7 @@ watch(
     customize.showExport = tasksDataListShowsExport(title);
     customize.showBatch = tasksDataListShowsBatch(title);
     activeSort.value = null;
+    migrateDataListColumnSettings(customize);
   },
   { immediate: true },
 );
@@ -129,6 +150,7 @@ const customizeRef = computed(() => customize);
 
 const showBatchButton = computed(() => tasksDataListShowsBatch(props.toolbarTitle));
 const showToolBarSectionForMenu = computed(() => showBatchButton.value);
+const { active: listInteractionBlockActive } = useListRegionInteractionBlock();
 
 const primaryActionLabel = computed(() => tasksDataListPrimaryActionLabel(props.toolbarTitle));
 const showActionColumn = computed(() => tasksDataListShowsActionColumn(props.toolbarTitle));
@@ -138,16 +160,42 @@ const showGeneralStructureColumn = computed(() =>
   tasksDataListShowsGeneralStructureColumn(props.toolbarTitle),
 );
 const showStatusColumn = computed(() => tasksDataListShowsStatusColumn(props.toolbarTitle));
-/** 表头 / 单元格内容右对齐（批处理或已办类菜单）；列 align 保持 left，位移走 margin 过渡。 */
+const showCreatedTimeColumn = computed(() => tasksDataListShowsCreatedTimeColumn(props.toolbarTitle));
+/** 表头 / 单元格内容右对齐（已办 / 记录类菜单）；批处理 selectMode 保持与常态相同左对齐与列宽。 */
 const amountColumnContentAlignEnd = computed(
-  () =>
-    customize.selectMode
-    || tasksDataListAmountColumnAlign(props.toolbarTitle) === 'right',
+  () => tasksDataListAmountColumnAlign(props.toolbarTitle) === 'right',
 );
 const amountColumnAlign = computed(() => tasksDataListAmountColumnAlign(props.toolbarTitle));
 const statusColumnLabel = computed(() => tasksDataListStatusColumnLabel(props.toolbarTitle));
-const currencyColumnWidth = computed(() =>
-  tasksDataListCurrencyColumnWidth(props.toolbarTitle),
+const receiverColumnWidth = computed(() =>
+  tasksDataListReceiverColumnWidth(props.toolbarTitle),
+);
+const createdTimeColumnMinWidth = computed(() =>
+  tasksDataListCreatedTimeColumnMinWidth(props.toolbarTitle),
+);
+const createdTimeColumnDisplayOrder = computed(() =>
+  tasksDataListCreatedTimeColumnDisplayOrder(props.toolbarTitle),
+);
+const statusColumnMinWidth = computed(() =>
+  tasksDataListStatusColumnMinWidth(props.toolbarTitle),
+);
+const statusColumnWidth = computed(() =>
+  tasksDataListStatusColumnWidth(props.toolbarTitle),
+);
+const statusColumnDisplayOrder = computed(() =>
+  tasksDataListStatusColumnDisplayOrder(props.toolbarTitle),
+);
+const businessTypeColumnDisplayOrder = computed(() =>
+  tasksDataListBusinessTypeColumnDisplayOrder(props.toolbarTitle, showStatusColumn.value),
+);
+const receiverColumnDisplayOrder = computed(() =>
+  tasksDataListReceiverColumnDisplayOrder(props.toolbarTitle),
+);
+const amountColumnDisplayOrder = computed(() =>
+  tasksDataListAmountColumnDisplayOrder(props.toolbarTitle),
+);
+const actionColumnDisplayOrder = computed(() =>
+  tasksDataListActionColumnDisplayOrder(props.toolbarTitle),
 );
 const businessTypeColumnWidth = computed(() =>
   tasksDataListBusinessTypeColumnWidth(props.toolbarTitle),
@@ -161,9 +209,9 @@ const businessTypeColumnSecondaryLabel = computed(() =>
 const businessTypeColumnSecondarySortable = computed(() =>
   tasksDataListBusinessTypeColumnSecondarySortable(props.toolbarTitle),
 );
-/** 批处理隐藏 Action 后，尾列 Amount 参与多余空间均分（承接原 Action 宽度）。 */
-const amountColumnFlexGrow = computed(
-  () => customize.selectMode || tasksDataListAmountColumnFlexGrow(props.toolbarTitle),
+/** Sent Request 第 1–3 列（金额 / 操作类型 / 发送方）无固定 width，均分剩余空间。 */
+const amountColumnFlexGrow = computed(() =>
+  tasksDataListAmountColumnFlexGrow(props.toolbarTitle),
 );
 const generalStructureColumnMinWidth = computed(() =>
   tasksDataListGeneralStructureColumnMinWidth(props.toolbarTitle),
@@ -203,10 +251,12 @@ function requestOpenDataListSelectMode() {
 const dataListRemountKey = ref(0);
 
 const listToastText = ref('');
+const listToastType = ref<'result' | 'danger'>('result');
 const listToastKeepMounted = ref(false);
 const listToastMotionActive = ref(false);
 const showEndFeedback = ref(false);
 const endFeedbackKey = ref(0);
+const endFeedbackText = ref('Success');
 let listToastTimer: ReturnType<typeof setTimeout> | undefined;
 let listToastLeaveTimer: ReturnType<typeof setTimeout> | undefined;
 let endFeedbackTimer: ReturnType<typeof setTimeout> | undefined;
@@ -251,7 +301,8 @@ function hideListToast() {
   }, leaveMs);
 }
 
-function showListError(message: string) {
+function showListToast(message: string, type: 'result' | 'danger' = 'result') {
+  listToastType.value = type;
   listToastText.value = message;
   syncListToastMotionEnter();
   if (listToastTimer !== undefined) clearTimeout(listToastTimer);
@@ -261,7 +312,12 @@ function showListError(message: string) {
   }, 3000);
 }
 
-function showListSuccess() {
+function showListError(message: string) {
+  showListToast(message, 'result');
+}
+
+function showListSuccess(messageKey = 'Success') {
+  endFeedbackText.value = ui(messageKey);
   endFeedbackKey.value += 1;
   showEndFeedback.value = true;
   if (endFeedbackTimer !== undefined) clearTimeout(endFeedbackTimer);
@@ -293,7 +349,7 @@ const approvalFlow = useApprovalFlow({
     dataListRemountKey.value += 1;
   },
   showError: (message) => showListError(message),
-  showSuccess: () => showListSuccess(),
+  showSuccess: (message) => showListSuccess(message),
 });
 
 const signingBatchFlow = useSigningBatchFlow({
@@ -328,12 +384,21 @@ const signingFlow = useSigningFlow({
     dataListRemountKey.value += 1;
   },
   showError: (message) => showListError(message),
-  showSuccess: () => showListSuccess(),
+  showSuccess: (message) => showListSuccess(message),
 });
 
 const recordDetailFlow = useRecordDetailFlow({
   menuItem: computed(() => props.toolbarTitle),
   allRowIndexes,
+  onWithdrawRequest: () => {
+    listToastText.value = ui('Request withdrawn');
+    syncListToastMotionEnter();
+    if (listToastTimer !== undefined) clearTimeout(listToastTimer);
+    listToastTimer = window.setTimeout(() => {
+      hideListToast();
+      listToastTimer = undefined;
+    }, 3000);
+  },
 });
 
 function onDataListSelectedChange(rows: Array<Record<string, unknown> & { _index: number }>) {
@@ -439,6 +504,28 @@ const {
   }),
 );
 
+const receiverColumnAlign = computed(
+  (): 'left' | 'center' | 'right' => previewColumnSettings.value[2].align,
+);
+
+/** 批处理 selectMode：发送方（第四列）表头与单元格右对齐。 */
+const businessTypeColumnAlign = computed((): 'left' | 'center' | 'right' =>
+  customize.selectMode ? 'right' : previewColumnSettings.value[3].align,
+);
+
+const businessTypeColumnMinWidth = computed(() =>
+  tasksDataListBusinessTypeColumnMinWidth(
+    props.toolbarTitle,
+    previewColumnSettings.value[3].minWidth,
+  ),
+);
+const receiverColumnMinWidth = computed(() =>
+  tasksDataListReceiverColumnMinWidth(
+    props.toolbarTitle,
+    previewColumnSettings.value[2].minWidth,
+  ),
+);
+
 watch(isApprovalMenu, (enabled) => {
   registerApprovalFlow(enabled ? approvalFlow : null);
   if (!enabled && customize.selectMode) {
@@ -452,7 +539,22 @@ watch(isSigningMenu, () => {
   if (!isSigningMenu.value && customize.selectMode) {
     requestCloseDataListSelectMode();
   }
+  if (!isSigningMenu.value) {
+    setSigningBatchSelectModeActive(false);
+  }
 });
+
+watch(
+  () => Boolean(isSigningMenu.value && customize.selectMode),
+  (active, wasActive) => {
+    if (wasActive && !active) {
+      closeAllAnchoredTooltips();
+      markSkipMultiSignInvitationAutoOpenOnce();
+    }
+    setSigningBatchSelectModeActive(active);
+  },
+  { immediate: true },
+);
 
 watch(isRecordMenu, (enabled) => {
   registerRecordDetailFlow(enabled ? recordDetailFlow : null);
@@ -465,6 +567,23 @@ function refreshListFromToolbar() {
 }
 
 onMounted(() => {
+  registerTasksDataListShellApi({
+    setListEmpty: (empty) => {
+      if (empty) {
+        customize.loading = false;
+      }
+      customize.empty = empty;
+    },
+    setListLoading: (loading) => {
+      customize.loading = loading;
+    },
+    showDangerToast: (message) => {
+      showListToast(message, 'danger');
+    },
+    showSuccessFeedback: (messageKey) => {
+      showListSuccess(messageKey);
+    },
+  });
   if (isApprovalMenu.value) registerApprovalFlow(approvalFlow);
   if (isSigningMenu.value) {
     registerSigningFlow(signingFlow);
@@ -475,7 +594,9 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+  registerTasksDataListShellApi(null);
   suspendBatchSigningProgressPopup();
+  setSigningBatchSelectModeActive(false);
   registerApprovalFlow(null);
   registerSigningFlow(null);
   registerSigningBatchFlow(null);
@@ -758,6 +879,11 @@ const displayBatchActions = computed(() => {
       </template>
 
       <div :class="pageStyles.listRegion">
+        <div
+          v-if="listInteractionBlockActive"
+          :class="pageStyles.listInteractionBlocker"
+          aria-hidden="true"
+        />
         <EgDataList
           ref="dataListRef"
           :key="dataListRemountKey"
@@ -785,6 +911,7 @@ const displayBatchActions = computed(() => {
           @batch-error="onBatchError"
           @batch-popover-dismiss="onBatchPopoverDismiss"
           @selected-change="onDataListSelectedChange"
+          :batch-count-suffix="ui('Selected')"
         >
           <template
             v-if="isApprovalMenu || isSigningMenu"
@@ -810,10 +937,10 @@ const displayBatchActions = computed(() => {
             />
           </template>
           <EgDataListColumn
-            prop="primary"
+            v-if="showGeneralStructureColumn"
+            prop="submitter"
             :label="ui(previewColumnSettings[0].label)"
-            :min-width="previewColumnSettings[0].minWidth"
-            :width="currencyColumnWidth"
+            :min-width="generalStructureColumnMinWidth"
             :align="previewColumnSettings[0].align"
             :sortable="false"
           >
@@ -828,6 +955,10 @@ const displayBatchActions = computed(() => {
                       {{ ui(previewColumnSettings[0].label) }}
                     </EgDataListCellOverflow>
                   </div>
+                  <DataListHeaderSortTrigger
+                    v-if="previewColumnSettings[0].sortable"
+                    :label="previewColumnSettings[0].label"
+                  />
                 </div>
                 <EgDivider type="navigator" direction="vertical" />
                 <div :class="pageStyles.comboHeaderSegment">
@@ -839,29 +970,40 @@ const displayBatchActions = computed(() => {
                       {{ ui(previewColumnSettings[0].secondaryLabel ?? '') }}
                     </EgDataListCellOverflow>
                   </div>
+                  <DataListHeaderSortTrigger
+                    v-if="previewColumnSettings[0].secondarySortable"
+                    :label="previewColumnSettings[0].secondaryLabel ?? ''"
+                    :active-order="createdTimeSortOrder"
+                    @sort-change="onCreatedTimeSort"
+                  />
                 </div>
               </div>
             </template>
             <template #default="{ data }">
               <TasksDataListColumnCell
                 :data-source="previewColumnSettings[0].dataSource"
-                :column-min-width="previewColumnSettings[0].minWidth"
+                :column-min-width="generalStructureColumnMinWidth"
                 :row-index="Number(data.id)"
-                variant="combo"
               />
             </template>
           </EgDataListColumn>
 
           <EgDataListColumn
-            v-if="showGeneralStructureColumn"
-            prop="submitter"
+            prop="amount"
             :label="ui(previewColumnSettings[1].label)"
-            :min-width="generalStructureColumnMinWidth"
-            :align="previewColumnSettings[1].align"
+            :min-width="amountColumnMinWidth"
+            :flex-grow="amountColumnFlexGrow"
+            :align="amountColumnAlign"
             :sortable="false"
+            :display-order="amountColumnDisplayOrder"
           >
             <template #header>
-              <div :class="pageStyles.comboHeader">
+              <div
+                :class="[
+                  pageStyles.comboHeader,
+                  amountColumnContentAlignEnd && pageStyles.comboHeaderAlignEnd,
+                ]"
+              >
                 <div :class="pageStyles.comboHeaderSegment">
                   <div :class="pageStyles.comboHeaderSegmentTextWrap">
                     <EgDataListCellOverflow
@@ -872,8 +1014,9 @@ const displayBatchActions = computed(() => {
                     </EgDataListCellOverflow>
                   </div>
                   <DataListHeaderSortTrigger
-                    v-if="previewColumnSettings[1].sortable"
                     :label="previewColumnSettings[1].label"
+                    :active-order="amountSortOrder"
+                    @sort-change="onAmountSort"
                   />
                 </div>
                 <EgDivider type="navigator" direction="vertical" />
@@ -898,7 +1041,60 @@ const displayBatchActions = computed(() => {
             <template #default="{ data }">
               <TasksDataListColumnCell
                 :data-source="previewColumnSettings[1].dataSource"
-                :column-min-width="generalStructureColumnMinWidth"
+                :column-min-width="amountColumnMinWidth"
+                :column-align="amountColumnContentAlignEnd ? 'right' : 'left'"
+                :menu-item="toolbarTitle"
+                :row-index="Number(data.id)"
+              />
+            </template>
+          </EgDataListColumn>
+
+          <EgDataListColumn
+            v-if="showCreatedTimeColumn"
+            prop="operationType"
+            :label="ui('Operation Type')"
+            :min-width="createdTimeColumnMinWidth"
+            align="left"
+            :sortable="false"
+            :display-order="createdTimeColumnDisplayOrder"
+          >
+            <template #header>
+              <div :class="pageStyles.comboHeaderSegment">
+                <div :class="pageStyles.comboHeaderSegmentTextWrap">
+                  <EgDataListCellOverflow
+                    :content-class="pageStyles.comboHeaderSegmentText"
+                    context="header"
+                  >
+                    {{ ui('Operation Type') }}
+                  </EgDataListCellOverflow>
+                </div>
+              </div>
+            </template>
+            <template #default="{ data }">
+              <TasksDataListColumnCell
+                data-source="general-structure"
+                :column-min-width="createdTimeColumnMinWidth"
+                :menu-item="toolbarTitle"
+                :row-index="Number(data.id)"
+              />
+            </template>
+          </EgDataListColumn>
+
+          <EgDataListColumn
+            prop="receiver"
+            :label="ui(previewColumnSettings[2].label)"
+            :min-width="receiverColumnMinWidth"
+            :width="receiverColumnWidth"
+            :align="receiverColumnAlign"
+            :sortable="false"
+            :display-order="receiverColumnDisplayOrder"
+          >
+            <template #default="{ data }">
+              <TasksDataListColumnCell
+                :data-source="previewColumnSettings[2].dataSource"
+                :column-min-width="receiverColumnMinWidth"
+                :column-align="receiverColumnAlign"
+                :menu-item="toolbarTitle"
                 :row-index="Number(data.id)"
               />
             </template>
@@ -906,14 +1102,12 @@ const displayBatchActions = computed(() => {
 
           <EgDataListColumn
             prop="businessType"
-            :label="ui(previewColumnSettings[2].label)"
-            :min-width="previewColumnSettings[2].minWidth"
+            :label="ui(previewColumnSettings[3].label)"
+            :min-width="businessTypeColumnMinWidth"
             :width="businessTypeColumnWidth"
-            :align="previewColumnSettings[2].align"
+            :align="businessTypeColumnAlign"
             :sortable="false"
-            :display-order="
-              showStatusColumn ? BUSINESS_TYPE_DATA_LIST_COLUMN_DISPLAY_ORDER : 3
-            "
+            :display-order="businessTypeColumnDisplayOrder"
           >
             <template v-if="businessTypeColumnShowsComboHeader" #header>
               <div :class="pageStyles.comboHeader">
@@ -923,7 +1117,7 @@ const displayBatchActions = computed(() => {
                       :content-class="pageStyles.comboHeaderSegmentText"
                       context="header"
                     >
-                      {{ ui(previewColumnSettings[2].label) }}
+                      {{ ui(previewColumnSettings[3].label) }}
                     </EgDataListCellOverflow>
                   </div>
                 </div>
@@ -948,8 +1142,9 @@ const displayBatchActions = computed(() => {
             </template>
             <template #default="{ data }">
               <TasksDataListColumnCell
-                :data-source="previewColumnSettings[2].dataSource"
-                :column-min-width="previewColumnSettings[2].minWidth"
+                :data-source="previewColumnSettings[3].dataSource"
+                :column-min-width="businessTypeColumnMinWidth"
+                :column-align="businessTypeColumnAlign"
                 :menu-item="toolbarTitle"
                 :row-index="Number(data.id)"
               />
@@ -960,69 +1155,18 @@ const displayBatchActions = computed(() => {
             v-if="showStatusColumn"
             prop="status"
             :label="displayStatusColumnLabel"
-            :min-width="STATUS_DATA_LIST_COLUMN_MIN_WIDTH"
-            :display-order="STATUS_DATA_LIST_COLUMN_DISPLAY_ORDER"
-            align="center"
+            :min-width="statusColumnMinWidth"
+            :width="statusColumnWidth"
+            :display-order="statusColumnDisplayOrder"
+            align="right"
             :sortable="false"
           >
             <template #default="{ data }">
               <TasksDataListColumnCell
                 data-source="status"
-                :column-min-width="STATUS_DATA_LIST_COLUMN_MIN_WIDTH"
+                :column-min-width="statusColumnMinWidth"
+                column-align="right"
                 :menu-item="toolbarTitle"
-                :row-index="Number(data.id)"
-              />
-            </template>
-          </EgDataListColumn>
-
-          <EgDataListColumn
-            prop="amount"
-            :label="ui(previewColumnSettings[3].label)"
-            :min-width="amountColumnMinWidth"
-            :flex-grow="amountColumnFlexGrow"
-            :align="amountColumnAlign"
-            :sortable="false"
-          >
-            <template #header>
-              <div
-                :class="[
-                  pageStyles.comboHeader,
-                  amountColumnContentAlignEnd && pageStyles.comboHeaderAlignEnd,
-                ]"
-              >
-                <div :class="pageStyles.comboHeaderSegment">
-                  <div :class="pageStyles.comboHeaderSegmentTextWrap">
-                    <EgDataListCellOverflow
-                      :content-class="pageStyles.comboHeaderSegmentText"
-                      context="header"
-                    >
-                      {{ ui(previewColumnSettings[3].label) }}
-                    </EgDataListCellOverflow>
-                  </div>
-                  <DataListHeaderSortTrigger
-                    :label="previewColumnSettings[3].label"
-                    :active-order="amountSortOrder"
-                    @sort-change="onAmountSort"
-                  />
-                </div>
-                <EgDivider type="navigator" direction="vertical" />
-                <div :class="pageStyles.comboHeaderSegment">
-                  <div :class="pageStyles.comboHeaderSegmentTextWrap">
-                    <EgDataListCellOverflow
-                      :content-class="pageStyles.comboHeaderSegmentText"
-                      context="header"
-                    >
-                      {{ ui(previewColumnSettings[3].secondaryLabel ?? '') }}
-                    </EgDataListCellOverflow>
-                  </div>
-                </div>
-              </div>
-            </template>
-            <template #default="{ data }">
-              <TasksDataListColumnCell
-                :data-source="previewColumnSettings[3].dataSource"
-                :column-min-width="amountColumnMinWidth"
-                :column-align="amountColumnContentAlignEnd ? 'right' : 'left'"
                 :row-index="Number(data.id)"
               />
             </template>
@@ -1036,6 +1180,7 @@ const displayBatchActions = computed(() => {
             align="right"
             :sortable="false"
             :hidden="actionColumnHidden"
+            :display-order="actionColumnDisplayOrder"
             is-action
           />
         </EgDataList>
@@ -1052,6 +1197,9 @@ const displayBatchActions = computed(() => {
           :data-volume-count="String(totalRowCount)"
           :data-volume-results="displayPaginerResults"
           :settings-level-labels="[...DATA_LIST_FIGMA_PAGE_SIZE_OPTIONS]"
+          :settings-level-label="ui('Items Per Page')"
+          :settings-jump-label="ui('Go to Page')"
+          :settings-jump-placeholder="ui('Please Enter')"
           @settings-jump="onSettingsJump"
         >
           <EgPaginationItem
@@ -1114,14 +1262,14 @@ const displayBatchActions = computed(() => {
 
     <Teleport to=".app-preview">
       <div v-if="showEndFeedback" :class="pageStyles.endFeedbackHost">
-        <EgEndFeedbackCard :key="endFeedbackKey" text="Success" />
+        <EgEndFeedbackCard :key="endFeedbackKey" :text="endFeedbackText" />
       </div>
       <div
         v-if="listToastKeepMounted"
         :class="[pageStyles.listToastHost, listToastMotionActive && 'is-active']"
       >
         <div class="motion-flotation">
-          <EgToast type="result" :text="listToastText" />
+          <EgToast :type="listToastType" :text="listToastText" />
         </div>
       </div>
     </Teleport>

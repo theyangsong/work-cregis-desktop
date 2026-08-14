@@ -1,9 +1,17 @@
-import { MOCK_WITHDRAWAL_QUOTA_USD } from './batchSigning.constants';
+import {
+  MOCK_WITHDRAWAL_QUOTA_USD,
+  WITHDRAWAL_OVERAGE_FEE_RATE,
+} from './batchSigning.constants';
 import type { SigningBatchRowModel } from './types';
 
 export type WithdrawalQuotaCheckResult =
   | { ok: true }
-  | { ok: false; requiredUsd: number; remainingUsd: number };
+  | {
+      ok: false;
+      requiredUsd: number;
+      remainingUsd: number;
+      overageFeeUsd: number;
+    };
 
 function parseFiatNumeric(fiat: string): number {
   const cleaned = fiat.replace(/[^0-9.]/g, '');
@@ -19,7 +27,13 @@ export function checkWithdrawalQuota(signableRows: SigningBatchRowModel[]): With
   const remainingUsd = MOCK_WITHDRAWAL_QUOTA_USD;
 
   if (requiredUsd > remainingUsd) {
-    return { ok: false, requiredUsd, remainingUsd };
+    const overageAmountUsd = requiredUsd - remainingUsd;
+    return {
+      ok: false,
+      requiredUsd,
+      remainingUsd,
+      overageFeeUsd: overageAmountUsd * WITHDRAWAL_OVERAGE_FEE_RATE,
+    };
   }
 
   return { ok: true };

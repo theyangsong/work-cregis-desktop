@@ -1,0 +1,49 @@
+.itemRow {
+  width: 100%;
+  cursor: pointer;
+}
+
+.itemRow:hover:not(.itemRowSelected) {
+  background-color: var(--event-hover);
+}
+
+/* 整行 hover 时同步 EgRadio 未选中预览点（radio 本身 pointer-events: none） */
+.itemRow:hover:not(.itemRowSelected) :global(.eds-radio[aria-checked='false']:not(:disabled) span[aria-hidden='true']) {
+  display: block;
+}
+
+.itemTitleRadio {
+  width: auto;
+  min-width: auto;
+  align-self: center;
+  pointer-events: none;
+}
+
+.radio {
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.itemRowSelected,
+.itemRowSelected:hover {
+  background-color: var(--event-focus-brand-weaken);
+}
+
+.itemValueStack {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: var(--spacing-05);
+  pointer-events: none;
+}
+
+.networkLabel {
+  color: var(--text-base-primary);
+  font-size: var(--eds-body-medium-size);
+  font-weight: var(--eds-body-medium-weight);
+  line-height: var(--eds-body-medium-line-height);
+}
+
+.latency {
+  font-variant-numeric: tabular-nums;
+}

@@ -1,34 +1,39 @@
 import { buildAmountRowValues } from '../list-field/tasksListFieldAmountRowData';
 import {
+  buildBusinessTypeSecondaryLabel,
+  buildApplicationTimeSecondaryValue,
+} from '../list-field/businessTypeDisplay';
+import {
   buildPayoutWalletsColumnValues,
   buildPayoutWalletCode,
+  buildSenderWalletDisplayName,
   buildTransferTypeRowValues,
 } from '../list-field/tasksListFieldBusinessTypeRowData';
-import { buildGeneralStructureRowValues } from '../list-field/tasksListFieldGeneralStructureRowData';
+import type { AppLocale } from '@/composables/useAppLocale';
+import { buildTasksListFieldBusinessTypeCustomize } from '../list-field/tasksListFieldBusinessTypeDefaults';
 import { buildTasksListFieldCurrencyCustomize } from '../list-field/tasksListFieldCurrencyDefaults';
 import { buildCurrencySideAddressData } from '../list-field/listFieldCurrencyAddressCustomize';
 import { buildCurrencyAddressTags } from '../list-field/listFieldCurrencyTagCustomize';
-import { getCurrencyRowPreset } from '../list-field/tasksListFieldCurrencyRowPresets';
+import type { CryptoAddressSideTags } from '@eds/desktop-components';
+import { parseCurrencyOrderCount } from '../list-field/listFieldCurrencyShared';
 import { resolveCurrencyRowPreset } from '../list-field/tasksListFieldCurrencyRowData';
 import { DATA_LIST_FIGMA_COLUMNS } from '../tasksDataListPageData';
 import type { ApprovalAddressEntry } from './types';
 
 export function formatApprovalAmountDisplay(rowIndex: number): string {
   const amount = buildAmountRowValues(rowIndex);
-  const customize = buildTasksListFieldCurrencyCustomize(rowIndex);
-  const preset = getCurrencyRowPreset(rowIndex);
-  const showNetwork = Boolean(customize.showNetwork ?? preset?.showNetwork);
-  const networkLabel = String(customize.networkLabel ?? preset?.networkLabel ?? '').trim();
-  const networkPart = showNetwork && networkLabel ? `-${networkLabel}` : '';
-  return `${amount.cryptoValue} ${amount.cryptoSymbol}${networkPart} ≈ ${amount.fiatValue}`;
+  return `${amount.cryptoValue} ${amount.cryptoSymbol} ≈ ${amount.fiatValue}`;
 }
 
 export function formatApprovalCreatedTime(rowIndex: number): string {
-  return buildGeneralStructureRowValues(rowIndex).secondaryValue;
+  return buildApplicationTimeSecondaryValue(rowIndex);
 }
 
-export function formatApprovalPayoutWallet(rowIndex: number): string {
-  return buildPayoutWalletsColumnValues(rowIndex).value;
+export function formatApprovalPayoutWallet(
+  rowIndex: number,
+  locale: AppLocale = 'en',
+): string {
+  return buildSenderWalletDisplayName(rowIndex, locale);
 }
 
 export function formatApprovalPayoutWalletSignLabel(rowIndex: number): string {
@@ -43,12 +48,43 @@ export function formatApprovalExpiryDisplay(rowIndex: number): string | null {
   return `${minutes}:${seconds} Until Expiry`;
 }
 
+function tagCustomizeForAddressSide(
+  prefix: 'from' | 'to',
+  customize: Record<string, unknown>,
+  rowIndex: number,
+): Record<string, unknown> {
+  if (prefix === 'from') {
+    return buildTasksListFieldBusinessTypeCustomize('', rowIndex);
+  }
+  return customize;
+}
+
+function normalizeTagList(
+  tags?: CryptoAddressSideTags['system'] | CryptoAddressSideTags['custom'],
+) {
+  if (!tags) return [];
+  const list = Array.isArray(tags) ? tags : [tags];
+  return list.filter((tag) => tag.show !== false);
+}
+
+function collectAddressTagLabels(
+  prefix: 'from' | 'to',
+  addressIndex: number,
+  customize: Record<string, unknown>,
+): string[] {
+  const tags = buildCurrencyAddressTags(prefix, addressIndex, customize);
+  return [...normalizeTagList(tags.system), ...normalizeTagList(tags.custom)]
+    .map((tag) => String(tag.label ?? '').trim())
+    .filter(Boolean);
+}
+
 function buildSideAddressEntries(
   prefix: 'from' | 'to',
   customize: Record<string, unknown>,
   rowIndex: number,
 ): ApprovalAddressEntry[] {
   const side = buildCurrencySideAddressData(prefix, customize);
+  const tagCustomize = tagCustomizeForAddressSide(prefix, customize, rowIndex);
   const amount = buildAmountRowValues(rowIndex);
   const amountLabel = `${amount.cryptoValue} ${amount.cryptoSymbol}`;
   const entries: ApprovalAddressEntry[] = [];
@@ -61,8 +97,8 @@ function buildSideAddressEntries(
     entries.push({
       alias,
       address,
-      tags: [],
-      addressTags: buildCurrencyAddressTags(prefix, index, customize),
+      tags: collectAddressTagLabels(prefix, index, tagCustomize),
+      addressTags: buildCurrencyAddressTags(prefix, index, tagCustomize),
       amount: amountLabel,
     });
   }
@@ -71,8 +107,8 @@ function buildSideAddressEntries(
     entries.push({
       alias: side.alias,
       address: side.address,
-      tags: [],
-      addressTags: buildCurrencyAddressTags(prefix, 1, customize),
+      tags: collectAddressTagLabels(prefix, 1, tagCustomize),
+      addressTags: buildCurrencyAddressTags(prefix, 1, tagCustomize),
       amount: amountLabel,
     });
   }
@@ -103,7 +139,7 @@ export function buildApprovalDetailRowFields(rowIndex: number) {
     amountCryptoSymbol: amount.cryptoSymbol,
     amountCryptoName: currencyPreset.cryptoName,
     amountNetworkLabel: networkLabel,
-    businessType: transferType.value,
+    businessType: buildBusinessTypeSecondaryLabel(rowIndex),
     expiryDisplay: formatApprovalExpiryDisplay(rowIndex),
     expiryCountdownMinutes: transferType.showCountdown
       ? String(transferType.countdownMinutes ?? '30')
@@ -117,9 +153,11 @@ export function buildApprovalDetailRowFields(rowIndex: number) {
     payoutWalletSignLabel: formatApprovalPayoutWalletSignLabel(rowIndex),
     senderSummary: fromSide.address,
     senderCount: fromSide.count,
+    senderOrderCount: parseCurrencyOrderCount(customize.fromOrderCount) || undefined,
     senders,
     receiverSummary: toSide.address,
     receiverCount: toSide.count,
+    receiverOrderCount: parseCurrencyOrderCount(customize.toOrderCount) || undefined,
     receivers,
   };
 }

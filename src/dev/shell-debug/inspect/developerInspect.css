@@ -1,0 +1,17 @@
+.app-preview[data-dev-inspect-active] {
+  cursor: crosshair;
+}
+
+.app-preview[data-dev-inspect-active] *:not([data-shell-debug-ui] *):not([data-dev-inspect-overlay] *) {
+  cursor: crosshair !important;
+}
+
+[data-shell-debug-ui] {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+[data-dev-inspect-copy] {
+  user-select: text;
+  -webkit-user-select: text;
+}

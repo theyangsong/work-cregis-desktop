@@ -1,17 +1,36 @@
-import { buildPayoutWalletsColumnValues } from './tasksListFieldBusinessTypeRowData';
-import { buildGeneralStructureRowValues } from './tasksListFieldGeneralStructureRowData';
+import {
+  buildCurrencySideAddressData,
+  currencySideAddressDefaults,
+} from './listFieldCurrencyAddressCustomize';
+import { currencyAddressTagsEnabledKey } from './listFieldCurrencyShared';
+import {
+  currencyAddressCustomTagLabelOverrides,
+  currencyTagShowKey,
+} from './listFieldCurrencyTagCustomize';
+import { buildTasksListFieldCurrencyCustomize } from './tasksListFieldCurrencyDefaults';
+import type { AppLocale } from '@/composables/useAppLocale';
+import { buildPayoutWalletsColumnValues, buildSenderWalletDisplayName } from './tasksListFieldBusinessTypeRowData';
 
-/** Showcase list-field-general-structure — Payout Wallets 列（单行 Title + Tooltip）。 */
+/** 第 2 条（0-based index 1）：发送方展示 1 个自定义 Tag（Coinbase）。 */
+export const SENDER_DEMO_ROW_COINBASE_TAG_INDEX = 1;
+
+const defaultFromSide = currencySideAddressDefaults('from', 'ZEC');
+const defaultFromAddress = buildCurrencySideAddressData('from', {
+  symbol: 'ZEC',
+  ...defaultFromSide,
+});
+
+/** 发送方列：别名 / 地址 + 副行钱包名（与详情出款钱包同源）。 */
 export const tasksListFieldBusinessTypeDefaults: Record<string, unknown> = {
-  value: 'Payout Wallets',
-  lineLayout: 'single',
+  ...defaultFromSide,
+  symbol: 'ZEC',
   minWidth: '',
-  copyOnRowHover: false,
-  tooltipTrigger: 'hover',
-  showRightTag: true,
-  showLeftTag: false,
-  rightSystemType: 'gray',
-  rightLabel: 'Single-Sign',
+  address: defaultFromAddress.address,
+  addressSecondaryText: '',
+  addressTooltipTrigger: 'hover',
+  showRowTag: false,
+  rightLabel: 'Multi-Sign',
+  rowTagSystemType: 'gray',
 };
 
 export function columnMinWidthForBusinessTypeCustomize(columnMinWidth: string): string {
@@ -22,6 +41,7 @@ export function buildTasksListFieldBusinessTypeCustomize(
   columnMinWidth = '',
   rowIndex?: number,
   menuItem?: string,
+  locale: AppLocale = 'en',
 ): Record<string, unknown> {
   const customize = { ...tasksListFieldBusinessTypeDefaults };
   const minWidth = columnMinWidthForBusinessTypeCustomize(columnMinWidth);
@@ -29,21 +49,27 @@ export function buildTasksListFieldBusinessTypeCustomize(
     customize.minWidth = minWidth;
   }
   if (rowIndex != null && Number.isFinite(rowIndex)) {
-    if (menuItem === 'Sent Request') {
-      const wallet = buildPayoutWalletsColumnValues(rowIndex);
-      const createdTime = buildGeneralStructureRowValues(rowIndex).secondaryValue;
+    const currencyCustomize = buildTasksListFieldCurrencyCustomize(rowIndex, columnMinWidth);
+    const wallet = buildPayoutWalletsColumnValues(rowIndex);
+    const fromAddress = buildCurrencySideAddressData('from', currencyCustomize);
+
+    Object.assign(customize, currencyCustomize, {
+      minWidth: customize.minWidth,
+      address: fromAddress.address,
+      addressSecondaryText: buildSenderWalletDisplayName(rowIndex, locale),
+      showRowTag: wallet.rightLabel === 'Multi-Sign',
+      rightLabel: wallet.rightLabel,
+      rowTagSystemType: 'gray',
+      addressTooltipTrigger: 'hover',
+    });
+
+    if (rowIndex === SENDER_DEMO_ROW_COINBASE_TAG_INDEX) {
       Object.assign(customize, {
-        lineLayout: 'double',
-        value: wallet.value,
-        secondaryValue: createdTime,
-        showRightTag: true,
-        showLeftTag: false,
-        rightLabel: wallet.rightLabel,
-        rightSystemType: 'gray',
+        [currencyAddressTagsEnabledKey('from', 1)]: true,
+        [currencyTagShowKey('from', 1, 'system')]: false,
+        ...currencyAddressCustomTagLabelOverrides('from', 1, ['Coinbase'], true),
       });
-      return customize;
     }
-    Object.assign(customize, buildPayoutWalletsColumnValues(rowIndex));
   }
   return customize;
 }

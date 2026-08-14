@@ -31,22 +31,29 @@
   color: var(--text-same-white-primary);
 }
 
-.guideHost :global(> .eds-popover .eds-popover-content > div:first-child .eds-icon-button) {
+.guideHost :global(> .eds-popover .eds-popover-content > div:first-child .eds-icon-button),
+.guideHost :global(> .eds-popover .eds-popover-content > div:first-child .eds-icon-button:hover:not(:disabled):not(.isDisabled)),
+.guideHost :global(> .eds-popover .eds-popover-content > div:first-child .eds-icon-button:focus-visible:not(:disabled):not(.isDisabled)),
+.guideHost :global(> .eds-popover .eds-popover-content > div:first-child .eds-icon-button:active:not(:disabled):not(.isDisabled)) {
   background-color: transparent;
 }
 
 .guideHost :global(> .eds-popover .eds-popover-content > div:first-child .eds-icon-button > span) {
-  color: var(--text-same-white-primary);
+  color: var(--material-same-white-quaternary) !important;
 }
 
-.guideHost
-  :global(
-    > .eds-popover
-      .eds-popover-content
-      > div:first-child
-      .eds-icon-button:hover:not(:disabled):not(.isDisabled)
-  ) {
-  background-color: var(--event-hover);
+.guideHost :global(> .eds-popover .eds-popover-content > div:first-child .eds-icon-button .eds-icon .eds-i-f),
+.guideHost :global(> .eds-popover .eds-popover-content > div:first-child .eds-icon-button .eds-icon svg path) {
+  fill: currentColor !important;
+}
+
+.guideHost :global(> .eds-popover .eds-popover-content > div:first-child .eds-icon-button:hover:not(:disabled):not(.isDisabled) > span),
+.guideHost :global(> .eds-popover .eds-popover-content > div:first-child .eds-icon-button:focus-visible:not(:disabled):not(.isDisabled) > span) {
+  color: var(--material-same-white-secondary) !important;
+}
+
+.guideHost :global(> .eds-popover .eds-popover-content > div:first-child .eds-icon-button:active:not(:disabled):not(.isDisabled) > span) {
+  color: var(--material-same-white-quaternary) !important;
 }
 
 .guideSlot {

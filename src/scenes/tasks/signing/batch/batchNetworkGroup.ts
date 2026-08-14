@@ -1,4 +1,4 @@
-import { resolveMinerFeeEvmShellVariant } from '../../approval/minerFeeEvmShellVariant';
+import { resolveEvmShellVariantFromSymbol } from '@eds/desktop-components';
 import { resolveMinerFeeProfile } from '../../shared/minerFeeProfile';
 import type { BatchNetworkGroupKey } from './types';
 
@@ -39,7 +39,7 @@ export function resolveBatchNetworkGroupKey(rowIndex: number): BatchNetworkGroup
   const profile = resolveMinerFeeProfile(rowIndex);
   if (profile.kind === 'tron') return 'tron';
   if (profile.kind === 'ton-xrp') return 'ton-xrp';
-  if (resolveMinerFeeEvmShellVariant(profile.symbol) === 'btc') return 'btc';
+  if (resolveEvmShellVariantFromSymbol(profile.symbol) === 'btc') return 'btc';
   return 'evm';
 }
 

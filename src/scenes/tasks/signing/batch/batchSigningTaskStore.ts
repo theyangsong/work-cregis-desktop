@@ -47,7 +47,9 @@ function resolveRowDurationMs(rowIndexInArray: number, totalRows: number): numbe
 }
 
 function mockTxHash(rowIndex: number): string {
-  return `0x${(rowIndex + 1).toString(16).padStart(8, '0')}…${(rowIndex * 17 + 91).toString(16).slice(-4)}`;
+  const head = (rowIndex + 1).toString(16).padStart(8, '0');
+  const tail = (rowIndex * 17 + 91).toString(16).padStart(56, '0');
+  return `0x${head}${tail}`;
 }
 
 /** 演示：第 1 条广播失败 → 成功 → 失败 → 成功，按 rowIndex % 4 循环。 */

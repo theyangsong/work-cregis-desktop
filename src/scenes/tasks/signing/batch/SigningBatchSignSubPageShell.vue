@@ -21,6 +21,7 @@ const emit = defineEmits<{
 
 const bodyRef = ref<HTMLElement | null>(null);
 const topOverlayRef = ref<HTMLElement | null>(null);
+const bottomOverlayRef = ref<HTMLElement | null>(null);
 
 const amountSortOrder = ref<TasksDataListSortOrder | ''>('');
 
@@ -37,6 +38,7 @@ provide(signingBatchDetailAmountSortKey, amountSortContext);
 
 useLayoutChromeInset(bodyRef, {
   topOverlayRef,
+  bottomOverlayRef,
 });
 </script>
 
@@ -45,6 +47,13 @@ useLayoutChromeInset(bodyRef, {
     <div ref="bodyRef" :class="styles.batchPopupSubPageBody">
       <div :class="styles.batchPopupSubPageContent">
         <slot />
+      </div>
+      <div
+        v-if="$slots.footer"
+        ref="bottomOverlayRef"
+        :class="styles.batchDetailPaginerOverlay"
+      >
+        <slot name="footer" />
       </div>
       <div ref="topOverlayRef" :class="styles.batchPopupSubPageTopOverlay">
         <SigningBatchPopupTopTool :title="title" @back="emit('back')">

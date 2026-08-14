@@ -110,6 +110,7 @@ function onMultiSignPopupClosed() {
     :dismiss-without-animation="flow.multiSignClosingForProgress.value"
     :detail="flow.detail.value"
     :phase="flow.multiSignPhase.value"
+    :perspective="flow.multiSignPerspective.value"
     :joined-count="flow.multiSignJoinedCount.value"
     :remark="flow.remark.value"
     :miner-fee-display="flow.selectedMinerFeeDisplay.value"
@@ -124,5 +125,6 @@ function onMultiSignPopupClosed() {
     :phase="flow.progressPhase.value"
     :miner-fee-display="flow.selectedMinerFeeDisplay.value"
     @close="onProgressPopupClosed"
+    @retry="flow.retryProgressAfterSignFailed()"
   />
 </template>

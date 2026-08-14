@@ -9,6 +9,7 @@ import {
   POPOVER_PRESET_WIDTH_GUIDE,
 } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
+import { useTasksDetailToolbarGuide } from './useTasksDetailToolbarGuide';
 import styles from './DetailToolbarNavGuidePopover.module.css';
 
 const props = withDefaults(
@@ -28,6 +29,7 @@ const emit = defineEmits<{
 }>();
 
 const { ui } = useAppI18n();
+const { markGuideSeen, tryConsumeGuideAutoPresent } = useTasksDetailToolbarGuide();
 const anchoredRef = ref<{ openPanel?: () => void; close?: () => void } | null>(null);
 let openTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -40,15 +42,18 @@ function clearOpenTimer() {
 
 function dismissGuide() {
   anchoredRef.value?.close?.();
+  markGuideSeen();
   emit('guide-dismiss');
 }
 
 function scheduleGuideOpen() {
   clearOpenTimer();
   if (!props.guideActive || props.disabled) return;
+  if (!tryConsumeGuideAutoPresent()) return;
 
   openTimer = setTimeout(async () => {
     await nextTick();
+    if (!props.guideActive) return;
     anchoredRef.value?.openPanel?.();
   }, 320);
 }

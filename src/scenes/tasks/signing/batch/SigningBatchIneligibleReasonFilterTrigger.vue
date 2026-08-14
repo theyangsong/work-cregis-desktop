@@ -53,7 +53,7 @@ function chooseFilter(value: BatchIneligibleReasonFilter, close: () => void) {
         :content-class="reasonHeaderTextClass"
         context="header"
       >
-        {{ ui('Ineligible transaction reasons') }}
+        {{ ui('Reason') }}
       </EgDataListCellOverflow>
     </div>
     <EgFlotation

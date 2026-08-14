@@ -31,11 +31,9 @@ function resolveAddressSideTags(tags?: CryptoAddressSideTags): CryptoAddressSide
   return tags;
 }
 
-function resolveAddressTag(variantId: DetailAddressSideKey, alias?: string): string | undefined {
-  if (variantId === 'receiver') {
-    return alias ?? '';
-  }
-  return alias || undefined;
+/** createDetailApplyItemRow 仅覆盖 !== undefined 的字段；sender 变体 catalog 默认 tag 为演示别名，无 alias 时须传 '' 清掉。 */
+function resolveAddressTag(_variantId: DetailAddressSideKey, alias?: string): string {
+  return alias?.trim() ?? '';
 }
 
 function buildAddressValueEntries(
@@ -83,11 +81,35 @@ export function buildDetailAddressSideItem(
     primary: AddressEntry | undefined;
     summary: string;
     count: number;
+    orderCount?: number;
     entries: AddressEntry[];
     expandLabel: string;
+    ordersLabel: string;
   },
 ): DetailItemData {
   const address = options.primary?.address ?? options.summary;
+  const orderCount = options.orderCount ?? 0;
+
+  if (orderCount > 1) {
+    return withAddressSideTags(
+      createDetailApplyItemRow(variantId, {
+        key: options.key,
+        title: options.title,
+        value: address,
+        tag: resolveAddressTag(variantId, options.primary?.alias),
+        addressLayout: 'multi-orders',
+        addressCount: orderCount,
+        valueEntries: buildAddressValueEntries(
+          options.entries.slice(0, 1),
+          variantId,
+        ),
+        addressViewMoreLabel: options.ordersLabel,
+      }),
+      options.primary,
+      options.entries.slice(0, 1),
+      variantId,
+    );
+  }
 
   if (options.count > 1) {
     return withAddressSideTags(

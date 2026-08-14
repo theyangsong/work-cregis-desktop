@@ -27,11 +27,11 @@ const signConfirmOpen = bindFlowOpen('signConfirmOpen');
 const quotaAlertOpen = bindFlowOpen('quotaAlertOpen');
 const verifyOpen = bindFlowOpen('verifyOpen');
 
-const quotaRequiredUsd = computed(
-  () => props.flow.quotaFailure.value?.requiredUsd ?? 0,
-);
 const quotaRemainingUsd = computed(
   () => props.flow.quotaFailure.value?.remainingUsd ?? 0,
+);
+const quotaOverageFeeUsd = computed(
+  () => props.flow.quotaFailure.value?.overageFeeUsd ?? 0,
 );
 
 const signConfirmShellSuspended = computed(
@@ -57,8 +57,9 @@ const signConfirmShellSuspended = computed(
 
   <SigningBatchQuotaAlertPopup
     v-model:open="quotaAlertOpen"
-    :required-usd="quotaRequiredUsd"
     :remaining-usd="quotaRemainingUsd"
+    :overage-fee-usd="quotaOverageFeeUsd"
+    @continue="flow.onQuotaAlertContinue()"
     @close="flow.onQuotaAlertClose()"
   />
 

@@ -1,15 +1,21 @@
-import { buildAmountRowValues } from '../../list-field/tasksListFieldAmountRowData';
-import { buildTasksListFieldCurrencyCustomize } from '../../list-field/tasksListFieldCurrencyDefaults';
+import { buildTasksListFieldAmountCustomize } from '../../list-field/tasksListFieldAmountDefaults';
 
-/** 进度弹层金额行：数量 + 币种符号 + 网络 Tag（对齐主列表币种列 EgCryptoCombo）。 */
-export function buildProgressAmountCurrencyCustomize(rowIndex: number) {
-  const amount = buildAmountRowValues(rowIndex);
-  const base = buildTasksListFieldCurrencyCustomize(rowIndex);
+/** 进度弹层金额行：主行对齐列表 Amount 列；副行展示矿工费。 */
+export function buildProgressAmountListCustomize(
+  rowIndex: number,
+  minerFeeDisplay: string,
+  columnMinWidth = '',
+) {
+  const base = buildTasksListFieldAmountCustomize(
+    columnMinWidth,
+    rowIndex,
+    'left',
+    'Signing',
+  );
 
   return {
     ...base,
-    comboMode: 'currency-only',
-    symbol: `${amount.cryptoValue} ${amount.cryptoSymbol}`,
-    minWidth: '',
+    secondaryValue: minerFeeDisplay,
+    showCountdown: false,
   };
 }

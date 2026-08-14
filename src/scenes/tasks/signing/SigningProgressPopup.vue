@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, toRef } from 'vue';
-import { EgPopup } from '@eds/desktop-components';
+import { computed, ref, toRef, watch } from 'vue';
+import { EgButton, EgPopup } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
 import { usePopupShellLifecycle } from '../shared/usePopupShellLifecycle';
 import {
@@ -25,6 +25,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:open': [value: boolean];
   close: [];
+  retry: [];
 }>();
 
 const { ui } = useAppI18n();
@@ -36,6 +37,22 @@ const { popupMounted, popupOpen, onPopupClosed } = usePopupShellLifecycle({
     emit('close');
   },
 });
+
+const isMpcNetworkSignFailed = computed(() => props.phase === 'sign-failed');
+const mpcNetworkSelectedIndex = ref<number | null>(null);
+
+const retryDisabled = computed(
+  () => isMpcNetworkSignFailed.value && mpcNetworkSelectedIndex.value === null,
+);
+
+watch(
+  () => props.phase,
+  (phase) => {
+    if (phase !== 'sign-failed') {
+      mpcNetworkSelectedIndex.value = null;
+    }
+  },
+);
 
 const currencyMeta = computed(() =>
   props.detail ? resolveSigningCustomPopupCurrencyMeta(props.detail) : null,
@@ -49,8 +66,17 @@ const items = computed(() =>
 
 const progressSteps = computed(() => buildSigningProgressPopupSteps(props.phase, ui));
 
+const panelReady = computed(
+  () => props.detail != null && (isMpcNetworkSignFailed.value || currencyMeta.value != null),
+);
+
 function onClose() {
   popupOpen.value = false;
+}
+
+function onRetry() {
+  if (retryDisabled.value) return;
+  emit('retry');
 }
 </script>
 
@@ -64,11 +90,29 @@ function onClose() {
     @close="onPopupClosed"
   >
     <SigningCustomPopupPanel
-      v-if="detail && currencyMeta"
+      v-if="panelReady"
       :items="items"
       :progress-steps="progressSteps"
+      :content-variant="isMpcNetworkSignFailed ? 'mpc-network-error' : 'detail'"
+      :footer-mode="isMpcNetworkSignFailed ? 'detail-toolbar' : 'latency'"
+      :mpc-network-selected-index="mpcNetworkSelectedIndex"
       footer-latency-label="122ms"
+      footer-latency-color="var(--status-success)"
+      @update:mpc-network-selected-index="mpcNetworkSelectedIndex = $event"
       @close="onClose"
-    />
+      @retry="onRetry"
+    >
+      <template v-if="isMpcNetworkSignFailed" #actions>
+        <EgButton
+          tone="decor"
+          variant="solid"
+          size="md"
+          :disabled="retryDisabled"
+          @click="onRetry"
+        >
+          {{ ui('Retry') }}
+        </EgButton>
+      </template>
+    </SigningCustomPopupPanel>
   </EgPopup>
 </template>

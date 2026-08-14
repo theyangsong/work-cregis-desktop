@@ -6,6 +6,7 @@ import styles from './TasksListFieldStatus.module.css';
 
 const props = defineProps<{
   customize: Record<string, unknown>;
+  alignEnd?: boolean;
 }>();
 
 function parsePreviewMinWidth(customize: Record<string, unknown>): number | undefined {
@@ -26,10 +27,15 @@ const tagStatus = computed(() => String(props.customize.status ?? 'success') as 
 const { ui } = useAppI18n();
 const tagLabel = computed(() => ui(String(props.customize.label ?? 'Success')));
 const tagTruncate = computed(() => Boolean(props.customize.truncate));
+const alignEnd = computed(() => Boolean(props.alignEnd));
 </script>
 
 <template>
-  <div class="list-field-status" :class="styles.statusPreview" :style="cellMinWidthStyle">
+  <div
+    class="list-field-status"
+    :class="[styles.statusPreview, alignEnd && styles.statusPreviewAlignEnd]"
+    :style="cellMinWidthStyle"
+  >
     <EgTag family="status" :status="tagStatus" size="lg" :truncate="tagTruncate">
       {{ tagLabel }}
     </EgTag>

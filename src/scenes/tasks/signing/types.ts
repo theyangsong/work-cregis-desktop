@@ -47,9 +47,11 @@ export type SigningDetail = {
   payoutWalletSignLabel: string;
   senderSummary: string;
   senderCount: number;
+  senderOrderCount?: number;
   senders: SigningAddressEntry[];
   receiverSummary: string;
   receiverCount: number;
+  receiverOrderCount?: number;
   receivers: SigningAddressEntry[];
   strategy: string;
   thirdPartyRef: string;
@@ -70,7 +72,7 @@ export type SigningDetail = {
   /** 签名通过：链上交易状态 Tag 文案（i18n key）。 */
   transactionStatusLabel?: string;
   transactionStatusTag?: 'success' | 'warning' | 'danger' | 'ready' | 'invalid';
-  /** 签名通过：链上交易哈希（只读展示，无复制）。 */
+  /** 签名通过：链上交易哈希（Apply_Item txid 变体）。 */
   transactionHash?: string;
   signingMode: 'single' | 'multi';
   signingThreshold: string | null;
@@ -87,4 +89,7 @@ export type SigningProgressPhase =
   | 'broadcast-success'
   | 'broadcast-failed';
 
-export type MultiSignRoomPhase = 'waiting' | 'ready';
+export type MultiSignRoomPhase = 'waiting' | 'ready' | 'signing' | 'sign-failed';
+
+/** 多签等待室视角：签名人（发起人）可就绪签名；参与人仅等待。 */
+export type MultiSignWaitingPerspective = 'signer' | 'participant';

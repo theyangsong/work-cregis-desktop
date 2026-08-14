@@ -6,7 +6,6 @@ import {
   EgDataListColumn,
   EgDivider,
   EgFormSubmission,
-  EgListFieldAddressLine,
   EgListFieldHashLikeLine,
   EgListFieldOverflowText,
   EgTag,
@@ -16,20 +15,23 @@ import {
 import { useAppI18n } from '@/composables/useAppI18n';
 import DataListHeaderSortTrigger from '../../DataListHeaderSortTrigger.vue';
 import type { TasksDataListSortOrder } from '../../tasksDataListSort';
-import TasksListFieldCurrency from '../../list-field/TasksListFieldCurrency.vue';
+import TasksDataListColumnCell from '../../list-field/TasksDataListColumnCell.vue';
+import TasksListFieldAmount from '../../list-field/TasksListFieldAmount.vue';
 import {
   DATA_LIST_FIGMA_HEADER_HEIGHT,
 } from '../../tasksDataListPageData';
 import pageStyles from '../../TasksDataListPage.module.css';
 import dataListStyles from '../../../../../../eds-desktop/packages/components/src/organisms/data-list/DataList.module.css';
-import { buildProgressAmountCurrencyCustomize } from './batchProgressAmountCustomize';
-import { computeBatchDataListHeight } from './batchDataListLayout';
+import { buildProgressAmountListCustomize } from './batchProgressAmountCustomize';
+import {
+  BATCH_RECEIVER_COLUMN_MIN_WIDTH,
+  computeBatchDataListHeight,
+} from './batchDataListLayout';
 import {
   BATCH_PROGRESS_EMPTY_DISPLAY,
   formatProgressListFieldDatetime,
   isProgressEmptyDisplay,
 } from './batchProgressListFieldDisplay';
-import { resolveProgressRowModel } from './batchSigningTaskStore';
 import type { BatchSigningFailReason, BatchSigningTaskRow } from './types';
 import styles from './batchSigning.shared.module.css';
 
@@ -87,7 +89,6 @@ function onCreatedTimeSort(order: TasksDataListSortOrder | null) {
 
 const dataList = computed<DataListItem[]>(() =>
   sortedRows.value.map((row) => {
-    const model = resolveProgressRowModel(row);
     const statusLabel =
       row.status === 'failed'
         ? ui('Failed')
@@ -103,7 +104,6 @@ const dataList = computed<DataListItem[]>(() =>
       id: row.rowIndex,
       signingId: row.signingId,
       rowIndex: row.rowIndex,
-      receiverAddress: model.receiver.address,
       txHash,
       minerFee: row.minerFeeDisplay?.trim() || BATCH_PROGRESS_EMPTY_DISPLAY,
       time: formatProgressListFieldDatetime(row.updatedAt),
@@ -175,13 +175,12 @@ function rowIndexFromData(data: DataListItem) {
         </template>
         <template #default="{ data }">
           <div :class="[styles.batchDetailDataListCell, styles.batchProgressAmountCell]">
-            <TasksListFieldCurrency
-              :customize="buildProgressAmountCurrencyCustomize(rowIndexFromData(data))"
-            />
-            <EgListFieldOverflowText
-              :text="String(data.minerFee ?? '')"
-              variant="secondary"
-              tooltip-trigger="hover"
+            <TasksListFieldAmount
+              :customize="buildProgressAmountListCustomize(
+                rowIndexFromData(data),
+                String(data.minerFee ?? ''),
+                PROGRESS_AMOUNT_COLUMN_MIN_WIDTH,
+              )"
             />
           </div>
         </template>
@@ -221,9 +220,11 @@ function rowIndexFromData(data: DataListItem) {
         </template>
         <template #default="{ data }">
           <div :class="styles.batchDetailDataListCell">
-            <EgListFieldAddressLine
-              :text="String(data.receiverAddress ?? '')"
-              tooltip-trigger="hover"
+            <TasksDataListColumnCell
+              data-source="receiver"
+              :column-min-width="BATCH_RECEIVER_COLUMN_MIN_WIDTH"
+              menu-item="Signing"
+              :row-index="rowIndexFromData(data)"
             />
             <EgListFieldHashLikeLine
               v-if="!isProgressEmptyDisplay(String(data.txHash ?? ''))"

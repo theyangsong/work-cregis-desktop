@@ -33,7 +33,7 @@ const REQUIRED_SOURCE_MARKERS = [
   },
   {
     file: 'src/scenes/tasks/approval/ApprovalRemarkPopoverPanel.vue',
-    markers: ['MinerFeeTonLikePanel', "resolvedProfile.kind === 'ton-xrp'", 'MinerFeeTronPanel'],
+    markers: ['EgMinerFeeTonPanel', "resolvedProfile.kind === 'ton-xrp'", 'EgMinerFeeTronPanel'],
   },
   {
     file: 'src/scenes/tasks/shared/minerFeeProfile.ts',

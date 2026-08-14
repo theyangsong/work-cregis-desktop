@@ -2,6 +2,7 @@
 import { EgContainer, EgTooltip } from '@eds/desktop-components';
 import { RouterView } from 'vue-router';
 import AppPopupOverlayHost from '@/components/AppPopupOverlayHost.vue';
+import MultiSignInvitationFloatHost from '@/scenes/tasks/signing/multiSignInvitation/MultiSignInvitationFloatHost.vue';
 </script>
 
 <template>
@@ -15,5 +16,6 @@ import AppPopupOverlayHost from '@/components/AppPopupOverlayHost.vue';
       <RouterView />
     </EgContainer>
     <AppPopupOverlayHost />
+    <MultiSignInvitationFloatHost />
   </EgTooltip>
 </template>

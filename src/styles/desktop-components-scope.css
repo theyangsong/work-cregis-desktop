@@ -2,4 +2,5 @@
 @import '../../../eds-desktop/packages/components/src/styles/global.css';
 @import '../../../eds-desktop/packages/components/src/styles/interactionHoverTooltip.css';
 @import '../../../eds-desktop/packages/components/src/styles/motionPageTransition.module.css';
+@import '../../../eds-desktop/packages/components/src/styles/motionLayoutDeformTransition.module.css';
 @import './list-field-typography.css';

@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import TasksListFieldAmount from './TasksListFieldAmount.vue';
-import TasksListFieldCurrency from './TasksListFieldCurrency.vue';
 import TasksListFieldGeneralStructure from './TasksListFieldGeneralStructure.vue';
+import TasksListFieldReceiver from './TasksListFieldReceiver.vue';
+import TasksListFieldSender from './TasksListFieldSender.vue';
 import TasksListFieldStatus from './TasksListFieldStatus.vue';
+import TasksListFieldTime from './TasksListFieldTime.vue';
 import { buildTasksListFieldAmountCustomize } from './tasksListFieldAmountDefaults';
 import { buildTasksListFieldBusinessTypeCustomize } from './tasksListFieldBusinessTypeDefaults';
-import { buildTasksListFieldCurrencyCustomize } from './tasksListFieldCurrencyDefaults';
 import { buildTasksListFieldGeneralStructureCustomize } from './tasksListFieldGeneralStructureDefaults';
+import { buildTasksListFieldReceiverCustomize } from './tasksListFieldReceiverDefaults';
 import { buildTasksListFieldStatusCustomize } from './tasksListFieldStatusDefaults';
+import { buildTasksListFieldTimeCustomize } from './tasksListFieldTimeDefaults';
+import { useAppI18n } from '@/composables/useAppI18n';
 import styles from './TasksDataListColumnCell.module.css';
 
 const props = withDefaults(
@@ -20,6 +24,8 @@ const props = withDefaults(
       | 'business-type'
       | 'status'
       | 'amount'
+      | 'receiver'
+      | 'created-time'
       | 'action';
     columnMinWidth?: string;
     columnAlign?: 'left' | 'center' | 'right';
@@ -35,28 +41,45 @@ const props = withDefaults(
   },
 );
 
+const { locale } = useAppI18n();
+
+/** 旧 customize 仍可能用 currency；与 receiver 列同源。 */
+const resolvedDataSource = computed(() =>
+  props.dataSource === 'currency' ? 'receiver' : props.dataSource,
+);
+
 const listFieldCustomize = computed(() => {
-  if (props.dataSource === 'currency') {
-    return buildTasksListFieldCurrencyCustomize(props.rowIndex, props.columnMinWidth);
+  void locale.value;
+  if (resolvedDataSource.value === 'receiver') {
+    return buildTasksListFieldReceiverCustomize(props.rowIndex, props.columnMinWidth);
   }
-  if (props.dataSource === 'general-structure') {
-    return buildTasksListFieldGeneralStructureCustomize(props.columnMinWidth, props.rowIndex);
+  if (resolvedDataSource.value === 'general-structure') {
+    return buildTasksListFieldGeneralStructureCustomize(
+      props.columnMinWidth,
+      props.rowIndex,
+      props.menuItem,
+      locale.value,
+    );
   }
-  if (props.dataSource === 'business-type') {
+  if (resolvedDataSource.value === 'business-type') {
     return buildTasksListFieldBusinessTypeCustomize(
       props.columnMinWidth,
       props.rowIndex,
       props.menuItem,
+      locale.value,
     );
   }
-  if (props.dataSource === 'status') {
+  if (resolvedDataSource.value === 'status') {
     return buildTasksListFieldStatusCustomize(
       props.columnMinWidth,
       props.rowIndex,
       props.menuItem,
     );
   }
-  if (props.dataSource === 'amount') {
+  if (resolvedDataSource.value === 'created-time') {
+    return buildTasksListFieldTimeCustomize(props.columnMinWidth, props.rowIndex);
+  }
+  if (resolvedDataSource.value === 'amount') {
     return buildTasksListFieldAmountCustomize(
       props.columnMinWidth,
       props.rowIndex,
@@ -69,19 +92,46 @@ const listFieldCustomize = computed(() => {
 </script>
 
 <template>
-  <div v-if="dataSource === 'currency' && listFieldCustomize" :class="styles.listFieldCell">
-    <TasksListFieldCurrency :customize="listFieldCustomize" />
+  <div v-if="resolvedDataSource === 'receiver' && listFieldCustomize" :class="[
+    styles.listFieldCell,
+    columnAlign === 'right' && styles.receiverFieldCellEnd,
+  ]">
+    <TasksListFieldReceiver
+      :customize="listFieldCustomize"
+      :align-end="columnAlign === 'right'"
+    />
   </div>
-  <div v-else-if="dataSource === 'general-structure' && listFieldCustomize" :class="styles.listFieldCell">
+  <div v-else-if="resolvedDataSource === 'general-structure' && listFieldCustomize" :class="styles.listFieldCell">
     <TasksListFieldGeneralStructure :customize="listFieldCustomize" />
   </div>
-  <div v-else-if="dataSource === 'business-type' && listFieldCustomize" :class="styles.listFieldCell">
-    <TasksListFieldGeneralStructure :customize="listFieldCustomize" />
+  <div
+    v-else-if="resolvedDataSource === 'business-type' && listFieldCustomize"
+    :class="[
+      styles.listFieldCell,
+      columnAlign === 'right' && styles.senderFieldCellEnd,
+    ]"
+  >
+    <TasksListFieldSender
+      :customize="listFieldCustomize"
+      :align-end="columnAlign === 'right'"
+    />
   </div>
-  <div v-else-if="dataSource === 'status' && listFieldCustomize" :class="[styles.listFieldCell, styles.statusFieldCell]">
-    <TasksListFieldStatus :customize="listFieldCustomize" />
+  <div
+    v-else-if="resolvedDataSource === 'status' && listFieldCustomize"
+    :class="[
+      styles.listFieldCell,
+      columnAlign === 'right' ? styles.statusFieldCellEnd : styles.statusFieldCell,
+    ]"
+  >
+    <TasksListFieldStatus
+      :customize="listFieldCustomize"
+      :align-end="columnAlign === 'right'"
+    />
   </div>
-  <div v-else-if="dataSource === 'amount' && listFieldCustomize" :class="styles.listFieldCell">
+  <div v-else-if="resolvedDataSource === 'created-time' && listFieldCustomize" :class="styles.listFieldCell">
+    <TasksListFieldTime :customize="listFieldCustomize" />
+  </div>
+  <div v-else-if="resolvedDataSource === 'amount' && listFieldCustomize" :class="styles.listFieldCell">
     <TasksListFieldAmount :customize="listFieldCustomize" />
   </div>
   <div v-else-if="variant === 'combo'" :class="styles.fieldItem">

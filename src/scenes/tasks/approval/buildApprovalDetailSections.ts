@@ -8,6 +8,7 @@ import {
   buildDetailAddressSideItem,
 } from '../shared/buildDetailAddressSideItems';
 import { buildDetailCurrencyAmountItems } from '../shared/buildDetailCurrencyAmountItems';
+import { buildDetailInitiationSourceItem } from '../shared/buildDetailInitiationSourceItem';
 import {
   buildDetailTransactionHashItem,
   buildDetailTransactionStatusItem,
@@ -17,11 +18,15 @@ import {
   buildStrategyDetailItem,
 } from '../shared/buildDetailWalletStrategyItems';
 import { buildExpiryDetailItem } from '../shared/buildDetailExpiryItem';
+import { buildSenderWalletDisplayName } from '../list-field/tasksListFieldBusinessTypeRowData';
+import type { AppLocale } from '@/composables/useAppLocale';
+import { formatEmptyDisplayValue } from '@/utils/formatEmptyDisplay';
+import { parseRowIndexFromApprovalId } from './approvalStore';
 import type { ApprovalDetail } from './types';
 
 const DETAIL_ITEM_TITLES = {
   expiry: 'Expiry',
-  appliedAt: DATA_LIST_FIGMA_COLUMNS.sortable.secondaryLabel ?? 'Application Time',
+  appliedAt: 'Application Time',
   payoutWallet: DATA_LIST_FIGMA_COLUMNS.businessType.label,
   sender: 'From Address',
   receiver: DATA_LIST_FIGMA_COLUMNS.combo.secondaryLabel ?? 'To Address',
@@ -41,8 +46,10 @@ function buildSenderItem(
     primary,
     summary: detail.senderSummary,
     count: detail.senderCount,
+    orderCount: detail.senderOrderCount,
     entries: detail.senders,
     expandLabel: translate('Expand {count}'),
+    ordersLabel: translate('{count} Orders'),
   });
 }
 
@@ -57,17 +64,21 @@ function buildReceiverItem(
     primary,
     summary: detail.receiverSummary,
     count: detail.receiverCount,
+    orderCount: detail.receiverOrderCount,
     entries: detail.receivers,
     expandLabel: translate('Expand {count}'),
+    ordersLabel: translate('{count} Orders'),
   });
 }
 
 export function buildApprovalDetailSections(
   detail: ApprovalDetail,
   translate: (key: string) => string = (key) => key,
+  locale: AppLocale = 'en',
 ): DetailSectionData[] {
   const transactionItems: DetailItemData[] = [
     ...buildDetailCurrencyAmountItems(detail, translate),
+    buildDetailInitiationSourceItem(parseRowIndexFromApprovalId(detail.id), translate),
   ];
 
   const transactionStatusItem = buildDetailTransactionStatusItem(detail, translate);
@@ -87,7 +98,10 @@ export function buildApprovalDetailSections(
       value: detail.appliedAtDisplay,
     }),
     buildPayoutWalletDetailItem(
-      detail,
+      {
+        ...detail,
+        payoutWallet: buildSenderWalletDisplayName(parseRowIndexFromApprovalId(detail.id), locale),
+      },
       translate,
       DETAIL_ITEM_TITLES.payoutWallet,
     ),
@@ -110,7 +124,7 @@ export function buildApprovalDetailSections(
     createDetailApplyItemRow('memo', {
       key: 'memo',
       title: translate(DETAIL_ITEM_TITLES.memo),
-      value: detail.memo,
+      value: formatEmptyDisplayValue(detail.memo),
     }),
   );
 

@@ -1,12 +1,17 @@
+import {
+  buildBusinessTypeSecondaryLabel,
+} from '../../list-field/businessTypeDisplay';
 import { buildCurrencySideAddressData } from '../../list-field/listFieldCurrencyAddressCustomize';
-import { CURRENCY_CUSTOM_TAG_DEFAULT_LABELS } from '../../list-field/listFieldCurrencyTagCustomize';
+import { resolveListFieldAddressLineModel } from '../../list-field/listFieldAddressLineModel';
 import { buildAmountRowValues } from '../../list-field/tasksListFieldAmountRowData';
 import {
   buildPayoutWalletsColumnValues,
-  buildTransferTypeRowValues,
   isMultiSignRow,
 } from '../../list-field/tasksListFieldBusinessTypeRowData';
+import { buildTasksListFieldBusinessTypeCustomize } from '../../list-field/tasksListFieldBusinessTypeDefaults';
 import { buildTasksListFieldCurrencyCustomize } from '../../list-field/tasksListFieldCurrencyDefaults';
+import { buildCurrencyAddressTags } from '../../list-field/listFieldCurrencyTagCustomize';
+import type { CryptoAddressSideTags } from '@eds/desktop-components';
 import {
   checkSigningPending,
   signingIdFromRowIndex,
@@ -14,29 +19,9 @@ import {
 import type { CryptoName } from '@eds/desktop-components';
 import type { BatchAddressDisplay, SigningBatchRowModel } from './types';
 
-const EXTENDED_BUSINESS_TYPES = [
-  'Manual Transfer',
-  'Wallet Payout',
-  'Sub-Address Payout',
-  'Swap',
-  'Contract Authorization',
-  'CSPN',
-  'Revoke Authorization',
-  'Remittance',
-] as const;
-
-function seededFraction(rowIndex: number, salt: number): number {
-  const x = Math.sin((rowIndex + 1) * 9973 + salt * 7919) * 10000;
-  return x - Math.floor(x);
-}
-
+/** 与列表第一列副行（Type of Business）同源。 */
 export function resolveBatchBusinessType(rowIndex: number): string {
-  const transfer = buildTransferTypeRowValues(rowIndex).value;
-  if (seededFraction(rowIndex, 23) > 0.82) {
-    const extendedIndex = Math.floor(seededFraction(rowIndex, 29) * EXTENDED_BUSINESS_TYPES.length);
-    return EXTENDED_BUSINESS_TYPES[extendedIndex] ?? transfer;
-  }
-  return transfer;
+  return buildBusinessTypeSecondaryLabel(rowIndex);
 }
 
 export function buildCurrencyKey(symbol: string, networkLabel: string): string {
@@ -48,10 +33,35 @@ export function buildCurrencyLabel(symbol: string, networkLabel: string): string
   return network ? `${symbol} · ${network}` : symbol;
 }
 
-function demoAddressTags(rowIndex: number, salt: number): string[] {
-  if (seededFraction(rowIndex, salt) > 0.45) return [];
-  const index = Math.floor(seededFraction(rowIndex, salt + 1) * CURRENCY_CUSTOM_TAG_DEFAULT_LABELS.length);
-  return [CURRENCY_CUSTOM_TAG_DEFAULT_LABELS[index] ?? 'Custom'];
+function tagCustomizeForAddressSide(
+  prefix: 'from' | 'to',
+  customize: Record<string, unknown>,
+  rowIndex: number,
+): Record<string, unknown> {
+  if (prefix === 'from') {
+    return buildTasksListFieldBusinessTypeCustomize('', rowIndex, 'Signing');
+  }
+  return customize;
+}
+
+function normalizeTagList(
+  tags?: CryptoAddressSideTags['system'] | CryptoAddressSideTags['custom'],
+) {
+  if (!tags) return [];
+  const list = Array.isArray(tags) ? tags : [tags];
+  return list.filter((tag) => tag.show !== false);
+}
+
+function collectAddressTagLabels(
+  prefix: 'from' | 'to',
+  customize: Record<string, unknown>,
+  rowIndex: number,
+): string[] {
+  const tagCustomize = tagCustomizeForAddressSide(prefix, customize, rowIndex);
+  const tags = buildCurrencyAddressTags(prefix, 1, tagCustomize);
+  return [...normalizeTagList(tags.system), ...normalizeTagList(tags.custom)]
+    .map((tag) => String(tag.label ?? '').trim())
+    .filter(Boolean);
 }
 
 function formatAddressDisplay(
@@ -60,17 +70,13 @@ function formatAddressDisplay(
   rowIndex: number,
 ): BatchAddressDisplay {
   const side = buildCurrencySideAddressData(prefix, customize);
-  const tags = demoAddressTags(rowIndex, prefix === 'from' ? 3 : 5);
-  const aliasPart = side.alias.trim();
-  const displayLine = aliasPart
-    ? `${aliasPart} · ${side.address}${tags.length ? ` · ${tags.join(' · ')}` : ''}`
-    : `${side.address}${tags.length ? ` · ${tags.join(' · ')}` : ''}`;
+  const model = resolveListFieldAddressLineModel(prefix, customize);
 
   return {
-    alias: aliasPart,
+    alias: model.alias,
     address: side.address,
-    tags,
-    displayLine,
+    tags: collectAddressTagLabels(prefix, customize, rowIndex),
+    displayLine: model.primaryText,
   };
 }
 
@@ -85,9 +91,7 @@ export function buildBatchSigningRowModel(rowIndex: number): SigningBatchRowMode
   const amount = buildAmountRowValues(rowIndex);
   const wallet = buildPayoutWalletsColumnValues(rowIndex);
   const businessType = resolveBatchBusinessType(rowIndex);
-  const amountFull = networkLabel
-    ? `${amount.cryptoValue} ${amount.cryptoSymbol} · ${networkLabel}`
-    : `${amount.cryptoValue} ${amount.cryptoSymbol}`;
+  const amountFull = `${amount.cryptoValue} ${amount.cryptoSymbol}`;
 
   return {
     rowIndex,

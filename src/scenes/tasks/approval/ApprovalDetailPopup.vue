@@ -11,6 +11,7 @@ import {
   applyDetailAddressExpand,
   isDetailAddressExpandKey,
 } from '../shared/detailAddressExpand';
+import { findDetailItemByKey } from '../shared/findDetailItemByKey';
 import { buildDetailApprovalProgressSteps } from '../shared/buildDetailApprovalProgressSteps';
 import DetailApprovalProgressAppend from '../shared/DetailApprovalProgressAppend.vue';
 import { resolveDetailHeadlineStatus } from '../shared/resolveDetailHeadlineStatus';
@@ -18,6 +19,7 @@ import { usePopupShellLifecycle } from '../shared/usePopupShellLifecycle';
 import { parseRowIndexFromApprovalId } from './approvalStore';
 import { buildApprovalDetailSections } from './buildApprovalDetailSections';
 import type { ApprovalDetail } from './types';
+import DetailHeadlineEyebrowPortal from '../shared/DetailHeadlineEyebrowPortal.vue';
 import detailChromeStyles from '../shared/detailPopupChrome.module.css';
 import DetailToolbarSlot from '../shared/DetailToolbarSlot.vue';
 import ExpiryCountdown from '../shared/ExpiryCountdown.vue';
@@ -38,12 +40,14 @@ const props = withDefaults(
   readOnly?: boolean;
   listStatusLabel?: string;
   listStatusKind?: TagStatus;
+  showWithdrawAction?: boolean;
   onRemarkBeforeOpen?: () => void | Promise<void>;
   }>(),
   {
     shellSuspended: false,
     remark: '',
     readOnly: false,
+    showWithdrawAction: false,
   },
 );
 
@@ -56,10 +60,11 @@ const emit = defineEmits<{
   next: [];
   passConfirm: [];
   rejectConfirm: [];
+  withdrawRequest: [];
   'view-more': [side: 'sender' | 'receiver'];
 }>();
 
-const { ui } = useAppI18n();
+const { ui, locale } = useAppI18n();
 const { shouldShowGuide, markGuideSeen } = useTasksDetailToolbarGuide();
 
 const { popupMounted, popupOpen, onPopupClosed } = usePopupShellLifecycle({
@@ -83,8 +88,8 @@ const headlineParts = computed(() => splitDetailAmountHeadline(headline.value));
 const signingThresholdDisplay = computed(() =>
   formatGroupedThresholdString(props.detail?.signingThreshold ?? ''),
 );
-const eyebrow = computed(() => ui(props.detail?.businessType ?? ''));
 
+const detailHostRef = ref<HTMLElement | null>(null);
 const expandedAddressKeys = ref(new Set<string>());
 
 watch(
@@ -95,7 +100,10 @@ watch(
 );
 
 const sections = computed(() => {
-  const base = props.detail ? buildApprovalDetailSections(props.detail, ui) : [];
+  void locale.value;
+  const base = props.detail
+    ? buildApprovalDetailSections(props.detail, ui, locale.value)
+    : [];
   return applyDetailAddressExpand(base, expandedAddressKeys.value);
 });
 const progressSteps = computed(() => {
@@ -129,6 +137,11 @@ const statusTag = computed(() => headlineStatus.value?.label ?? '');
 const statusTagStatus = computed(() => headlineStatus.value?.status ?? 'ready');
 
 function onItemValueLinkClick(key: string) {
+  const item = findDetailItemByKey(sections.value, key);
+  if (item?.addressLayout === 'multi-orders' && isDetailAddressExpandKey(key)) {
+    emit('view-more', key);
+    return;
+  }
   if (isDetailAddressExpandKey(key)) {
     expandedAddressKeys.value = new Set([...expandedAddressKeys.value, key]);
   }
@@ -136,6 +149,17 @@ function onItemValueLinkClick(key: string) {
 
 function onRemarkDismiss() {
   emit('update:remark', '');
+}
+
+const withdrawRemark = ref('');
+
+function onWithdrawDismiss() {
+  withdrawRemark.value = '';
+}
+
+function onWithdrawConfirm() {
+  emit('withdrawRequest');
+  withdrawRemark.value = '';
 }
 
 function onDetailClose() {
@@ -150,12 +174,12 @@ function onDetailClose() {
     uses="detail"
     @close="onPopupClosed"
   >
-    <div :class="detailChromeStyles.detailHost">
+    <div ref="detailHostRef" :class="detailChromeStyles.detailHost">
     <EgDetail
       v-if="detail"
       :toolbar-page-key="detail.id"
-      :eyebrow="eyebrow"
       :headline="headline"
+      :show-eyebrow="false"
       :show-status-tag="showStatusTag"
       :status-tag="statusTag"
       status-tag-size="lg"
@@ -186,12 +210,45 @@ function onDetailClose() {
           @toolbar-next="emit('next')"
           @guide-dismiss="markGuideSeen"
         >
-          <template v-if="!readOnly" #actions>
+          <template #actions>
+            <template v-if="showWithdrawAction">
+              <ApprovalRemarkPopover
+                boundary-selector=".eds-popup"
+                :title="ui('Remark')"
+                :remark="withdrawRemark"
+                placeholder-key="Please enter remark"
+                confirm-tone="danger"
+                @update:remark="withdrawRemark = $event"
+                @confirm="onWithdrawConfirm"
+                @dismiss="onWithdrawDismiss"
+              >
+                <template #trigger="{ active, onClick }">
+                  <span
+                    :class="[
+                      remarkTriggerStyles.remarkTrigger,
+                      active && remarkTriggerStyles.remarkTriggerWithdrawPressed,
+                    ]"
+                  >
+                    <EgButton
+                      tone="danger"
+                      variant="solid"
+                      size="md"
+                      :aria-expanded="active"
+                      @click.stop="onClick"
+                    >
+                      {{ ui('Withdraw request') }}
+                    </EgButton>
+                  </span>
+                </template>
+              </ApprovalRemarkPopover>
+            </template>
+            <template v-else-if="!readOnly">
             <ApprovalRemarkPopover
               boundary-selector=".eds-popup"
               :title="ui('Remark')"
               :remark="remark"
               :on-before-open="onRemarkBeforeOpen"
+              confirm-tone="danger"
               @update:remark="emit('update:remark', $event)"
               @confirm="emit('rejectConfirm')"
               @dismiss="onRemarkDismiss"
@@ -244,6 +301,7 @@ function onDetailClose() {
                 </span>
               </template>
             </ApprovalRemarkPopover>
+            </template>
           </template>
         </DetailToolbarSlot>
       </template>
@@ -266,6 +324,12 @@ function onDetailClose() {
         <DetailApprovalProgressAppend :steps="progressSteps" />
       </template>
     </EgDetail>
+    <DetailHeadlineEyebrowPortal
+      v-if="detail"
+      :host-ref="detailHostRef"
+      :business-type-key="detail.businessType"
+      :page-key="detail.id"
+    />
     </div>
   </EgPopup>
 </template>

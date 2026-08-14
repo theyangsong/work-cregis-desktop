@@ -1,6 +1,8 @@
 import type { CryptoAddressFamily } from '../list-field/listFieldCryptoSampleAddresses';
-import { buildTonLikeMinerFeeDisplay } from '../approval/minerFeeTonLikeDisplay';
-import { buildTronMinerFeeDisplay } from '../approval/minerFeeTronDisplay';
+import {
+  buildTonLikeMinerFeeDisplay,
+} from '@eds/desktop-components';
+import { buildTronMinerFeeDisplay } from '@eds/desktop-components';
 import { buildTasksListFieldCurrencyCustomize } from '../list-field/tasksListFieldCurrencyDefaults';
 import { resolveCurrencyRowPreset } from '../list-field/tasksListFieldCurrencyRowData';
 import { parseRowIndexFromSigningId } from '../signing/signingStore';
@@ -37,11 +39,8 @@ const PROFILE_KIND_BY_FAMILY: Record<CryptoAddressFamily, MinerFeeProfileKind> =
 
 const DEFAULT_MINER_FEE_PROFILE_KIND: MinerFeeProfileKind = 'evm';
 
-const POPOVER_TITLE_KEY_BY_KIND: Record<MinerFeeProfileKind, string> = {
-  evm: 'Gas fee',
-  'ton-xrp': 'Miner Fee',
-  tron: 'Gas fee',
-};
+/** 四套矿工费 Popover topTool 统一文案 key（i18n → 矿工费）。 */
+export const MINER_FEE_POPOVER_TITLE_KEY = 'Gas fee';
 
 export function isEvmMinerFeeShell(kind: MinerFeeProfileKind): boolean {
   return kind === 'evm';
@@ -70,8 +69,8 @@ export function resolveMinerFeeProfileFromDetail(detail: SigningDetail): MinerFe
   return resolveMinerFeeProfile(parseRowIndexFromSigningId(detail.id));
 }
 
-export function resolveMinerFeePopoverTitleKey(profile: MinerFeeProfile): string {
-  return POPOVER_TITLE_KEY_BY_KIND[profile.kind];
+export function resolveMinerFeePopoverTitleKey(_profile: MinerFeeProfile): string {
+  return MINER_FEE_POPOVER_TITLE_KEY;
 }
 
 export function buildStubMinerFeeDisplay(profile: MinerFeeProfile): string {

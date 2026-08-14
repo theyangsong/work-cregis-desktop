@@ -58,9 +58,12 @@ export type ApprovalDetail = {
   payoutWalletSignLabel: string;
   senderSummary: string;
   senderCount: number;
+  /** 多笔订单（multi-orders）；与 senderCount 多地址互斥。 */
+  senderOrderCount?: number;
   senders: ApprovalAddressEntry[];
   receiverSummary: string;
   receiverCount: number;
+  receiverOrderCount?: number;
   receivers: ApprovalAddressEntry[];
   strategy: string;
   thirdPartyRef: string;
@@ -81,7 +84,7 @@ export type ApprovalDetail = {
   /** 已审批 + 签名通过：链上交易状态 Tag 文案（i18n key）。 */
   transactionStatusLabel?: string;
   transactionStatusTag?: 'success' | 'warning' | 'danger' | 'ready' | 'invalid';
-  /** 已审批 + 签名通过：链上交易哈希（只读展示，无复制）。 */
+  /** 已审批 + 签名通过：链上交易哈希（Apply_Item txid 变体）。 */
   transactionHash?: string;
   signingMode: 'single' | 'multi';
   signingThreshold: string | null;

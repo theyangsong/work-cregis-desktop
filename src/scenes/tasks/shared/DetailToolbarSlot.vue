@@ -61,7 +61,7 @@ const toolbarCounterTotalText = computed(() =>
       direction="horizontal"
       :hide="!toolbarDividerPinned"
     />
-    <div :class="styles.toolbarBar">
+    <div :class="[styles.toolbarBar, !showToolbarNav && styles.toolbarBarActionsOnly]">
       <div v-if="showToolbarNav" :class="styles.toolbarStart">
         <div :class="styles.toolbarNav">
           <DetailToolbarNavGuidePopover

@@ -25,5 +25,8 @@ export const BATCH_PROGRESS_STEPS_PER_ROW = 3;
 
 export const MOCK_WITHDRAWAL_QUOTA_USD = 50_000;
 
+/** 超出团队提币额度部分收取 0.1% 超额服务费。 */
+export const WITHDRAWAL_OVERAGE_FEE_RATE = 0.001;
+
 /** 演示：rowIndex % 7 === 0 时模拟额度不足 */
 export const MOCK_QUOTA_INSUFFICIENT_ROW_MOD = 7;

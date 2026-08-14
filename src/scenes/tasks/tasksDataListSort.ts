@@ -1,5 +1,5 @@
 import { buildAmountRowValues } from './list-field/tasksListFieldAmountRowData';
-import { buildGeneralStructureRowValues } from './list-field/tasksListFieldGeneralStructureRowData';
+import { buildApplicationTimeSecondaryValue } from './list-field/businessTypeDisplay';
 
 export type TasksDataListSortKey = 'created-time' | 'amount';
 export type TasksDataListSortOrder = 'asc' | 'desc';
@@ -26,12 +26,8 @@ function compareRowIndices(
   key: TasksDataListSortKey,
 ): number {
   if (key === 'created-time') {
-    const timeA = parseCreatedTimeSortValue(
-      buildGeneralStructureRowValues(rowIndexA).secondaryValue,
-    );
-    const timeB = parseCreatedTimeSortValue(
-      buildGeneralStructureRowValues(rowIndexB).secondaryValue,
-    );
+    const timeA = parseCreatedTimeSortValue(buildApplicationTimeSecondaryValue(rowIndexA));
+    const timeB = parseCreatedTimeSortValue(buildApplicationTimeSecondaryValue(rowIndexB));
     return timeA - timeB;
   }
 

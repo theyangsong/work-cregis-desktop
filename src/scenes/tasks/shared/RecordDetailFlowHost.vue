@@ -48,10 +48,12 @@ const signingPopupMounted = computed(
     :next-disabled="flow.nextDisabled.value"
     :list-status-label="flow.statusTagLabel.value"
     :list-status-kind="flow.statusTagStatus.value"
+    :show-withdraw-action="flow.showWithdrawAction.value"
     @popup-closed="flow.onDetailPopupClosed()"
     @prev="flow.navigateRelative(-1)"
     @next="flow.navigateRelative(1)"
     @view-more="flow.openViewMore"
+    @withdraw-request="flow.onWithdrawRequest()"
   />
 
   <SigningDetailPopup

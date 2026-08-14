@@ -61,7 +61,7 @@ const slots = useSlots();
       {{ toolbarCancelLabel }}
     </EgButton>
     <EgButton
-      v-if="showToolbarConfirm"
+      v-if="showToolbarConfirm && !$slots['toolbar-confirm']"
       :tone="toolbarConfirmTone"
       variant="solid"
       size="md"
@@ -70,5 +70,6 @@ const slots = useSlots();
     >
       {{ toolbarConfirmLabel }}
     </EgButton>
+    <slot v-else-if="showToolbarConfirm" name="toolbar-confirm" />
   </div>
 </template>

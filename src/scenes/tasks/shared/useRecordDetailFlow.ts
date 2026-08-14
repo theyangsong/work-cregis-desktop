@@ -7,7 +7,13 @@ import {
 import { buildDetailProgressFields } from './buildDetailProgressFields';
 import { buildAddressMoreSummary } from '../approval/buildApprovalDetailSections';
 import type { ApprovalDetail } from '../approval/types';
-import { buildStatusRowValues, buildApprovedModuleDetailStatusRowValues } from '../list-field/tasksListFieldStatusRowData';
+import {
+  buildApprovedModuleDetailStatusRowValues,
+  buildStatusRowValues,
+} from '../list-field/tasksListFieldStatusRowData';
+import {
+  sentRequestRowShowsWithdrawAction,
+} from '../tasksDataListPageData';
 import {
   getSigningDetail,
   parseRowIndexFromSigningId,
@@ -39,6 +45,7 @@ function isRecordMenuItem(menuItem: string | undefined): boolean {
 export function useRecordDetailFlow(options: {
   menuItem: Ref<string | undefined>;
   allRowIndexes: Ref<number[]>;
+  onWithdrawRequest?: () => void;
 }) {
   const detailOpen = ref(false);
   const currentId = ref<string | null>(null);
@@ -80,6 +87,9 @@ export function useRecordDetailFlow(options: {
 
   const statusTagLabel = computed(() => listStatus.value.label);
   const statusTagStatus = computed(() => listStatus.value.status as TasksListFieldStatusKind);
+  const showWithdrawAction = computed(() =>
+    sentRequestRowShowsWithdrawAction(currentRowIndex.value, options.menuItem.value),
+  );
 
   function idFromRowIndex(rowIndex: number): string {
     return detailKind.value === 'signing'
@@ -160,6 +170,11 @@ export function useRecordDetailFlow(options: {
     }
   }
 
+  function onWithdrawRequest() {
+    options.onWithdrawRequest?.();
+    detailOpen.value = false;
+  }
+
   return {
     detailOpen,
     detailKind,
@@ -172,11 +187,13 @@ export function useRecordDetailFlow(options: {
     nextDisabled,
     statusTagLabel,
     statusTagStatus,
+    showWithdrawAction,
     viewMoreOpen,
     viewMoreText,
     openDetailForRow,
     onDetailPopupClosed,
     navigateRelative,
     openViewMore,
+    onWithdrawRequest,
   };
 }

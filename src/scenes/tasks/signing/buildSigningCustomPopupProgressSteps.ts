@@ -38,12 +38,15 @@ export function buildSigningProgressPopupSteps(
     return buildThreeStepProgress(1, translate, { failedIndex: 1 });
   }
 
+  if (phase === 'sign-failed') {
+    return buildThreeStepProgress(0, translate, { failedIndex: 0 });
+  }
+
   const phaseIndex: Record<
-    Exclude<SigningProgressPhase, 'broadcast-failed'>,
+    Exclude<SigningProgressPhase, 'broadcast-failed' | 'sign-failed'>,
     number
   > = {
     signing: 0,
-    'sign-failed': 0,
     broadcasting: 1,
     'on-chain-confirming': 2,
     'broadcast-success': 3,

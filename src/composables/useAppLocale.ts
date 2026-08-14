@@ -9,7 +9,7 @@ export const APP_LOCALE_OPTIONS = [
   { value: 'en', label: 'English' },
 ] as const satisfies readonly { value: AppLocale; label: string }[];
 
-const locale: Ref<AppLocale> = ref('en');
+const locale: Ref<AppLocale> = ref('zh-CN');
 let initialized = false;
 
 function readStoredLocale(): AppLocale {
@@ -21,7 +21,7 @@ function readStoredLocale(): AppLocale {
   const htmlLang = document.documentElement.lang.trim();
   if (htmlLang === 'zh-CN') return 'zh-CN';
 
-  return 'en';
+  return 'zh-CN';
 }
 
 export function applyAppLocale(next: AppLocale, target: HTMLElement = document.documentElement) {

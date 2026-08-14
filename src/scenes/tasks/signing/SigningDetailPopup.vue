@@ -11,19 +11,19 @@ import {
   applyDetailAddressExpand,
   isDetailAddressExpandKey,
 } from '../shared/detailAddressExpand';
+import { findDetailItemByKey } from '../shared/findDetailItemByKey';
 import { buildDetailApprovalProgressSteps } from '../shared/buildDetailApprovalProgressSteps';
 import DetailApprovalProgressAppend from '../shared/DetailApprovalProgressAppend.vue';
 import { resolveDetailHeadlineStatus } from '../shared/resolveDetailHeadlineStatus';
 import { usePopupShellLifecycle } from '../shared/usePopupShellLifecycle';
 import { buildSigningDetailSections } from './buildSigningDetailSections';
 import {
-  isEvmMinerFeeShell,
-  resolveMinerFeePopoverTitleKey,
   resolveMinerFeeProfileFromDetail,
 } from '../shared/minerFeeProfile';
 import type { MinerFeeSelection } from '../shared/minerFeeProfile';
 import { isMultiSignSigningDetail } from './signingStore';
 import type { SigningDetail } from './types';
+import DetailHeadlineEyebrowPortal from '../shared/DetailHeadlineEyebrowPortal.vue';
 import detailChromeStyles from '../shared/detailPopupChrome.module.css';
 import DetailToolbarSlot from '../shared/DetailToolbarSlot.vue';
 import ExpiryCountdown from '../shared/ExpiryCountdown.vue';
@@ -65,7 +65,7 @@ const emit = defineEmits<{
   'view-more': [side: 'sender' | 'receiver'];
 }>();
 
-const { ui } = useAppI18n();
+const { ui, locale } = useAppI18n();
 const { shouldShowGuide, markGuideSeen } = useTasksDetailToolbarGuide();
 
 const { popupMounted, popupOpen, onPopupClosed } = usePopupShellLifecycle({
@@ -89,9 +89,9 @@ const headlineParts = computed(() => splitDetailAmountHeadline(headline.value));
 const signingThresholdDisplay = computed(() =>
   formatGroupedThresholdString(props.detail?.signingThreshold ?? ''),
 );
-const eyebrow = computed(() => ui(props.detail?.businessType ?? ''));
 const isMultiSign = computed(() => isMultiSignSigningDetail(props.detail));
 
+const detailHostRef = ref<HTMLElement | null>(null);
 const expandedAddressKeys = ref(new Set<string>());
 
 watch(
@@ -102,7 +102,10 @@ watch(
 );
 
 const sections = computed(() => {
-  const base = props.detail ? buildSigningDetailSections(props.detail, ui) : [];
+  void locale.value;
+  const base = props.detail
+    ? buildSigningDetailSections(props.detail, ui, locale.value)
+    : [];
   return applyDetailAddressExpand(base, expandedAddressKeys.value);
 });
 const progressSteps = computed(() => {
@@ -132,6 +135,11 @@ const statusTag = computed(() => headlineStatus.value?.label ?? '');
 const statusTagStatus = computed(() => headlineStatus.value?.status ?? 'ready');
 
 function onItemValueLinkClick(key: string) {
+  const item = findDetailItemByKey(sections.value, key);
+  if (item?.addressLayout === 'multi-orders' && isDetailAddressExpandKey(key)) {
+    emit('view-more', key);
+    return;
+  }
   if (isDetailAddressExpandKey(key)) {
     expandedAddressKeys.value = new Set([...expandedAddressKeys.value, key]);
   }
@@ -139,18 +147,6 @@ function onItemValueLinkClick(key: string) {
 const minerFeeProfile = computed(() =>
   props.detail ? resolveMinerFeeProfileFromDetail(props.detail) : null,
 );
-const usesEvmMinerFeeShell = computed(
-  () => minerFeeProfile.value != null && isEvmMinerFeeShell(minerFeeProfile.value.kind),
-);
-const signPopoverTitle = computed(() => {
-  if (usesEvmMinerFeeShell.value) {
-    return ui('Gas fee');
-  }
-  if (!minerFeeProfile.value) {
-    return ui('Gas fee');
-  }
-  return ui(resolveMinerFeePopoverTitleKey(minerFeeProfile.value));
-});
 
 async function onMultiSignPassClick() {
   try {
@@ -188,12 +184,12 @@ function onDetailClose() {
     uses="detail"
     @close="onPopupClosed"
   >
-    <div :class="detailChromeStyles.detailHost">
+    <div ref="detailHostRef" :class="detailChromeStyles.detailHost">
     <EgDetail
       v-if="detail"
       :toolbar-page-key="detail.id"
-      :eyebrow="eyebrow"
       :headline="headline"
+      :show-eyebrow="false"
       :show-status-tag="showStatusTag"
       :status-tag="statusTag"
       status-tag-size="lg"
@@ -240,6 +236,7 @@ function onDetailClose() {
               :title="ui('Remark')"
               :remark="remark"
               :on-before-open="onRemarkBeforeOpen"
+              confirm-tone="danger"
               @update:remark="emit('update:remark', $event)"
               @confirm="emit('rejectConfirm')"
               @dismiss="onRemarkDismiss"
@@ -277,11 +274,11 @@ function onDetailClose() {
             <ApprovalRemarkPopover
               v-else
               boundary-selector=".eds-popup"
-              :title="signPopoverTitle"
+              :title="ui('Remark')"
               :remark="remark"
-              :show-miner-fee="usesEvmMinerFeeShell"
               :miner-fee-profile="minerFeeProfile ?? undefined"
               :on-before-open="onRemarkBeforeOpen"
+              miner-fee-confirm-tone="danger"
               @update:remark="emit('update:remark', $event)"
               @confirm="emit('passConfirm', $event)"
               @dismiss="onRemarkDismiss"
@@ -327,6 +324,12 @@ function onDetailClose() {
         <DetailApprovalProgressAppend :steps="progressSteps" />
       </template>
     </EgDetail>
+    <DetailHeadlineEyebrowPortal
+      v-if="detail"
+      :host-ref="detailHostRef"
+      :business-type-key="detail.businessType"
+      :page-key="detail.id"
+    />
     </div>
   </EgPopup>
 </template>

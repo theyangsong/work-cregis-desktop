@@ -168,25 +168,6 @@
   overflow: hidden;
 }
 
-.footerMotionStack {
-  width: 100%;
-  min-width: 0;
-}
-
-.footerMotionPage {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  width: 100%;
-  min-width: 0;
-}
-
-.footerMotionPageEmpty {
-  height: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-
 .toolbarBar {
   display: flex;
   align-items: center;

@@ -7,6 +7,8 @@ import { defineConfig } from 'vite';
 const EDS_ROOT = resolve(__dirname, '../eds-desktop');
 const EDS_COMPONENTS_SRC = resolve(EDS_ROOT, 'packages/components/src/index.ts');
 const EDS_COMPONENTS_SRC_DIR = resolve(EDS_ROOT, 'packages/components/src');
+const EDS_ICONS_DIR = resolve(EDS_COMPONENTS_SRC_DIR, 'atoms/icons');
+const EDS_ICON_REGISTRY = resolve(EDS_ICONS_DIR, 'iconRegistry.ts');
 const EDS_TOKENS_SPEC_DIR = resolve(EDS_ROOT, 'packages/tokens/spec');
 const EDS_TOKENS_DIST_DIR = resolve(EDS_ROOT, 'packages/tokens/dist');
 const EDS_TOKENS_BUILD_SCRIPT = resolve(EDS_ROOT, 'packages/tokens/scripts/build.mjs');
@@ -82,6 +84,15 @@ function watchEdsDesktopPackages(): Plugin {
         }
 
         if (file.startsWith(EDS_COMPONENTS_SRC_DIR) && /\.(vue|css|ts)$/.test(file)) {
+          scheduleFullReload(server);
+          return;
+        }
+
+        if (file.startsWith(EDS_ICONS_DIR) && file.endsWith('.svg')) {
+          const iconRegistryMod = server.moduleGraph.getModuleById(EDS_ICON_REGISTRY);
+          if (iconRegistryMod) {
+            server.moduleGraph.invalidateModule(iconRegistryMod);
+          }
           scheduleFullReload(server);
         }
       });

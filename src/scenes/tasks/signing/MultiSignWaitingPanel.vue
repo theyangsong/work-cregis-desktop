@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch, withDefaults } from 'vue';
 import {
   EgAvatar,
   EgDivider,
@@ -12,14 +12,22 @@ import { useAppI18n } from '@/composables/useAppI18n';
 import { formatGroupedNumber } from '@/utils/formatGroupedDisplay';
 import './multiSignWaitingPopupHost.css';
 import type { MultiSignWaitingPanelModel } from './buildMultiSignWaitingPanelModel';
+import type { MultiSignRoomPhase, MultiSignWaitingPerspective } from './types';
 import SigningFooterLatencyToolbar from './SigningFooterLatencyToolbar.vue';
+import MultiSignWaitingExitConfirmPopover from './MultiSignWaitingExitConfirmPopover.vue';
 import { useMultiSignWaitingPopupHost } from './useMultiSignWaitingPopupHost';
 import styles from './MultiSignWaitingPanel.module.css';
 
-const props = defineProps<{
-  model: MultiSignWaitingPanelModel;
-  phase: 'waiting' | 'ready';
-}>();
+const props = withDefaults(
+  defineProps<{
+    model: MultiSignWaitingPanelModel;
+    phase: MultiSignRoomPhase;
+    perspective?: MultiSignWaitingPerspective;
+  }>(),
+  {
+    perspective: 'signer',
+  },
+);
 
 const emit = defineEmits<{
   close: [];
@@ -36,16 +44,73 @@ const memberListRef = ref<HTMLElement | null>(null);
 const scrollOverflows = ref(false);
 let scrollResizeObserver: ResizeObserver | undefined;
 
-const statusTitle = computed(() =>
-  props.phase === 'ready' ? ui('Ready to sign') : ui('Waiting'),
+const statusTitle = computed(() => {
+  switch (props.phase) {
+    case 'ready':
+      return ui('Ready to sign');
+    case 'signing':
+      return ui('Signing in progress');
+    case 'sign-failed':
+      return ui('Signing failed');
+    default:
+      return ui('Waiting');
+  }
+});
+
+type StatusSubtitlePart =
+  | { kind: 'text'; value: string }
+  | { kind: 'number'; value: string };
+
+function buildStatusSubtitleParts(
+  template: string,
+  values: Record<string, string>,
+): StatusSubtitlePart[] {
+  const parts: StatusSubtitlePart[] = [];
+  const placeholderPattern = /\{(required|joined)\}/g;
+  let lastIndex = 0;
+
+  for (const match of template.matchAll(placeholderPattern)) {
+    const index = match.index ?? 0;
+
+    if (index > lastIndex) {
+      parts.push({ kind: 'text', value: template.slice(lastIndex, index) });
+    }
+
+    parts.push({ kind: 'number', value: values[match[1]!] ?? '' });
+    lastIndex = index + match[0].length;
+  }
+
+  if (lastIndex < template.length) {
+    parts.push({ kind: 'text', value: template.slice(lastIndex) });
+  }
+
+  return parts;
+}
+
+const statusSubtitleParts = computed((): StatusSubtitlePart[] | null => {
+  if (props.phase === 'sign-failed') {
+    return null;
+  }
+
+  const template = ui('Need {required} members to participate, {joined} joined');
+
+  return buildStatusSubtitleParts(template, {
+    required: formatGroupedNumber(props.model.thresholdRequired),
+    joined: formatGroupedNumber(props.model.joinedCount),
+  });
+});
+
+const showSignActions = computed(() => props.perspective === 'signer');
+
+const showMpcNetworkGuide = computed(
+  () => props.perspective === 'participant' && props.phase === 'sign-failed',
 );
 
-const statusSubtitle = computed(() => {
-  const template = ui('Need {required} members to participate, {joined} joined');
-  return template
-    .replace('{required}', formatGroupedNumber(props.model.thresholdTotal))
-    .replace('{joined}', formatGroupedNumber(props.model.joinedCount));
-});
+const showParticipantStatusRipple = computed(
+  () =>
+    props.perspective === 'participant'
+    && (props.phase === 'ready' || props.phase === 'signing' || props.phase === 'sign-failed'),
+);
 
 function updateScrollState() {
   const element = memberListRef.value;
@@ -100,15 +165,27 @@ watch([memberListRef, () => props.model.members.length], () => {
   >
     <div :class="styles.root">
       <div :class="styles.systemBarClose">
-        <EgIconButton
-          shape="square"
-          size="md"
-          label="关闭"
-          motion="asym"
-          @click="emit('close')"
-        >
-          <EgIcon name="eds-close-circle-fill" fit />
-        </EgIconButton>
+        <MultiSignWaitingExitConfirmPopover @confirm="emit('close')">
+          <template #trigger="{ onClick, active }">
+            <span
+              :class="[
+                styles.systemBarCloseTrigger,
+                active && styles.systemBarCloseTriggerActive,
+              ]"
+            >
+              <EgIconButton
+                shape="square"
+                size="md"
+                label="关闭"
+                motion="asym"
+                :aria-expanded="active"
+                @click.stop="onClick"
+              >
+                <EgIcon name="eds-close-circle-fill" fit />
+              </EgIconButton>
+            </span>
+          </template>
+        </MultiSignWaitingExitConfirmPopover>
       </div>
 
       <div :class="styles.body">
@@ -133,19 +210,7 @@ watch([memberListRef, () => props.model.members.length], () => {
         <section :class="styles.main">
           <div :class="styles.statusBlock">
             <div :class="styles.statusIconShell">
-              <template v-if="phase === 'ready'">
-                <EgRipplePulse
-                  :class="styles.statusIconRipple"
-                  active
-                />
-                <div :class="[styles.statusIcon, styles.statusIconReady]">
-                  <EgIcon
-                    name="eds-tick-fill"
-                    size="md"
-                  />
-                </div>
-              </template>
-              <template v-else>
+              <template v-if="phase === 'waiting'">
                 <EgRipplePulse
                   :class="[styles.statusIconRipple, styles.statusIconRippleWaiting]"
                   active
@@ -157,10 +222,64 @@ watch([memberListRef, () => props.model.members.length], () => {
                   />
                 </div>
               </template>
+              <template v-else-if="phase === 'ready'">
+                <EgRipplePulse
+                  v-if="showParticipantStatusRipple"
+                  :class="[styles.statusIconRipple, styles.statusIconRippleReady]"
+                  active
+                />
+                <div :class="[styles.statusIcon, styles.statusIconReady]">
+                  <EgIcon
+                    name="eds-tick-fill"
+                    size="md"
+                  />
+                </div>
+              </template>
+              <template v-else-if="phase === 'signing' || phase === 'sign-failed'">
+                <EgRipplePulse
+                  v-if="showParticipantStatusRipple"
+                  :class="[
+                    styles.statusIconRipple,
+                    phase === 'sign-failed'
+                      ? styles.statusIconRippleFailed
+                      : styles.statusIconRippleReady,
+                  ]"
+                  active
+                />
+                <div
+                  :class="[
+                    styles.statusIcon,
+                    phase === 'sign-failed'
+                      ? styles.statusIconFailed
+                      : styles.statusIconReady,
+                  ]"
+                >
+                  <EgIcon
+                    name="eds-signature-pen-mini-fill"
+                    size="md"
+                  />
+                </div>
+              </template>
             </div>
             <div :class="styles.statusCopy">
               <h3 :class="styles.statusTitle">{{ statusTitle }}</h3>
-              <p :class="styles.statusSubtitle">{{ statusSubtitle }}</p>
+              <p :class="styles.statusSubtitle">
+                <template v-if="statusSubtitleParts">
+                  <template
+                    v-for="(part, index) in statusSubtitleParts"
+                    :key="index"
+                  >
+                    <span
+                      v-if="part.kind === 'number'"
+                      :class="styles.statusSubtitleNumber"
+                    >{{ part.value }}</span>
+                    <template v-else>{{ part.value }}</template>
+                  </template>
+                </template>
+                <template v-else>
+                  {{ ui('MPC network error') }}
+                </template>
+              </p>
             </div>
             <div :class="styles.statusDividerSlot">
               <EgDivider type="page" />
@@ -244,7 +363,9 @@ watch([memberListRef, () => props.model.members.length], () => {
 
           <SigningFooterLatencyToolbar
             :scroll-overflows="scrollOverflows"
-            show-actions
+            network-picker
+            :show-actions="showSignActions"
+            :mpc-network-guide-active="showMpcNetworkGuide"
           >
             <template #actions>
               <slot name="actions" />

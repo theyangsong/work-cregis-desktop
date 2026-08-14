@@ -1,16 +1,6 @@
 import { buildAmountRowValues } from './tasksListFieldAmountRowData';
-import { buildStatusRowValues } from './tasksListFieldStatusRowData';
-import { buildTransferTypeRowValues } from './tasksListFieldBusinessTypeRowData';
-
-const COUNTDOWN_SUPPRESSED_STATUS_LABELS = new Set([
-  'Signature Passed',
-  'Signature Reject',
-]);
-
-function shouldShowAmountCountdown(rowIndex: number, menuItem?: string): boolean {
-  const status = buildStatusRowValues(rowIndex, menuItem);
-  return !COUNTDOWN_SUPPRESSED_STATUS_LABELS.has(status.label);
-}
+import { resolveCurrencyRowPreset } from './tasksListFieldCurrencyRowData';
+import { buildListApplicationTimeSecondaryValue } from './tasksListFieldGeneralStructureDefaults';
 
 /** Showcase list-field-amount customizeDefaults — Data List 金额列。 */
 export const tasksListFieldAmountDefaults: Record<string, unknown> = {
@@ -18,6 +8,7 @@ export const tasksListFieldAmountDefaults: Record<string, unknown> = {
   fiatValue: '$12,500.01',
   cryptoValue: '12,500.000001',
   cryptoSymbol: 'USDT',
+  showCryptoIcon: true,
   minWidth: '',
   tooltipTrigger: 'hover',
 };
@@ -41,22 +32,16 @@ export function buildTasksListFieldAmountCustomize(
     customize.alignEnd = true;
   }
   if (rowIndex != null && Number.isFinite(rowIndex)) {
+    const currencyPreset = resolveCurrencyRowPreset(rowIndex);
     const rowAmount = buildAmountRowValues(rowIndex);
     customize.cryptoSymbol = rowAmount.cryptoSymbol;
+    customize.cryptoName = currencyPreset.cryptoName;
     customize.cryptoValue = rowAmount.cryptoValue;
     customize.fiatValue = rowAmount.fiatValue;
-
-    const transferType = buildTransferTypeRowValues(rowIndex);
-    customize.secondaryValue = transferType.value;
-    if (
-      transferType.showCountdown
-      && shouldShowAmountCountdown(rowIndex, menuItem)
-    ) {
-      customize.showCountdown = true;
-      customize.countdownMinutes = transferType.countdownMinutes;
-      customize.countdownSeconds = transferType.countdownSeconds;
-      customize.countdownAlign = transferType.countdownAlign ?? 'left';
-    }
+    customize.showNetwork = currencyPreset.showNetwork;
+    customize.networkLabel = currencyPreset.networkLabel ?? '';
+    customize.secondaryValue = buildListApplicationTimeSecondaryValue(rowIndex);
+    customize.showCountdown = false;
   }
   return customize;
 }

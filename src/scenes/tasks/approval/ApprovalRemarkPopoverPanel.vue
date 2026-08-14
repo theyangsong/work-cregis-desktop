@@ -1,18 +1,18 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import {
-  EgButton,
-  EgComboTextareaItem,
-  EgFormSubmission,
+  EgMinerFeeBitcoinPanel,
+  EgMinerFeeEthereumPanel,
+  EgMinerFeeTonPanel,
+  EgMinerFeeTronPanel,
+  REMARK_POPOVER_MAX_LENGTH,
+  type ButtonTone,
+  type MinerFeeConfirmPayload,
 } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
 import type { MinerFeeProfile, MinerFeeSelection } from '../shared/minerFeeProfile';
-import MinerFeeEvmPopoverPanel from './MinerFeeEvmPopoverPanel.vue';
-import MinerFeeTonLikePanel from './MinerFeeTonLikePanel.vue';
-import MinerFeeTronPanel from './MinerFeeTronPanel.vue';
+import ApprovalRemarkFormPanel from './ApprovalRemarkFormPanel.vue';
 import styles from './ApprovalRemarkPopoverPanel.module.css';
-
-const REMARK_MAX_LENGTH = 256;
 
 type MinerFeeScreen = 'list' | 'custom';
 
@@ -29,12 +29,18 @@ const props = withDefaults(
     requireMinerFee?: boolean;
     /** 为 true 时隐藏面板内确认按钮，由外层 Popup 工具栏承接。 */
     hideInlineConfirm?: boolean;
+    /** 挂载时是否清空备注；矿工费第二步应 false，避免覆盖已填备注。 */
+    resetRemarkOnMount?: boolean;
+    /** Popover 内「确定」按钮 tone。 */
+    confirmTone?: ButtonTone;
   }>(),
   {
     placeholderKey: 'Please enter',
     feedbackKey: 'Optional, Max. 256 characters',
     requireMinerFee: false,
     hideInlineConfirm: false,
+    resetRemarkOnMount: true,
+    confirmTone: 'decor',
   },
 );
 
@@ -47,10 +53,22 @@ const emit = defineEmits<{
 
 const { ui } = useAppI18n();
 
-const remarkFieldRef = ref<HTMLElement | null>(null);
-const evmPanelRef = ref<InstanceType<typeof MinerFeeEvmPopoverPanel> | null>(null);
-const tonLikePanelRef = ref<InstanceType<typeof MinerFeeTonLikePanel> | null>(null);
-const tronPanelRef = ref<InstanceType<typeof MinerFeeTronPanel> | null>(null);
+type MinerFeeEvmPanelExpose = {
+  resetMinerFeeFlow: () => void;
+  attemptConfirm: () => void;
+  attemptCancelCustom: () => void;
+  attemptSaveCustom: () => void;
+  confirmDisabled?: boolean | { value: boolean };
+};
+
+type MinerFeeSimplePanelExpose = {
+  attemptConfirm: () => void;
+};
+
+const evmPanelRef = ref<MinerFeeEvmPanelExpose | null>(null);
+const bitcoinPanelRef = ref<MinerFeeEvmPanelExpose | null>(null);
+const tonPanelRef = ref<MinerFeeSimplePanelExpose | null>(null);
+const tronPanelRef = ref<MinerFeeSimplePanelExpose | null>(null);
 const minerFeeScreen = ref<MinerFeeScreen>('list');
 
 const resolvedProfile = computed<MinerFeeProfile | null>(() => {
@@ -68,37 +86,21 @@ const resolvedProfile = computed<MinerFeeProfile | null>(() => {
   return null;
 });
 
+const isBitcoinProfile = computed(
+  () =>
+    resolvedProfile.value?.kind === 'evm'
+    && resolvedProfile.value.symbol.trim().toUpperCase() === 'BTC',
+);
+
 const remarkModel = computed({
   get: () => props.remark,
-  set: (value: string) => emit('update:remark', value.slice(0, REMARK_MAX_LENGTH)),
+  set: (value: string) => emit('update:remark', value.slice(0, REMARK_POPOVER_MAX_LENGTH)),
 });
 
-function getRemarkControlElement() {
-  return remarkFieldRef.value?.querySelector('input, textarea') as
-    | HTMLInputElement
-    | HTMLTextAreaElement
-    | null;
-}
-
-async function focusRemarkInput() {
-  await nextTick();
-  getRemarkControlElement()?.focus();
-
-  window.requestAnimationFrame(() => {
-    getRemarkControlElement()?.focus();
-  });
-
-  window.setTimeout(() => {
-    getRemarkControlElement()?.focus();
-  }, 120);
-}
-
-onMounted(async () => {
-  emit('update:remark', '');
-  if (resolvedProfile.value) {
-    return;
+onMounted(() => {
+  if (props.resetRemarkOnMount) {
+    emit('update:remark', '');
   }
-  await focusRemarkInput();
 });
 
 function onMinerFeeScreenChange(screen: MinerFeeScreen) {
@@ -106,34 +108,44 @@ function onMinerFeeScreenChange(screen: MinerFeeScreen) {
   emit('miner-fee-screen-change', screen);
 }
 
-function onMinerFeeConfirm(selection: MinerFeeSelection) {
-  emit('confirm', selection);
+function onMinerFeeConfirm(payload: MinerFeeConfirmPayload) {
+  if (!resolvedProfile.value) {
+    return;
+  }
+  emit('confirm', {
+    profileKind: resolvedProfile.value.kind,
+    displayValue: payload.displayValue,
+  });
 }
 
 function onRemarkOnlyConfirm() {
   emit('confirm', null);
 }
 
+function activeEvmPanelRef() {
+  return isBitcoinProfile.value ? bitcoinPanelRef.value : evmPanelRef.value;
+}
+
 function resetMinerFeeFlow() {
   minerFeeScreen.value = 'list';
-  evmPanelRef.value?.resetMinerFeeFlow();
+  activeEvmPanelRef()?.resetMinerFeeFlow();
 }
 
 function attemptCancelCustom() {
-  evmPanelRef.value?.attemptCancelCustom();
+  activeEvmPanelRef()?.attemptCancelCustom();
 }
 
 function attemptSaveCustom() {
-  evmPanelRef.value?.attemptSaveCustom();
+  activeEvmPanelRef()?.attemptSaveCustom();
 }
 
 function attemptConfirm() {
   if (resolvedProfile.value?.kind === 'evm') {
-    evmPanelRef.value?.attemptConfirm();
+    activeEvmPanelRef()?.attemptConfirm();
     return;
   }
   if (resolvedProfile.value?.kind === 'ton-xrp') {
-    tonLikePanelRef.value?.attemptConfirm();
+    tonPanelRef.value?.attemptConfirm();
     return;
   }
   if (resolvedProfile.value?.kind === 'tron') {
@@ -154,13 +166,17 @@ function readConfirmDisabled(
 
 const confirmDisabled = computed(() => {
   if (resolvedProfile.value?.kind === 'evm') {
-    return readConfirmDisabled(evmPanelRef.value?.confirmDisabled);
+    return readConfirmDisabled(activeEvmPanelRef()?.confirmDisabled);
   }
   return false;
 });
 
 const isMinerFeeCustomScreen = computed(
   () => resolvedProfile.value?.kind === 'evm' && minerFeeScreen.value === 'custom',
+);
+
+const minerFeeConfirmClass = computed(() =>
+  props.confirmTone === 'danger' ? styles.minerFeeConfirmDanger : undefined,
 );
 
 defineExpose({
@@ -175,75 +191,55 @@ defineExpose({
 </script>
 
 <template>
-  <template v-if="resolvedProfile">
-    <MinerFeeEvmPopoverPanel
-      v-if="resolvedProfile.kind === 'evm'"
-      ref="evmPanelRef"
-      :symbol="resolvedProfile.symbol"
-      :remark="remarkModel"
-      :placeholder-key="placeholderKey"
-      :feedback-key="feedbackKey"
+  <div v-if="resolvedProfile" :class="minerFeeConfirmClass">
+    <EgMinerFeeBitcoinPanel
+      v-if="isBitcoinProfile"
+      ref="bitcoinPanelRef"
+      :translate="ui"
       :hide-inline-confirm="hideInlineConfirm"
-      @update:remark="remarkModel = $event"
       @miner-fee-screen-change="onMinerFeeScreenChange"
       @confirm="onMinerFeeConfirm"
     />
 
-    <MinerFeeTonLikePanel
-      v-else-if="resolvedProfile.kind === 'ton-xrp'"
-      ref="tonLikePanelRef"
-      :profile="resolvedProfile"
-      :remark="remarkModel"
-      :placeholder-key="placeholderKey"
-      :feedback-key="feedbackKey"
+    <EgMinerFeeEthereumPanel
+      v-else-if="resolvedProfile.kind === 'evm'"
+      ref="evmPanelRef"
+      :translate="ui"
+      :symbol="resolvedProfile.symbol"
       :hide-inline-confirm="hideInlineConfirm"
-      @update:remark="remarkModel = $event"
+      @miner-fee-screen-change="onMinerFeeScreenChange"
       @confirm="onMinerFeeConfirm"
     />
 
-    <MinerFeeTronPanel
+    <EgMinerFeeTonPanel
+      v-else-if="resolvedProfile.kind === 'ton-xrp'"
+      ref="tonPanelRef"
+      :translate="ui"
+      :symbol="resolvedProfile.symbol"
+      :hide-inline-confirm="hideInlineConfirm"
+      @confirm="onMinerFeeConfirm"
+    />
+
+    <EgMinerFeeTronPanel
       v-else-if="resolvedProfile.kind === 'tron'"
       ref="tronPanelRef"
-      :profile="resolvedProfile"
-      :remark="remarkModel"
-      :placeholder-key="placeholderKey"
-      :feedback-key="feedbackKey"
+      :translate="ui"
       :hide-inline-confirm="hideInlineConfirm"
-      @update:remark="remarkModel = $event"
       @confirm="onMinerFeeConfirm"
     />
-  </template>
-
-  <div v-else :class="styles.root">
-    <div
-      ref="remarkFieldRef"
-      :class="[styles.remarkField, styles.remarkFieldNoLabel]"
-    >
-      <EgComboTextareaItem
-        v-model="remarkModel"
-        feedback
-        :label="ui('Remark')"
-        :placeholder="ui(placeholderKey)"
-      >
-        <template #feedback>
-          <EgFormSubmission
-            type="notes"
-            :text="ui(feedbackKey)"
-            :show-link="false"
-          />
-        </template>
-      </EgComboTextareaItem>
-    </div>
-
-    <EgButton
-      v-if="!hideInlineConfirm"
-      :class="styles.confirm"
-      tone="decor"
-      variant="solid"
-      size="md"
-      @click="onRemarkOnlyConfirm"
-    >
-      {{ ui('Confirm') }}
-    </EgButton>
   </div>
+
+  <ApprovalRemarkFormPanel
+    v-else
+    v-model="remarkModel"
+    :hide-confirm="hideInlineConfirm"
+    :label="ui('Remark')"
+    :placeholder="ui(placeholderKey)"
+    :feedback-text="ui(feedbackKey)"
+    :confirm-label="ui('Confirm')"
+    :confirm-tone="confirmTone"
+    hide-label
+    :reset-on-mount="false"
+    @confirm="onRemarkOnlyConfirm"
+  />
 </template>

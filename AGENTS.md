@@ -72,6 +72,10 @@
 
 展示态数字须千分位分组；用 `formatGroupedNumber`（`@eds/desktop-components`）或 `src/utils/formatGroupedDisplay.ts`（金额、复合文案、阈值、矿工费）。**不**格式化：输入态、倒计时 `MM:SS`、ID 编号（如 `SIG-*`）。详案：`.cursor/rules/work.mdc` §6.4。
 
+## 网络名称（硬约束）
+
+链 Tag / 展示文案只写 **链全名**；币种只出现在金额列。禁止 `BSC`、`USDT-Ethereum`、`BTC-Bitcoin` 等缩写或拼接。批处理分组保留 **Ethereum Mainnet**、**The Open Network**、**Tron**、**Bitcoin**。详案：`.cursor/rules/work.mdc` §6.6。
+
 ## EgDetail · Apply_Item（硬约束）
 
 标准 Detail 行 **必须** `createDetailApplyItemRow(variantId, overrides)`（`@eds/desktop-components`）；选用 **无复制** catalog variant，**禁止** `showValueCopy`、复制挂件与 clipboard 集成。
@@ -105,6 +109,6 @@ Showcase 外层是 **Website token 壳**，部分未在 Desktop spec 定义的�
 ## 更多细节
 
 - `README.md` — 集成与脚本
-- `.cursor/rules/work.mdc` — 业务集成规范（Popup 动效 §7.1.1、数字 §6.4、**Top & Bottom Mask §6.5**）
+- `.cursor/rules/work.mdc` — 业务集成规范（Popup 动效 §7.1.1、数字 §6.4、**网络名称 §6.6**、**Top & Bottom Mask §6.5**）
 - `.cursor/rules/top&botton-mask.mdc` — **滚动顶底毛玻璃强推**（`alwaysApply`）
 - `.cursor/rules/eds-project.mdc` — 完整 EDS 约定（在 eds-desktop 仓库）

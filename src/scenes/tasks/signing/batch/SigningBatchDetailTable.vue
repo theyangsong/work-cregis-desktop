@@ -1,19 +1,16 @@
 <script setup lang="ts">
 import { computed, inject } from 'vue';
 import {
-  EgCryptoAddress,
   EgDataList,
   EgDataListCellOverflow,
   EgDataListColumn,
   EgDivider,
-  EgListFieldOverflowText,
-  type CryptoAddressSideTags,
+  EgTextOverflowTooltip,
   type DataListItem,
 } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
 import DataListHeaderSortTrigger from '../../DataListHeaderSortTrigger.vue';
 import type { TasksDataListSortOrder } from '../../tasksDataListSort';
-import { resolveCurrencyCustomTagStyleForLabel } from '../../list-field/listFieldCurrencyTagCustomize';
 import TasksDataListColumnCell from '../../list-field/TasksDataListColumnCell.vue';
 import {
   DATA_LIST_FIGMA_HEADER_HEIGHT,
@@ -23,7 +20,8 @@ import {
   computeBatchDataListHeight,
   BATCH_AMOUNT_COLUMN_MIN_WIDTH,
   BATCH_INELIGIBLE_REASON_COLUMN_MIN_WIDTH,
-  BATCH_WALLET_COMBO_COLUMN_MIN_WIDTH,
+  BATCH_RECEIVER_COLUMN_MIN_WIDTH,
+  BATCH_SENDER_COLUMN_MIN_WIDTH,
 } from './batchDataListLayout';
 import { signingBatchDetailAmountSortKey } from './signingBatchDetailTableSortContext';
 import {
@@ -31,39 +29,10 @@ import {
 } from './evaluateBatchEligibility';
 import type { BatchIneligibleReasonFilter } from './batchIneligibleReasonFilter';
 import type {
-  BatchAddressDisplay,
   BatchIneligibleReason,
   SigningBatchRowModel,
 } from './types';
 import styles from './batchSigning.shared.module.css';
-
-function buildAddressSideTags(tags: string[]): CryptoAddressSideTags | undefined {
-  if (!tags.length) return undefined;
-
-  return {
-    custom: tags.map((label) => ({
-      show: true,
-      size: 'sm' as const,
-      family: 'custom' as const,
-      label,
-      customStyle: resolveCurrencyCustomTagStyleForLabel(label),
-    })),
-  };
-}
-
-function resolveAddressTagsList(tags: string[]): CryptoAddressSideTags[] | undefined {
-  const sideTags = buildAddressSideTags(tags);
-  return sideTags ? [sideTags] : undefined;
-}
-
-function addressFieldsFrom(display: BatchAddressDisplay) {
-  return {
-    text: display.address,
-    alias: display.alias.trim() || undefined,
-    addresses: [display.address],
-    tagsList: resolveAddressTagsList(display.tags),
-  };
-}
 
 const props = withDefaults(
   defineProps<{
@@ -103,9 +72,6 @@ function onAmountSort(order: TasksDataListSortOrder | null) {
 
 const dataList = computed<DataListItem[]>(() =>
   props.rows.map((row) => {
-    const sender = addressFieldsFrom(row.sender);
-    const receiver = addressFieldsFrom(row.receiver);
-
     const reason = props.ineligibleReasonByRowIndex.get(row.rowIndex);
     const ineligibleReasonLabel =
       reason != null ? ui(BATCH_INELIGIBLE_REASON_LABELS[reason]) : '';
@@ -114,16 +80,6 @@ const dataList = computed<DataListItem[]>(() =>
       id: row.rowIndex,
       signingId: row.signingId,
       rowIndex: row.rowIndex,
-      senderText: sender.text,
-      senderAlias: sender.alias,
-      senderAddresses: sender.addresses,
-      senderTagsList: sender.tagsList,
-      receiverText: receiver.text,
-      receiverAlias: receiver.alias,
-      receiverAddresses: receiver.addresses,
-      receiverTagsList: receiver.tagsList,
-      amountFull: row.amountFull,
-      amountFiat: row.amountFiat,
       ineligibleReasonLabel,
     };
   }),
@@ -150,70 +106,34 @@ function rowIndexFromData(data: DataListItem) {
       :column-height="66"
     >
       <EgDataListColumn
-        prop="wallet"
-        :label="ui('Outbound Wallet')"
-        :min-width="BATCH_WALLET_COMBO_COLUMN_MIN_WIDTH"
+        prop="sender"
+        :label="ui('Sender')"
+        :min-width="BATCH_SENDER_COLUMN_MIN_WIDTH"
         :sortable="false"
       >
-        <template #header>
-          <div :class="pageStyles.comboHeader">
-            <div :class="pageStyles.comboHeaderSegment">
-              <div :class="pageStyles.comboHeaderSegmentTextWrap">
-                <EgDataListCellOverflow
-                  :content-class="pageStyles.comboHeaderSegmentText"
-                  context="header"
-                >
-                  {{ ui('Outbound Wallet') }}
-                </EgDataListCellOverflow>
-              </div>
-            </div>
-            <EgDivider type="navigator" direction="vertical" />
-            <div :class="pageStyles.comboHeaderSegment">
-              <div :class="pageStyles.comboHeaderSegmentTextWrap">
-                <EgDataListCellOverflow
-                  :content-class="pageStyles.comboHeaderSegmentText"
-                  context="header"
-                >
-                  {{ ui('From Address') }}
-                </EgDataListCellOverflow>
-              </div>
-            </div>
-            <EgDivider type="navigator" direction="vertical" />
-            <div :class="pageStyles.comboHeaderSegment">
-              <div :class="pageStyles.comboHeaderSegmentTextWrap">
-                <EgDataListCellOverflow
-                  :content-class="pageStyles.comboHeaderSegmentText"
-                  context="header"
-                >
-                  {{ ui('To Address') }}
-                </EgDataListCellOverflow>
-              </div>
-            </div>
-          </div>
-        </template>
         <template #default="{ data }">
-          <div :class="styles.batchDetailWalletComboCell">
-            <TasksDataListColumnCell
-              data-source="business-type"
-              column-min-width="0"
-              menu-item="Signing"
-              :row-index="rowIndexFromData(data)"
-            />
-            <EgCryptoAddress
-              address-mode="double"
-              :from-text="String(data.senderText ?? '')"
-              :from-alias="data.senderAlias ? String(data.senderAlias) : undefined"
-              :from-address-count="1"
-              :from-addresses="(data.senderAddresses as string[] | undefined) ?? []"
-              :from-tags-list="data.senderTagsList as CryptoAddressSideTags[] | undefined"
-              :to-text="String(data.receiverText ?? '')"
-              :to-alias="data.receiverAlias ? String(data.receiverAlias) : undefined"
-              :to-address-count="1"
-              :to-addresses="(data.receiverAddresses as string[] | undefined) ?? []"
-              :to-tags-list="data.receiverTagsList as CryptoAddressSideTags[] | undefined"
-              address-tooltip-trigger="hover"
-            />
-          </div>
+          <TasksDataListColumnCell
+            data-source="business-type"
+            :column-min-width="BATCH_SENDER_COLUMN_MIN_WIDTH"
+            menu-item="Signing"
+            :row-index="rowIndexFromData(data)"
+          />
+        </template>
+      </EgDataListColumn>
+
+      <EgDataListColumn
+        prop="receiver"
+        :label="ui('To Address')"
+        :min-width="BATCH_RECEIVER_COLUMN_MIN_WIDTH"
+        :sortable="false"
+      >
+        <template #default="{ data }">
+          <TasksDataListColumnCell
+            data-source="receiver"
+            :column-min-width="BATCH_RECEIVER_COLUMN_MIN_WIDTH"
+            menu-item="Signing"
+            :row-index="rowIndexFromData(data)"
+          />
         </template>
       </EgDataListColumn>
 
@@ -221,16 +141,11 @@ function rowIndexFromData(data: DataListItem) {
         prop="amount"
         :label="ui('Amount')"
         :min-width="BATCH_AMOUNT_COLUMN_MIN_WIDTH"
-        align="right"
+        align="left"
         :sortable="false"
       >
         <template #header>
-          <div
-            :class="[
-              pageStyles.comboHeader,
-              pageStyles.comboHeaderAlignEnd,
-            ]"
-          >
+          <div :class="pageStyles.comboHeader">
             <div :class="pageStyles.comboHeaderSegment">
               <div :class="pageStyles.comboHeaderSegmentTextWrap">
                 <EgDataListCellOverflow
@@ -254,7 +169,7 @@ function rowIndexFromData(data: DataListItem) {
                   :content-class="pageStyles.comboHeaderSegmentText"
                   context="header"
                 >
-                  {{ ui('Type of Business') }}
+                  {{ ui('Operation Type') }}
                 </EgDataListCellOverflow>
               </div>
             </div>
@@ -264,7 +179,7 @@ function rowIndexFromData(data: DataListItem) {
           <TasksDataListColumnCell
             data-source="amount"
             :column-min-width="BATCH_AMOUNT_COLUMN_MIN_WIDTH"
-            column-align="right"
+            column-align="left"
             menu-item="Signing"
             :row-index="rowIndexFromData(data)"
           />
@@ -274,7 +189,7 @@ function rowIndexFromData(data: DataListItem) {
       <EgDataListColumn
         v-if="showIneligibleReasonColumn"
         prop="ineligibleReason"
-        :label="ui('Ineligible transaction reasons')"
+        :label="ui('Reason')"
         :min-width="BATCH_INELIGIBLE_REASON_COLUMN_MIN_WIDTH"
         align="right"
         :sortable="false"
@@ -291,18 +206,21 @@ function rowIndexFromData(data: DataListItem) {
                 :content-class="pageStyles.comboHeaderSegmentText"
                 context="header"
               >
-                {{ ui('Ineligible transaction reasons') }}
+                {{ ui('Reason') }}
               </EgDataListCellOverflow>
             </div>
           </div>
         </template>
         <template #default="{ data }">
           <div :class="styles.batchIneligibleReasonCell">
-            <EgListFieldOverflowText
-              :text="String(data.ineligibleReasonLabel ?? '')"
-              variant="primary"
-              tooltip-trigger="hover"
-            />
+            <EgTextOverflowTooltip
+              :tooltip-text="String(data.ineligibleReasonLabel ?? '')"
+              :typography-class="styles.batchIneligibleReasonCellText"
+              :measure-class="styles.batchIneligibleReasonCellText"
+              boundary-selector=".eds-data-list"
+            >
+              {{ String(data.ineligibleReasonLabel ?? '') }}
+            </EgTextOverflowTooltip>
           </div>
         </template>
       </EgDataListColumn>

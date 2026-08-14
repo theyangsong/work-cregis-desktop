@@ -2,10 +2,12 @@ import {
   createDetailApplyItemRow,
   type DetailItemData,
 } from '@eds/desktop-components';
+import { formatEmptyDisplayValue } from '@/utils/formatEmptyDisplay';
 import { formatGroupedAmountText } from '@/utils/formatGroupedDisplay';
 import { buildAmountRowValues } from '../list-field/tasksListFieldAmountRowData';
 import { buildTasksListFieldCurrencyCustomize } from '../list-field/tasksListFieldCurrencyDefaults';
 import { resolveCurrencyRowPreset } from '../list-field/tasksListFieldCurrencyRowData';
+import { buildDetailInitiationSourceItem } from '../shared/buildDetailInitiationSourceItem';
 import {
   buildReceiverItem,
   buildSenderItem,
@@ -52,7 +54,7 @@ export function formatSigningProgressMinerFeeDisplay(display: string): string {
   );
 }
 
-/** Figma 656×516 签名 custom 弹窗 — 明细：币种 → 金额 → 发送方 → 接收方 → 矿工费 → Memo */
+/** Figma 656×480 签名 custom 弹窗 — 明细：币种 → 金额 → 发送方 → 接收方 → 矿工费 → Memo */
 export function buildSigningCustomPopupItems(
   detail: SigningDetail,
   translate: (key: string) => string,
@@ -71,6 +73,7 @@ export function buildSigningCustomPopupItems(
       valueIcon: currency.cryptoName,
       tag: currency.networkLabel || undefined,
     }),
+    buildDetailInitiationSourceItem(rowIndex, translate),
     createDetailApplyItemRow('amount', {
       key: 'amount',
       title: translate('Amount'),
@@ -93,7 +96,7 @@ export function buildSigningCustomPopupItems(
     createDetailApplyItemRow('memo', {
       key: 'memo',
       title: translate('Memo'),
-      value: detail.memo,
+      value: formatEmptyDisplayValue(detail.memo),
     }),
   ];
 }

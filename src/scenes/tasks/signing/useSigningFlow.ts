@@ -11,16 +11,34 @@ import {
   signingIdFromRowIndex,
   submitBatchSigningAction,
   submitSigningAction,
+  verifyTradePassword,
 } from './signingStore';
+import { buildSigningDetailFromMultiSignInvitation } from './multiSignInvitation/buildSigningDetailFromMultiSignInvitation';
+import {
+  getMultiSignInvitationById,
+  joinMultiSignInvitation,
+  validateMultiSignInvitationJoin,
+} from './multiSignInvitation/multiSignInvitationStore';
+import type { MultiSignInvitation } from './multiSignInvitation/types';
+import type { MultiSignInvitationJoinResult } from './multiSignInvitation/types';
 import { SIGNING_PROGRESS_STEP_HOLD_MS } from './signingCustomPopup.constants';
+import { resolveSigningProgressDemoFailure } from './signingProgressDemo';
 import {
   MULTI_SIGN_MEMBER_JOIN_LAST_DELAY_MS,
   MULTI_SIGN_MEMBER_JOIN_RANDOM_MAX_MS,
+  MULTI_SIGN_PARTICIPANT_SIGNING_AFTER_READY_MS,
+  SIGNING_PARTICIPANT_SUCCESS_MESSAGE,
   parseSigningThreshold,
 } from './multiSignWaiting.constants';
 import type { MinerFeeProfile, MinerFeeSelection } from '../shared/minerFeeProfile';
 import { resolveMinerFeeProfile } from '../shared/minerFeeProfile';
-import type { SigningActionKind, SigningDetail, SigningProgressPhase } from './types';
+import type {
+  MultiSignRoomPhase,
+  MultiSignWaitingPerspective,
+  SigningActionKind,
+  SigningDetail,
+  SigningProgressPhase,
+} from './types';
 
 export const SIGNING_BATCH_MAX = 100;
 
@@ -28,6 +46,13 @@ export const SIGNING_ALREADY_PROCESSED_MESSAGE =
   'This item has already been processed. Please refresh the data and try again.';
 
 export const SIGNING_SUCCESS_MESSAGE = 'Operation successful';
+
+type RequestJoinMultiSignInvitationResult =
+  | MultiSignInvitationJoinResult
+  | 'verify'
+  | 'flow-unavailable';
+
+export type { RequestJoinMultiSignInvitationResult };
 
 type DataListRow = Record<string, unknown> & { id?: number };
 
@@ -48,14 +73,18 @@ export function useSigningFlow(options: {
   const currentSigningId = ref<string | null>(null);
   const pendingIds = ref<string[]>([]);
   const pendingAction = ref<SigningActionKind | null>(null);
+  const pendingJoinInvitation = ref<MultiSignInvitation | null>(null);
   const batchMode = ref(false);
   const batchSelectedIds = ref<string[]>([]);
   const batchMinerFeeProfile = ref<MinerFeeProfile | null>(null);
   const remark = ref('');
   const viewMoreText = ref('');
   const progressPhase = ref<SigningProgressPhase>('signing');
-  const multiSignPhase = ref<'waiting' | 'ready'>('waiting');
+  const multiSignPhase = ref<MultiSignRoomPhase>('waiting');
   const multiSignJoinedCount = ref(1);
+  const multiSignPerspective = ref<MultiSignWaitingPerspective>('signer');
+  const multiSignParticipantDemoOutcome = ref<'success' | 'mpc-network-error'>('success');
+  const pendingParticipantSuccessFeedback = ref(false);
 
   const detail = shallowRef<SigningDetail | null>(null);
   const pendingAutoAdvanceId = ref<string | null>(null);
@@ -173,20 +202,68 @@ export function useSigningFlow(options: {
 
   function onVerifyCancel() {
     verifyOpen.value = false;
+    pendingJoinInvitation.value = null;
+  }
+
+  function requestJoinMultiSignInvitation(
+    id: string,
+  ): RequestJoinMultiSignInvitationResult {
+    if (!options.enabled.value) {
+      return 'flow-unavailable';
+    }
+
+    const precheck = validateMultiSignInvitationJoin(id);
+    if (precheck !== 'ok') {
+      return precheck;
+    }
+
+    const invitation = getMultiSignInvitationById(id);
+    if (!invitation) {
+      return 'expired';
+    }
+
+    pendingJoinInvitation.value = invitation;
+    verifyOpen.value = true;
+    return 'verify';
+  }
+
+  function completeJoinMultiSignInvitationAfterVerify() {
+    const invitation = pendingJoinInvitation.value;
+    pendingJoinInvitation.value = null;
+    if (!invitation) return;
+
+    const result = joinMultiSignInvitation(invitation.id);
+    if (result !== 'joined') {
+      options.showError(
+        result === 'shard-missing'
+          ? 'Wallet shard not imported'
+          : 'Invitation expired',
+      );
+      return;
+    }
+
+    startMultiSignRoomAsParticipant(buildSigningDetailFromMultiSignInvitation(invitation));
   }
 
   function startProgressPopup() {
     const rowIndex = currentSigningId.value
       ? parseRowIndexFromSigningId(currentSigningId.value)
       : -1;
-    const isBroadcastFailedDemo = rowIndex === 0;
+    const demoFailure = resolveSigningProgressDemoFailure(rowIndex);
 
     progressPhase.value = 'signing';
     progressOpen.value = true;
 
-    if (isBroadcastFailedDemo) {
+    if (demoFailure === 'broadcast-failed') {
       window.setTimeout(() => {
         progressPhase.value = 'broadcast-failed';
+      }, SIGNING_PROGRESS_STEP_HOLD_MS);
+      return;
+    }
+
+    if (demoFailure === 'mpc-network-error') {
+      window.setTimeout(() => {
+        progressPhase.value = 'sign-failed';
       }, SIGNING_PROGRESS_STEP_HOLD_MS);
       return;
     }
@@ -200,6 +277,26 @@ export function useSigningFlow(options: {
     window.setTimeout(() => {
       progressPhase.value = 'broadcast-success';
     }, SIGNING_PROGRESS_STEP_HOLD_MS * 3);
+  }
+
+  function retryProgressAfterSignFailed() {
+    if (progressPhase.value !== 'sign-failed') return;
+
+    const rowIndex = currentSigningId.value
+      ? parseRowIndexFromSigningId(currentSigningId.value)
+      : -1;
+
+    progressPhase.value = 'signing';
+
+    if (resolveSigningProgressDemoFailure(rowIndex) !== 'mpc-network-error') {
+      return;
+    }
+
+    window.setTimeout(() => {
+      if (progressOpen.value && progressPhase.value === 'signing') {
+        progressPhase.value = 'sign-failed';
+      }
+    }, SIGNING_PROGRESS_STEP_HOLD_MS);
   }
 
   let multiSignJoinTimers: ReturnType<typeof window.setTimeout>[] = [];
@@ -220,6 +317,9 @@ export function useSigningFlow(options: {
     const { required } = parseSigningThreshold(detail.value?.signingThreshold ?? null);
     if (required <= 1) {
       multiSignPhase.value = 'ready';
+      if (multiSignPerspective.value === 'participant') {
+        scheduleParticipantSigningAfterReady();
+      }
       return;
     }
 
@@ -235,18 +335,85 @@ export function useSigningFlow(options: {
         multiSignJoinedCount.value = nextJoined;
         if (nextJoined >= required) {
           multiSignPhase.value = 'ready';
+          if (multiSignPerspective.value === 'participant') {
+            scheduleParticipantSigningAfterReady();
+          }
         }
       }, delayMs);
       multiSignJoinTimers.push(timerId);
     }
   }
 
+  function scheduleParticipantSigningAfterReady() {
+    const timerId = window.setTimeout(() => {
+      if (!multiSignOpen.value || multiSignPerspective.value !== 'participant') return;
+      if (multiSignPhase.value !== 'ready') return;
+      multiSignPhase.value = 'signing';
+
+      const finishTimer = window.setTimeout(() => {
+        if (!multiSignOpen.value || multiSignPerspective.value !== 'participant') return;
+        if (multiSignPhase.value !== 'signing') return;
+        if (multiSignParticipantDemoOutcome.value === 'mpc-network-error') {
+          multiSignPhase.value = 'sign-failed';
+          return;
+        }
+        finishMultiSignParticipantSuccess();
+      }, SIGNING_PROGRESS_STEP_HOLD_MS);
+      multiSignJoinTimers.push(finishTimer);
+    }, MULTI_SIGN_PARTICIPANT_SIGNING_AFTER_READY_MS);
+    multiSignJoinTimers.push(timerId);
+  }
+
+  function finishMultiSignParticipantSuccess() {
+    pendingParticipantSuccessFeedback.value = true;
+    multiSignOpen.value = false;
+  }
+
   function startMultiSignRoom() {
     clearMultiSignJoinTimers();
+    multiSignPerspective.value = 'signer';
     multiSignJoinedCount.value = 1;
     multiSignPhase.value = 'waiting';
     multiSignOpen.value = true;
     scheduleMultiSignMemberJoins();
+  }
+
+  /** 参与人：从邀请加入；autoFlow=false 时仅停留 waiting（QA）。 */
+  function startMultiSignRoomAsParticipant(
+    participantDetail: SigningDetail,
+    options?: {
+      autoFlow?: boolean;
+      demoOutcome?: 'success' | 'mpc-network-error';
+    },
+  ) {
+    clearMultiSignJoinTimers();
+    detail.value = participantDetail;
+    currentSigningId.value = participantDetail.id;
+    multiSignPerspective.value = 'participant';
+    multiSignPhase.value = 'waiting';
+    multiSignParticipantDemoOutcome.value = options?.demoOutcome ?? 'success';
+    pendingParticipantSuccessFeedback.value = false;
+    const { required } = parseSigningThreshold(participantDetail.signingThreshold ?? null);
+    multiSignJoinedCount.value = Math.max(2, Math.min(required - 1, 2));
+    multiSignOpen.value = true;
+    if (options?.autoFlow !== false) {
+      scheduleMultiSignMemberJoins();
+    }
+  }
+
+  function setMultiSignParticipantPhaseForDemo(
+    phase: MultiSignRoomPhase,
+    joinedCount?: number,
+    demoOutcome?: 'success' | 'mpc-network-error',
+  ) {
+    clearMultiSignJoinTimers();
+    multiSignPhase.value = phase;
+    if (joinedCount != null) {
+      multiSignJoinedCount.value = joinedCount;
+    }
+    if (demoOutcome != null) {
+      multiSignParticipantDemoOutcome.value = demoOutcome;
+    }
   }
 
   function onMultiSignReadyConfirm(selection: MinerFeeSelection | null) {
@@ -339,6 +506,7 @@ export function useSigningFlow(options: {
 
   function onMultiSignClosed() {
     clearMultiSignJoinTimers();
+    multiSignPerspective.value = 'signer';
     multiSignPhase.value = 'waiting';
     multiSignJoinedCount.value = 1;
     remark.value = '';
@@ -362,10 +530,19 @@ export function useSigningFlow(options: {
       startProgressPopup();
       return;
     }
+    const showParticipantSuccess = pendingParticipantSuccessFeedback.value;
+    pendingParticipantSuccessFeedback.value = false;
     onMultiSignClosed();
+    if (showParticipantSuccess) {
+      options.showSuccess(SIGNING_PARTICIPANT_SUCCESS_MESSAGE);
+    }
   }
 
   function onVerifyConfirm(password: string): boolean {
+    if (pendingJoinInvitation.value) {
+      return verifyTradePassword(password);
+    }
+
     const action = pendingAction.value;
     if (!action) return false;
 
@@ -400,6 +577,15 @@ export function useSigningFlow(options: {
   }
 
   function onVerifyPopupClosed(accepted: boolean) {
+    if (pendingJoinInvitation.value) {
+      if (!accepted) {
+        pendingJoinInvitation.value = null;
+        return;
+      }
+      completeJoinMultiSignInvitationAfterVerify();
+      return;
+    }
+
     if (!accepted) {
       pendingAction.value = null;
       return;
@@ -496,6 +682,7 @@ export function useSigningFlow(options: {
         verifyOpen.value = false;
         viewMoreOpen.value = false;
         progressOpen.value = false;
+        pendingJoinInvitation.value = null;
         clearMultiSignJoinTimers();
         multiSignOpen.value = false;
       }
@@ -522,6 +709,8 @@ export function useSigningFlow(options: {
     progressPhase,
     multiSignPhase,
     multiSignJoinedCount,
+    multiSignPerspective,
+    multiSignParticipantDemoOutcome,
     selectedMinerFeeDisplay,
     openDetailForRow,
     closeDetail,
@@ -534,10 +723,15 @@ export function useSigningFlow(options: {
     onVerifyConfirm,
     onVerifyPopupClosed,
     onProgressClosed,
+    retryProgressAfterSignFailed,
     requestMultiSignProgress,
     onMultiSignPopupClosed,
     onMultiSignReadyConfirm,
     multiSignClosingForProgress,
+    startMultiSignRoomAsParticipant,
+    requestJoinMultiSignInvitation,
+    setMultiSignParticipantPhaseForDemo,
+    finishMultiSignParticipantSuccess,
     prepareDetailRemarkOpen,
     prepareBatchRemarkOpen,
     onBatchRemarkConfirm,

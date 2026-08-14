@@ -1,0 +1,178 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-025);
+  min-width: 0;
+}
+
+.detailHeadlineList {
+  gap: var(--spacing-0);
+}
+
+.detailHeadlineMenu {
+  padding: 0 0 0 var(--spacing-7);
+}
+
+.cardHeadlineRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--spacing-2);
+  box-sizing: border-box;
+  min-width: 0;
+  padding: var(--spacing-2) var(--spacing-3);
+  border-radius: var(--radius-sm);
+  composes: motion-ease is-hover from global;
+}
+
+.cardHeadlineRow:hover {
+  background-color: var(--event-hover);
+}
+
+.cardHeadline {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-05);
+  min-width: 0;
+}
+
+.cardHeadlineAction {
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.taskAvatar {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.inviterLine {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  color: var(--text-base-primary);
+}
+
+.inviterName {
+  font-size: var(--eds-body-medium-size);
+  font-weight: var(--eds-body-medium-weight);
+  line-height: var(--eds-body-medium-line-height);
+}
+
+.inviterSuffix {
+  font-size: var(--eds-body-medium-size);
+  font-weight: var(--eds-body-medium-weight);
+  line-height: var(--eds-body-medium-line-height);
+}
+
+.invitedAt {
+  margin: 0;
+  font-size: var(--eds-footnote-size);
+  font-weight: var(--eds-footnote-weight);
+  line-height: var(--eds-footnote-line-height);
+  color: var(--text-base-primary);
+}
+
+.detailRowLabel {
+  flex-shrink: 0;
+  text-align: left;
+  font-size: var(--eds-footnote-size);
+  font-weight: var(--eds-footnote-weight);
+  line-height: var(--eds-footnote-line-height);
+}
+
+.detailListRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  align-self: stretch;
+  gap: var(--spacing-1-5);
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--radius-sm);
+  justify-content: space-between;
+  composes: motion-ease is-hover from global;
+}
+
+.detailListRow:hover {
+  background-color: var(--event-hover);
+}
+
+.detailListRowAddress:hover {
+  background-color: var(--event-hover);
+}
+
+.detailListRowAddress:hover .walletName,
+.detailListRowAddress:hover .addressOverflow :global([class*='textSecondary']),
+.detailListRowAddress:hover .amountPrimary {
+  color: var(--text-base-primary);
+}
+
+.detailListRowAddress {
+  justify-content: flex-start;
+}
+
+.rowValueCluster {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--spacing-1);
+  min-width: 0;
+  text-align: right;
+}
+
+.rowValueClusterAddress {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.addressValueLine {
+  display: inline-flex;
+  flex: 1 1 auto;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--spacing-1);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.addressOverflow {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.addressOverflow :global([class*='measure']) {
+  text-align: left;
+}
+
+.walletName {
+  flex-shrink: 0;
+  font-size: var(--eds-footnote-size);
+  font-weight: var(--eds-footnote-strong-weight);
+  line-height: var(--eds-footnote-strong-line-height);
+  color: var(--text-base-secondary);
+}
+
+.addressAliasTag {
+  flex-shrink: 0;
+}
+
+.addressOverflow :global([class*='textSecondary']) {
+  color: var(--text-base-secondary);
+}
+
+.amountPrimary {
+  font-size: var(--eds-footnote-size);
+  font-weight: var(--eds-footnote-weight);
+  line-height: var(--eds-footnote-line-height);
+  color: var(--text-base-secondary);
+}

@@ -1,3 +1,4 @@
+import type { AppLocale } from '@/composables/useAppLocale';
 import { isSigningBatchDemoSingleSignRow } from '../signing/batch/signingBatchDemoRowDistribution';
 
 export type PayoutWalletsColumnValues = {
@@ -5,9 +6,14 @@ export type PayoutWalletsColumnValues = {
   rightLabel?: string;
 };
 
+export type SwapBusinessAction = 'transfer' | 'contract-auth' | 'revoke-auth';
+
 export type TransferTypeRowValues = {
   value: string;
+  swapAction?: SwapBusinessAction;
   showCountdown?: boolean;
+  /** 列表 H:MM:SS 演示用；详情仍仅用 countdownMinutes / countdownSeconds。 */
+  countdownHours?: string;
   countdownMinutes?: string;
   countdownSeconds?: string;
   countdownAlign?: 'left' | 'center' | 'right';
@@ -63,6 +69,7 @@ export const TRANSFER_TYPES = [
   'Wallet Payout',
   'Sub-Address Payout',
   'Manual Transfer',
+  'Sub-Address Transfer',
   'Swap',
   'Remittance',
 ] as const;
@@ -70,16 +77,24 @@ export const TRANSFER_TYPES = [
 /** @deprecated 使用 TRANSFER_TYPES */
 export const BUSINESS_TYPES = TRANSFER_TYPES;
 
-/** 前 8 行固定展示：5 种转账类型打乱顺序循环（现用于金额列副行）。 */
+/** 前 8 行固定展示：发起方副行「来源｜动作」demo（rowIndex 0–6 定稿，7 起 fallback）。 */
 const TRANSFER_TYPE_ROW_PRESETS: readonly TransferTypeRowValues[] = [
-  { value: 'Manual Transfer' },
+  { value: 'Swap', swapAction: 'contract-auth' },
   { value: 'Sub-Address Payout' },
-  { value: 'Swap' },
-  { value: 'Remittance' },
   { value: 'Manual Transfer' },
-  { value: 'Swap' },
-  { value: 'Manual Transfer' },
+  { value: 'Sub-Address Transfer' },
+  {
+    value: 'Swap',
+    swapAction: 'transfer',
+    showCountdown: true,
+    countdownHours: '1',
+    countdownMinutes: '23',
+    countdownSeconds: '45',
+    countdownAlign: 'left',
+  },
   { value: 'Wallet Payout' },
+  { value: 'Swap', swapAction: 'revoke-auth' },
+  { value: 'Remittance' },
 ] as const;
 
 function seededFraction(rowIndex: number, salt: number): number {
@@ -92,15 +107,23 @@ function buildRandomTransferTypeRowValues(rowIndex: number): TransferTypeRowValu
   return { value: TRANSFER_TYPES[typeIndex] ?? TRANSFER_TYPES[0] };
 }
 
-function withSwapCountdown(values: TransferTypeRowValues, rowIndex: number): TransferTypeRowValues {
-  if (values.value !== 'Swap') return values;
+function withSwapCountdownFallback(
+  values: TransferTypeRowValues,
+  rowIndex: number,
+): TransferTypeRowValues {
+  if (values.value !== 'Swap' || values.showCountdown) return values;
+  if (values.swapAction != null && values.swapAction !== 'transfer') return values;
 
-  const minutes = 15 + (rowIndex % 4) * 5;
+  const hours = rowIndex % 5;
+  const minutes = 10 + (rowIndex * 3) % 50;
+  const seconds = (rowIndex * 7) % 60;
   return {
     ...values,
+    swapAction: values.swapAction ?? 'transfer',
     showCountdown: true,
+    countdownHours: String(hours),
     countdownMinutes: String(minutes),
-    countdownSeconds: '00',
+    countdownSeconds: String(seconds),
     countdownAlign: 'left',
   };
 }
@@ -141,16 +164,86 @@ export function buildPayoutWalletsColumnValues(rowIndex: number): PayoutWalletsC
   };
 }
 
+/** 发送方副行：除溢出演示行外，短钱包名池（稳定随机）。 */
+const SENDER_WALLET_SECONDARY_EN_NAMES = [
+  'Ops Wallet',
+  'Main Vault',
+  'Hot Wallet',
+  'Reserve',
+  'Treasury',
+  'Vendor',
+  'Escrow',
+  'Settlement',
+  'Liquidity',
+  'Marketing',
+  'Compliance',
+  'Client Fund',
+  'APAC Ops',
+  'EMEA Hub',
+  'Cold Pool',
+] as const;
+
+const SENDER_WALLET_SECONDARY_ZH_NAMES = [
+  '运营钱包',
+  '主钱包',
+  '热钱包',
+  '储备金',
+  '财库',
+  '供应商',
+  '托管仓',
+  '清算池',
+  '流动性',
+  '市场金',
+  '合规户',
+  '客户金',
+  '亚太户',
+  '欧洲户',
+  '冷池',
+] as const;
+
+/** 中文站：中文名 40%；英文站：英文名 60%（即中文名 40%）。 */
+function senderWalletSecondaryChineseRatio(locale: AppLocale): number {
+  return locale === 'zh-CN' ? 0.4 : 0.4;
+}
+
+function buildRandomSenderWalletSecondaryText(rowIndex: number, locale: AppLocale): string {
+  const useChinese = seededFraction(rowIndex, 43) < senderWalletSecondaryChineseRatio(locale);
+  const pool = useChinese ? SENDER_WALLET_SECONDARY_ZH_NAMES : SENDER_WALLET_SECONDARY_EN_NAMES;
+  const index = Math.floor(seededFraction(rowIndex, 47) * pool.length);
+  return pool[index] ?? pool[0];
+}
+
+/** 发送方列副行 / 详情出款钱包 — 同一 rowIndex 同一文案。 */
+const SENDER_WALLET_SECONDARY_PAYROLL_OVERFLOW_INDEX = 1;
+
+export function buildSenderWalletDisplayName(
+  rowIndex: number,
+  locale: AppLocale = 'en',
+): string {
+  if (rowIndex === SENDER_WALLET_SECONDARY_PAYROLL_OVERFLOW_INDEX) {
+    return 'Payroll Payout Wallet';
+  }
+  return buildRandomSenderWalletSecondaryText(rowIndex, locale);
+}
+
+export function resolveSenderWalletSecondaryText(
+  rowIndex: number,
+  _walletValue: string,
+  locale: AppLocale = 'en',
+): string {
+  return buildSenderWalletDisplayName(rowIndex, locale);
+}
+
 /** 出款钱包是否为多签（批量签名须排除）。 */
 export function isMultiSignRow(rowIndex: number): boolean {
   return buildPayoutWalletsColumnValues(rowIndex).rightLabel === 'Multi-Sign';
 }
 
-/** 金额列副行：转账类型（Manual Transfer / Swap 等）。 */
+/** 业务类型 / 详情枚举（Wallet Payout / Swap 等）。 */
 export function buildTransferTypeRowValues(rowIndex: number): TransferTypeRowValues {
   const preset = TRANSFER_TYPE_ROW_PRESETS[rowIndex];
   const values = preset ?? buildRandomTransferTypeRowValues(rowIndex);
-  return withSwapCountdown(values, rowIndex);
+  return withSwapCountdownFallback(values, rowIndex);
 }
 
 /** @deprecated 使用 buildPayoutWalletsColumnValues / buildTransferTypeRowValues */

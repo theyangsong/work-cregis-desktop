@@ -379,6 +379,35 @@ const { canScroll, topScrim, bottomScrim } = useScrollChromeScrim(scrollRef, { c
 
 **底缘虚化（Flotation 列表）**：`bottomScrim` → 滚动容器 `mask-image` bottom fade（非 sticky 底栏时）。
 
+### 6.6 网络名称（链 Tag / 展示文案 · 锁死）
+
+**原则**：网络 Tag / 链展示文案只写 **链全名**；**币种**（BTC、ETH、USDT…）只出现在金额 / 符号列，**禁止** `币种-网络` 拼接或链缩写当网络名。
+
+| 禁止 | 正确示例 |
+|------|----------|
+| `BSC`、`BNB-BSC` | **BNB Smart Chain** |
+| `BTC-Bitcoin`、`USDT-Ethereum`、`ETH-Ethereum` | **Bitcoin**、**Ethereum**（Tag）；金额列仍可为 `1,000 USDT` |
+| 未用到的链凭空加 demo | 用到哪条链写哪条，名称按下列表 |
+
+#### L1 主网（参考）
+
+Bitcoin · **Ethereum Mainnet**（批处理分组）/ **Ethereum**（多签 Tag、列表 chain Tag）· Solana · **BNB Smart Chain** · Cardano · Avalanche · **Tron** · NEAR · Sui · Sei · Aptos · **The Open Network**
+
+#### L2 / 侧链（参考）
+
+Arbitrum One · Arbitrum Nova · Optimism · Base · Polygon PoS · Polygon zkEVM · Scroll · zkSync Era
+
+#### 场景对照（勿混用）
+
+| 场景 | 约定 | 权威文件 |
+|------|------|----------|
+| 列表币种 chain Tag | `networkLabel` → `EgCryptoCombo` `:chain-label` | `tasksListFieldCurrencyRowPresets.ts` |
+| 多签邀请金额行网络 Tag | 短链名：`Ethereum`、`Bitcoin`、`BNB Smart Chain`… | `buildMultiSignInvitationDemoData.ts` |
+| 批处理网络分组 / 矿工费壳 | **`Ethereum Mainnet`**、**`The Open Network`**、**`Tron`**、**`Bitcoin`** | `batchNetworkGroup.ts` |
+| 审批列表金额列 | `符号-网络` 连写（如 `USDT-BNB Smart Chain`）为**金额列**格式，非 Tag | `buildApprovalDetailRowFields.ts` |
+
+**Agent**：改 UI 时先 `rg networkLabel` / `chain-label`；名称不对只改正文，**不**为凑覆盖而新增未使用链。
+
 ---
 
 ## 7. 架构模式（禁止平行实现）
@@ -537,8 +566,12 @@ Verify 打开时 Detail 会 **suspend 出场**（EgDetail 卸载）。若验证�
 |------|------|
 | shell `motion-layout-deform` + content 绑齐 `is-exiting` / `is-entering` | 只绑 `is-exiting` |
 | `switchTo` 前离屏/在页测量 `shellHeight`（`minerFeeMeasureHost`） | 写死高度 |
-| 子页 layout（padding、标题、Teleport）绑 **`activePage`** | 点击瞬间切 `data-*` / padding |
+| 测量完成后 shell **始终**绑 `height: shellHeight`（`data-shell-ready` 后再开 transition） | 仅 morph 帧绑高度 |
+| 子页 layout（padding、标题、Teleport、**scroll 模式 `data-*`**）绑 **`activePage`** 且 **morph 期间冻结** | 点击瞬间切 `data-*` / padding |
 | 只走 `switchTo(next)` | 手动 `shellHeight` + `v-if` 两套逻辑 |
+| glue CSS 已 `@import` 于 `src/styles/desktop-components-scope.css` | 漏 import 导致 `.is-exiting` 无 transition |
+| QA 场景注册 **`replaceShellDebugScenariosForPage`** | `registerShellDebugScenarios` 只增不删（HMR 幽灵项） |
+| QA Popover **`useContentMinHeight: true`**（整面板 **360px**）+ deform shell **`clamp ≥ shellDebugPopoverContentMinHeight`（298px）** | 关 min-height 或 shell 测高不 clamp（空态缩到 ~178px） |
 
 参考：`ApprovalRemarkPopoverPanel.vue`。
 
@@ -763,6 +796,49 @@ multiSignJoinedCount.value = Math.max(1, required - 1);
 multiSignJoinedCount.value = required;
 ```
 
+### 7.3.1 多签邀请浮标 · EgAnchoredTooltip（锁死）
+
+**真源**：`MultiSignInvitationFloatHost.vue` · `multiSignInvitationPanel.css` · `multiSignInvitationStore.ts`
+
+右下角「N 笔多签邀请」= `EgTooltip`（Popup Box 材质壳）+ `EgAnchoredTooltip`（Flotation 列表面板）。**开/关仅走业务 `onBadgeClick`**；DS 只负责 `openPanel` / `close` 与动效。
+
+#### 开关（锁死 · 勿再改回 click-toggle）
+
+| 必须 | 禁止 |
+|------|------|
+| `EgAnchoredTooltip` **`click-toggle="false"`** | `click-toggle="true"` 与 `onBadgeClick` 并存（双 toggle / 闪开即关） |
+| **`onBadgeClick`** 绑在 **`button` + `data-eds-trigger-metrics`**，`@click.stop.prevent`；以 **`panelExpanded`**（`@open`/`@close` 同步）判断开/关 | `@pointerdown.capture` 拦截 click；裸依赖 DS trigger 默认 click |
+| 开：`closeAllAnchoredTooltips()` → `openPanel()`；关：`dismissPanel()` | `readAnchoredOpen()` 驱动 UI 分支；`toggle()` 与 `panelExpanded` 并行 |
+| Popup / 批选 / 无邀请 / **离开待签名** 时 **`dismissPanel()`** 或 **`v-if` 卸载**（勿 `v-show` 隐藏留 teleport） | 用 `v-show` 只藏 trigger、teleport 残留导致切页后点不开 |
+| host **`pointer-events: none`** + **`data-float-interactive`**；teleport 关闭态穿透（`multiSignInvitationPanel.css` + `global.css` 排除） | `global.css` 对邀请 teleport  blanket `pointer-events:auto` |
+| Dev Inspect 排除 **`[data-app-client-float-host]`** | Dev 打开时 block 浮标 |
+| 自动展开走同一 **`openPanel()`** | auto-open 单独 `openPanel` 不关其它浮层 |
+
+**MPC 引导 Popover**（`MultiSignParticipantMpcGuideAnchored`）：外层 `EgAnchoredTooltip` 同样 `click-toggle=false`；slot 内 `data-eds-trigger-metrics` **须** `@click.stop`，否则点 latency `EgFlotation` 时事件冒泡到外层 trigger → 引导不关且与 Flotation 菜单叠层。Flotation `@open` 须调 `dismissGuide()`；用户关闭后 `guideSuppressed` 阻止同态 auto-open。
+
+#### 层级与 Popup 共存
+
+| 场景 | 行为 |
+|------|------|
+| 默认 | 浮标 host `[data-app-client-float-host]` **z-index 1101**；teleport 邀请面板 **1102**（`.multi-sign-invitation-panel-root`） |
+| `clientPopupActive`（EgPopup / 多签等待室等） | host 挂 `overlayLayerUnderPopup` → **z-index 15**（低于 shell 20）；`watch` **dismissPanel** — 浮标不可点属预期 |
+| Popup 关闭后 | `watch(clientPopupActive)` 已 dismiss；再点浮标须能正常 open |
+
+#### Join 与内容
+
+| 必须 | 禁止 |
+|------|------|
+| `onJoinInvitation`：**先** `find` 缓存 invitation，**再** `joinMultiSignInvitation(id)`（store 会删项） | join 后再 `find` 同 id |
+| 面板内容根：`.multi-sign-invitation-panel-root` + `useScrollChromeScrim` | 在 `#content` 外包未激活的 `motion-flotation`（opacity 0 整页空白） |
+| `EgTooltip` 只做 trigger 胶囊材质；`panel-kind="popup"` + `radius-full` | 把 Flotation 尺寸写进 EgTooltip 壳 |
+
+#### 可见性
+
+- 仅 **Tasks → 待签名（Signing）** 且 `pendingMultiSignInvitationCount > 0` 且非批选模式（`multiSignCollaborationModuleActive` + `!signingBatchSelectModeActive`）。
+- Toast 用 host 内独立 `motion-flotation`，勿与 AnchoredTooltip 面板混用同一套 open 态。
+
+**验收**：待签名列表 → 点浮标开/关面板 → 点「加入」进参与者等待室 → 关闭等待室 → 再点浮标；开 Detail / 签名 Popup 时浮标降级且面板关闭。
+
 ### 7.4 数据列表 · 付款钱包列（锁死）
 
 **Mock**：`tasksListFieldBusinessTypeRowData.ts`
@@ -777,6 +853,44 @@ multiSignJoinedCount.value = required;
 | 正确 | 错误 |
 |------|------|
 | 无溢出时 Tag 紧跟文字；溢出时文字省略、Tag 仍可见 | OverflowText 根 `host-flex`（`flex: 1 1 auto`）把 Tag 推到列最右 |
+
+### 7.5 Shell Debug QA 平台（壳外 · DEV only · 锁死）
+
+**挂载**：`AppRoot.vue` 在 `import.meta.env.DEV` 时异步挂载 `src/dev/shell-debug/**`；生产构建不包含。
+
+| 允许 | 禁止 |
+|------|------|
+| `src/dev/shell-debug/**` | 改 `../eds-desktop/packages/**` |
+| `AppRoot.vue` / `main.ts` 壳挂载 | 改 `src/scenes/**` 业务源码（为 QA 加分支） |
+| import 业务 **已 export** 的 store / 函数 / 只读评估 helper | 业务 import `src/dev/**` |
+| 只读 DOM / computedStyle（开发者模式） | 业务内 `if (DEV)` 分支 |
+
+**启动器（壳外）**
+
+- Dev / QA 胶囊在 **`.app-preview` 右侧**（`ShellDebugPlatform.module.css`），`teleport-to="body"`，`boundary-selector="body"`。
+- QA Popover 标题 = 当前 ModuleMenu 聚焦页名；优先 `pageKey` i18n（`useShellPageContext`），勿读 badge 拼接后的 `textContent`。
+- Popover 尺寸：`320` 宽；`min-height: 380` / `max-height: 560`；`height-mode="adaptive"`。
+- 再次点击已打开的 Dev/QA 胶囊须 **关闭** Popover（`button` 上 `@click.stop.prevent` + `active` 时 `close()`）。
+- **禁止** `:on-before-open` 内 `await nextTick()` 改 `align`（首开 remount 导致须点两次）；`align` 默认 `end`，`onMounted` / 点击前 **同步** `resolvePopoverAlign()`。
+
+**QA 能力（场景注入 · 锁死）**
+
+- QA 面板 **仅展示测试项**（`listQaScenariosForPage` 注册的 `apply()` 列表）；点「执行」调用业务 **公开 API** 注入状态 / 打开弹窗。
+- **禁止**在 QA 面板内做只读数据预览、异常行列表、或写入业务 DataList / 批签 filter（验收走 App 内真实 UI）。
+
+**空态与注册**
+
+- 当前 `pageKey` 无注册场景 → 显示「**当前业务无测试**」（`listQaScenariosForPage`：全局 `*` 项 + 页内项；全局项排最前）。
+- **全局通用项**（所有 QA 面板）：`空页面`、`加载中`（`commonScenarioPack.ts` → `tasksDataListShellApiRegistry`）。
+- 场景定义：`src/dev/shell-debug/scenarios/*.ts` → `registerShellDebugScenarios`；按页精确匹配 `pageKey`（如 `Tasks:Signing`）。
+- 待签名页示例：`scenarios/signingScenarioPack.ts`（空页面、签名失败、批签确认、额度告警、多签等待/就绪、分片缺失等）。
+- 列表空态：`tasksDataListShellApiRegistry.setListEmpty`（`tasksDataListShellApi.ts`，页面 mount 注册；非 DEV 分支）。
+
+**扩展**
+
+- Inspect：`inspect/registerInspectBlock.ts`
+- Scenario pack：`scenarios/signingScenarioPack.ts` 等
+- 详案：`src/dev/shell-debug/AGENTS.md`
 
 ---
 
@@ -956,6 +1070,7 @@ PR 合并前逐项确认：
 - [ ] MultiSignWaiting：`joinedCount = max(1, required-1)`；pending/offline 无设备标签（§7.3）
 - [ ] 付款钱包：第 3 行长名溢出；短名 Tag 紧跟文字（`titleTextSlot`，§7.4）
 - [ ] **Top & Bottom Mask**（§6.5）：Skid 用 `EgSkid`；自定义壳用 `useScrollChromeScrim`；无毛玻璃手搓 sticky / 不透明顶底背景
+- [ ] **网络名称**（§6.6）：Tag 为链全名；无 `BSC` / `USDT-Ethereum`；批处理分组保留 `Ethereum Mainnet` / `The Open Network` / `Tron`
 
 ---
 
@@ -1048,6 +1163,10 @@ Showcase 外层是 **Website** `body-medium`（18px）。Desktop spec 中 ToolBa
 
 见 **§7.4**。`EgListFieldOverflowText` 外包 `titleTextSlot`（`flex: 0 1 auto`），勿让 host-flex 占满整列。
 
+### Q: 网络 Tag 写 BSC 还是 BNB Smart Chain？
+
+见 **§6.6**。Tag 用链全名（**BNB Smart Chain**，非 BSC）；禁止 `USDT-Ethereum`。批处理分组保留 **Ethereum Mainnet** / **The Open Network** / **Tron**。
+
 ---
 
 ## 12. 参考文件索引
@@ -1063,6 +1182,7 @@ Showcase 外层是 **Website** `body-medium`（18px）。Desktop spec 中 ToolBa
 | list-field crypto 校验 | `work-cregis-desktop/scripts/verify-list-field-crypto.mjs` |
 | EgPopup 叠层 lifecycle | `src/scenes/tasks/shared/usePopupShellLifecycle.ts` |
 | 数字千分位封装 | `src/utils/formatGroupedDisplay.ts` |
+| 网络名称 §6.6 | `tasksListFieldCurrencyRowPresets.ts` · `batchNetworkGroup.ts` · `buildMultiSignInvitationDemoData.ts` |
 | Scroll chrome / Top & Bottom Mask | `.cursor/rules/top&botton-mask.mdc` · `eds-desktop/.cursor/rules/top&botton-mask.mdc` |
 | Scroll chrome composable | `src/scenes/tasks/shared/useScrollChromeScrim.ts` |
 | 批量签名 flow | `src/scenes/tasks/signing/batch/useSigningBatchFlow.ts` |
@@ -1070,6 +1190,7 @@ Showcase 外层是 **Website** `body-medium`（18px）。Desktop spec 中 ToolBa
 | 多签等待 model | `src/scenes/tasks/signing/buildMultiSignWaitingPanelModel.ts` |
 | 付款钱包 mock | `src/scenes/tasks/list-field/tasksListFieldBusinessTypeRowData.ts` |
 | 客户端示例 | `work-cregis-desktop/AGENTS.md` |
+| Shell Debug QA（§7.5） | `src/dev/shell-debug/AGENTS.md` · `ShellDebugPlatform.vue` · `scenarios/signingScenarioPack.ts` |
 
 ---
 
@@ -1077,7 +1198,7 @@ Showcase 外层是 **Website** `body-medium`（18px）。Desktop spec 中 ToolBa
 
 | 字段 | 值 |
 |------|-----|
-| 文档版本 | 1.6 |
+| 文档版本 | 1.7 |
 | 对齐 eds-project | 2026-08-05 |
 | EgPopup 叠层动效 §7.1 | 2026-08-08 |
 | 关闭动效一致性 §7.1.1 | 2026-08-09 |
@@ -1089,6 +1210,7 @@ Showcase 外层是 **Website** `body-medium`（18px）。Desktop spec 中 ToolBa
 | Scroll chrome 毛玻璃 §6.5 | 2026-08-10 |
 | Top & Bottom Mask 强推规则 `top&botton-mask.mdc` | 2026-08-10 |
 | 开发改动 dev 实时生效 §2.3.2 | 2026-08-10 |
+| 网络名称 §6.6 | 2026-08-13 |
 | Showcase / AI 提示词片段 §7.1 | 2026-08-09 |
 | list-field sync 排除 | 2026-08-05 |
 | 维护 | EDS Desktop 维护者 |

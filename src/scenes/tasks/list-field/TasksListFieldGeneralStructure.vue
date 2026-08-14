@@ -1,12 +1,26 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
-import { EgListFieldOverflowText, EgTag, type TagSystemType } from '@eds/desktop-components';
+import { EgAvatar, EgDivider, EgIcon, EgListFieldOverflowText, EgTag, type IconName, type TagSystemType } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
+import {
+  splitBusinessTypeSecondaryKey,
+} from './businessTypeDisplay';
+import {
+  formatExpiryCountdownHms,
+  parseExpiryCountdownTotal,
+} from '../shared/expiryCountdownUtils';
 import styles from './TasksListFieldGeneralStructure.module.css';
 
 const props = defineProps<{
   customize: Record<string, unknown>;
 }>();
+
+function resolveInitiatorDisplayName(raw: string): string {
+  const trimmed = raw.trim();
+  const parenIndex = trimmed.indexOf(' (');
+  if (parenIndex > 0) return trimmed.slice(0, parenIndex).trim();
+  return trimmed;
+}
 
 const COUNTDOWN_LOOP_SECONDS = 60 * 60;
 
@@ -33,9 +47,29 @@ function formatCountdownTotal(total: number): string {
 }
 
 const value = computed(() => String(props.customize.value ?? ''));
-const secondaryValue = computed(() => String(props.customize.secondaryValue ?? ''));
+const { ui } = useAppI18n();
+const secondaryValueRaw = computed(() => String(props.customize.secondaryValue ?? '').trim());
+const secondaryValue = computed(() => ui(secondaryValueRaw.value));
+const businessTypeSecondaryParts = computed(() => {
+  const parts = splitBusinessTypeSecondaryKey(secondaryValueRaw.value);
+  if (!parts) return null;
+  return {
+    source: ui(parts.sourceKey),
+    action: ui(parts.actionKey),
+  };
+});
+const showBusinessTypeSecondary = computed(
+  () => isDoubleLine.value && secondaryValueRaw.value.length > 0 && businessTypeSecondaryParts.value != null,
+);
+const showPlainSecondary = computed(
+  () => isDoubleLine.value && secondaryValueRaw.value.length > 0 && businessTypeSecondaryParts.value == null,
+);
+const showCountdownOnSecondary = computed(
+  () => showBusinessTypeSecondary.value && Boolean(props.customize.showCountdown),
+);
 const lineLayout = computed(() => String(props.customize.lineLayout ?? 'double'));
 const isDoubleLine = computed(() => lineLayout.value === 'double');
+const operationTypeOnly = computed(() => Boolean(props.customize.operationTypeOnly));
 const showLeftTag = computed(() => Boolean(props.customize.showLeftTag));
 const showRightTag = computed(() => Boolean(props.customize.showRightTag));
 const showCountdown = computed(
@@ -50,12 +84,39 @@ const countdownAlignClass = computed(() => {
 const leftTagSystemType = computed(
   () => String(props.customize.leftSystemType ?? 'stroke-solid') as TagSystemType,
 );
-const { ui } = useAppI18n();
 const leftTagLabel = computed(() => ui(String(props.customize.leftLabel ?? 'Me')));
 const rightTagSystemType = computed(
   () => String(props.customize.rightSystemType ?? 'stroke-subtle') as TagSystemType,
 );
 const rightTagLabel = computed(() => ui(String(props.customize.rightLabel ?? 'Tag')));
+const initiatorIconKind = computed((): 'avatar' | 'app' | 'none' => {
+  const explicit = String(props.customize.initiatorIconKind ?? '').trim();
+  if (explicit === 'avatar' || explicit === 'app' || explicit === 'none') {
+    return explicit;
+  }
+  return 'avatar';
+});
+const showAvatar = computed(() => initiatorIconKind.value === 'avatar');
+const showAppIcon = computed(() => initiatorIconKind.value === 'app');
+const appIconName = computed(
+  () => String(props.customize.initiatorAppIcon ?? 'eds-application-22') as IconName,
+);
+const countdownSuffixKey = computed(() =>
+  String(props.customize.countdownSuffixKey ?? 'Until Expiry').trim() || 'Until Expiry',
+);
+const countdownListText = computed(() => {
+  const total = parseExpiryCountdownTotal(
+    String(props.customize.countdownMinutes ?? '30'),
+    String(props.customize.countdownSeconds ?? '00'),
+    String(props.customize.countdownHours ?? '0'),
+  );
+  return `${formatExpiryCountdownHms(total)} ${ui(countdownSuffixKey.value)}`;
+});
+const primaryDisplayText = computed(() => value.value);
+const avatarDisplayName = computed(() => resolveInitiatorDisplayName(value.value));
+const avatarColorSeed = computed(() =>
+  String(props.customize.avatarColorSeed ?? avatarDisplayName.value),
+);
 const tooltipTrigger = computed(
   () => String(props.customize.tooltipTrigger ?? 'hover') as 'hover' | 'focus',
 );
@@ -128,7 +189,56 @@ const countdownTime = computed(() => formatCountdownTotal(countdownRemainingSeco
     :class="styles.host"
   >
     <div
-      v-if="showLeftTag || showRightTag"
+      v-if="operationTypeOnly"
+      :class="styles.operationTypeOnlyRow"
+      :style="hashLikeMinWidthStyle"
+    >
+      <span
+        v-if="showBusinessTypeSecondary || showCountdownOnSecondary"
+        class="hash-like-combo"
+        :class="styles.hashLikeCombo"
+      >
+        <EgListFieldOverflowText
+          :text="businessTypeSecondaryParts!.source"
+          variant="primary"
+          :tooltip-trigger="tooltipTrigger"
+        />
+        <div v-if="showCountdownOnSecondary" :class="styles.hashLikeComboSecondaryRow">
+          <span :class="styles.secondaryRowAction">
+            <EgListFieldOverflowText
+              :text="businessTypeSecondaryParts!.action"
+              variant="secondary"
+              :tooltip-trigger="tooltipTrigger"
+            />
+          </span>
+          <EgDivider type="navigator" direction="vertical" />
+          <span :class="styles.secondaryRowCountdown">
+            <EgListFieldOverflowText
+              :text="countdownListText"
+              variant="secondary"
+              tabular
+              :tooltip-trigger="tooltipTrigger"
+            />
+          </span>
+        </div>
+        <EgListFieldOverflowText
+          v-else
+          :text="businessTypeSecondaryParts!.action"
+          variant="secondary"
+          :tooltip-trigger="tooltipTrigger"
+        />
+      </span>
+      <EgListFieldOverflowText
+        v-else-if="showPlainSecondary"
+        :text="secondaryValue"
+        variant="secondary"
+        tabular
+        :tooltip-trigger="tooltipTrigger"
+      />
+    </div>
+
+    <div
+      v-else-if="showLeftTag || showRightTag"
       :class="isDoubleLine ? styles.stackPreview : styles.titleRow"
       :style="hashLikeMinWidthStyle"
     >
@@ -142,9 +252,22 @@ const countdownTime = computed(() => formatCountdownTotal(countdownRemainingSeco
           >
             {{ leftTagLabel }}
           </EgTag>
+          <EgIcon
+            v-if="showAppIcon"
+            :name="appIconName"
+            fit
+            :class="styles.appIcon"
+          />
+          <EgAvatar
+            v-else-if="showAvatar"
+            size="xs"
+            :name="avatarDisplayName"
+            :color-seed="avatarColorSeed"
+            :class="styles.avatar"
+          />
           <div :class="styles.titleTextSlot">
             <EgListFieldOverflowText
-              :text="value"
+              :text="primaryDisplayText"
               variant="primary"
               :tooltip-trigger="tooltipTrigger"
             />
@@ -158,9 +281,54 @@ const countdownTime = computed(() => formatCountdownTotal(countdownRemainingSeco
             {{ rightTagLabel }}
           </EgTag>
         </div>
+        <div v-if="showCountdownOnSecondary" :class="styles.secondaryRow">
+          <span :class="styles.secondaryRowSource">
+            <EgListFieldOverflowText
+              :text="businessTypeSecondaryParts!.source"
+              variant="secondary"
+              :tooltip-trigger="tooltipTrigger"
+            />
+          </span>
+          <EgDivider type="navigator" direction="vertical" />
+          <span :class="styles.secondaryRowAction">
+            <EgListFieldOverflowText
+              :text="businessTypeSecondaryParts!.action"
+              variant="secondary"
+              :tooltip-trigger="tooltipTrigger"
+            />
+          </span>
+          <EgDivider type="navigator" direction="vertical" />
+          <span :class="styles.secondaryRowCountdown">
+            <EgListFieldOverflowText
+              :text="countdownListText"
+              variant="secondary"
+              tabular
+              :tooltip-trigger="tooltipTrigger"
+            />
+          </span>
+        </div>
+        <div v-else-if="showBusinessTypeSecondary" :class="styles.secondaryRow">
+          <span :class="styles.secondaryRowSource">
+            <EgListFieldOverflowText
+              :text="businessTypeSecondaryParts!.source"
+              variant="secondary"
+              :tooltip-trigger="tooltipTrigger"
+            />
+          </span>
+          <EgDivider type="navigator" direction="vertical" />
+          <span :class="styles.secondaryRowAction">
+            <EgListFieldOverflowText
+              :text="businessTypeSecondaryParts!.action"
+              variant="secondary"
+              :tooltip-trigger="tooltipTrigger"
+            />
+          </span>
+        </div>
         <EgListFieldOverflowText
+          v-else-if="showPlainSecondary"
           :text="secondaryValue"
           variant="secondary"
+          tabular
           :tooltip-trigger="tooltipTrigger"
         />
       </template>
@@ -173,9 +341,22 @@ const countdownTime = computed(() => formatCountdownTotal(countdownRemainingSeco
         >
           {{ leftTagLabel }}
         </EgTag>
+        <EgIcon
+          v-if="showAppIcon"
+          :name="appIconName"
+          fit
+          :class="styles.appIcon"
+        />
+        <EgAvatar
+          v-else-if="showAvatar"
+          size="xs"
+          :name="avatarDisplayName"
+          :color-seed="avatarColorSeed"
+          :class="styles.avatar"
+        />
         <div :class="styles.titleTextSlot">
           <EgListFieldOverflowText
-            :text="value"
+            :text="primaryDisplayText"
             variant="primary"
             :tooltip-trigger="tooltipTrigger"
           />
@@ -193,14 +374,74 @@ const countdownTime = computed(() => formatCountdownTotal(countdownRemainingSeco
 
     <template v-else>
       <span v-if="isDoubleLine" :class="styles.combo" :style="hashLikeMinWidthStyle">
+        <div :class="styles.titleRow">
+          <EgIcon
+            v-if="showAppIcon"
+            :name="appIconName"
+            fit
+            :class="styles.appIcon"
+          />
+          <EgAvatar
+            v-else-if="showAvatar"
+            size="xs"
+            :name="avatarDisplayName"
+            :color-seed="avatarColorSeed"
+            :class="styles.avatar"
+          />
+          <EgListFieldOverflowText
+            :text="primaryDisplayText"
+            variant="primary"
+            :tooltip-trigger="tooltipTrigger"
+          />
+        </div>
+        <div v-if="showCountdownOnSecondary" :class="styles.secondaryRow">
+          <span :class="styles.secondaryRowSource">
+            <EgListFieldOverflowText
+              :text="businessTypeSecondaryParts!.source"
+              variant="secondary"
+              :tooltip-trigger="tooltipTrigger"
+            />
+          </span>
+          <EgDivider type="navigator" direction="vertical" />
+          <span :class="styles.secondaryRowAction">
+            <EgListFieldOverflowText
+              :text="businessTypeSecondaryParts!.action"
+              variant="secondary"
+              :tooltip-trigger="tooltipTrigger"
+            />
+          </span>
+          <EgDivider type="navigator" direction="vertical" />
+          <span :class="styles.secondaryRowCountdown">
+            <EgListFieldOverflowText
+              :text="countdownListText"
+              variant="secondary"
+              tabular
+              :tooltip-trigger="tooltipTrigger"
+            />
+          </span>
+        </div>
+        <div v-else-if="showBusinessTypeSecondary" :class="styles.secondaryRow">
+          <span :class="styles.secondaryRowSource">
+            <EgListFieldOverflowText
+              :text="businessTypeSecondaryParts!.source"
+              variant="secondary"
+              :tooltip-trigger="tooltipTrigger"
+            />
+          </span>
+          <EgDivider type="navigator" direction="vertical" />
+          <span :class="styles.secondaryRowAction">
+            <EgListFieldOverflowText
+              :text="businessTypeSecondaryParts!.action"
+              variant="secondary"
+              :tooltip-trigger="tooltipTrigger"
+            />
+          </span>
+        </div>
         <EgListFieldOverflowText
-          :text="value"
-          variant="primary"
-          :tooltip-trigger="tooltipTrigger"
-        />
-        <EgListFieldOverflowText
+          v-else-if="showPlainSecondary"
           :text="secondaryValue"
           variant="secondary"
+          tabular
           :tooltip-trigger="tooltipTrigger"
         />
       </span>
@@ -209,11 +450,26 @@ const countdownTime = computed(() => formatCountdownTotal(countdownRemainingSeco
         :class="showCountdown ? [styles.singleStack, countdownAlignClass] : undefined"
         :style="hashLikeMinWidthStyle"
       >
-        <EgListFieldOverflowText
-          :text="value"
-          variant="primary"
-          :tooltip-trigger="tooltipTrigger"
-        />
+        <div :class="styles.titleRow">
+          <EgIcon
+            v-if="showAppIcon"
+            :name="appIconName"
+            fit
+            :class="styles.appIcon"
+          />
+          <EgAvatar
+            v-else-if="showAvatar"
+            size="xs"
+            :name="avatarDisplayName"
+            :color-seed="avatarColorSeed"
+            :class="styles.avatar"
+          />
+          <EgListFieldOverflowText
+            :text="primaryDisplayText"
+            variant="primary"
+            :tooltip-trigger="tooltipTrigger"
+          />
+        </div>
         <span v-if="showCountdown" :class="styles.countdown">
           <span :class="styles.countdownTime">{{ countdownTime }}</span>
           <span :class="styles.countdownSuffix"> Until Expiry</span>

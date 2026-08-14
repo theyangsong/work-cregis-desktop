@@ -81,6 +81,9 @@ watch(
     :data-volume-count="formatGroupedNumber(totalRowCount)"
     :data-volume-results="displayPaginerResults"
     :settings-level-labels="[...DATA_LIST_FIGMA_PAGE_SIZE_OPTIONS]"
+    :settings-level-label="ui('Items Per Page')"
+    :settings-jump-label="ui('Go to Page')"
+    :settings-jump-placeholder="ui('Please Enter')"
     @settings-jump="onSettingsJump"
   >
     <EgPaginationItem

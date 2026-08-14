@@ -1,3 +1,5 @@
+import { resolveAddressSideFullLabel } from '../list-field/listFieldAddressLineModel';
+import { formatEmptyDisplayValue } from '@/utils/formatEmptyDisplay';
 import { parseSigningThreshold } from './multiSignWaiting.constants';
 import { formatGroupedAmountText } from '@/utils/formatGroupedDisplay';
 import type { SigningDetail, SigningProgressMember } from './types';
@@ -129,24 +131,24 @@ export function buildMultiSignWaitingPanelModel(
       },
       {
         key: 'business-type',
-        labelKey: 'Type of Business',
+        labelKey: 'Operation Type',
         value: translate(detail.businessType),
       },
       buildInitiatorSidebarField(detail),
       {
         key: 'sender',
         labelKey: 'From Address',
-        value: sender?.address ?? detail.senderSummary,
+        value: resolveAddressSideFullLabel(sender, detail.senderSummary),
       },
       {
         key: 'receiver',
         labelKey: 'To Address',
-        value: receiver?.address ?? detail.receiverSummary,
+        value: resolveAddressSideFullLabel(receiver, detail.receiverSummary),
       },
       {
         key: 'memo',
         labelKey: 'Memo',
-        value: detail.memo,
+        value: formatEmptyDisplayValue(detail.memo),
       },
     ],
     members: buildMultiSignWaitingMembers(detail, joinedCount),

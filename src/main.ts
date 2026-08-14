@@ -10,7 +10,7 @@ import '@eds/desktop-tokens';
 import './styles/desktop-components-scope.css';
 
 import { initAppLocale } from './composables/useAppLocale';
-import App from './App.vue';
+import AppRoot from './AppRoot.vue';
 import { router } from './router';
 import { installPageCopyGuard } from './utils/preventPageCopy';
 import './styles/global.css';
@@ -22,7 +22,7 @@ initThemeProvider();
 initAppLocale();
 installPageCopyGuard();
 
-createApp(App).use(router).mount('#app');
+createApp(AppRoot).use(router).mount('#app');
 
 router.afterEach(() => {
   requestAnimationFrame(() => {

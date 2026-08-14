@@ -14,6 +14,30 @@
   line-height: var(--eds-body-small-line-height);
 }
 
+.detailHost :global([data-detail-headline-eyebrow]) {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.detailEyebrowRow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1-5);
+  color: var(--text-base-primary);
+  font-size: var(--eds-body-small-strong-size);
+  font-weight: var(--eds-body-small-strong-weight);
+  line-height: var(--eds-body-small-strong-line-height);
+}
+
+.detailEyebrowDivider {
+  flex-shrink: 0;
+  align-self: center;
+  height: var(--scale-3);
+  min-height: var(--scale-3);
+  max-height: var(--scale-3);
+}
+
 /* EgDetail toolbar：module 分割线常驻（默认仅 scrollOverflows 时显示）。 */
 .detailHost :global(.eds-detail > footer .eds-divider) {
   opacity: 1;

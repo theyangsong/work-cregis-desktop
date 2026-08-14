@@ -112,6 +112,14 @@
   --ripple-pulse-color: var(--status-warning);
 }
 
+.statusIconRippleReady {
+  --ripple-pulse-color: var(--status-success);
+}
+
+.statusIconRippleFailed {
+  --ripple-pulse-color: var(--status-danger);
+}
+
 .statusIcon {
   position: relative;
   z-index: 1;
@@ -127,6 +135,23 @@
 
 .statusIconReady {
   background: var(--status-success);
+  color: var(--material-same-white-primary);
+}
+
+.statusIconReady :global(.eds-i-f),
+.statusIconFailed :global(.eds-i-f),
+.statusIconWaiting :global(.eds-i-f) {
+  fill: currentColor;
+}
+
+.statusIconReady :global(.eds-i-s),
+.statusIconFailed :global(.eds-i-s),
+.statusIconWaiting :global(.eds-i-s) {
+  stroke: currentColor;
+}
+
+.statusIconFailed {
+  background: var(--status-danger);
   color: var(--material-same-white-primary);
 }
 
@@ -168,6 +193,14 @@
   font-size: var(--eds-body-small-size);
   font-weight: var(--eds-body-small-weight);
   line-height: var(--eds-body-small-line-height);
+}
+
+.statusSubtitleNumber {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--spacing-1);
+  font-weight: var(--eds-body-small-strong-weight);
+  font-variant-numeric: tabular-nums;
 }
 
 .statusDividerSlot {
@@ -367,6 +400,14 @@
   z-index: 3;
   display: inline-flex;
   padding: var(--spacing-0);
+}
+
+.systemBarCloseTrigger {
+  display: inline-flex;
+}
+
+.systemBarCloseTriggerActive :global(.eds-icon-button:not(:disabled)) {
+  background-color: var(--event-focus);
 }
 
 .systemBarClose :global(.eds-icon-button) {

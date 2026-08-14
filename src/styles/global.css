@@ -150,12 +150,67 @@ body > [id^='eds-tooltip-v-'],
 .app-popup-overlay-host > * {
   position: absolute;
   inset: 0;
+  pointer-events: none;
+}
+
+.app-popup-overlay-root .eds-popup,
+.app-popup-overlay-host .eds-popup {
+  pointer-events: auto;
+}
+
+/*
+ * 客户端预览框内全局浮标：默认 z-index 由 FloatHost.module 控制（1101，高于 click Popover 1100）；
+ * EgPopup 打开时 FloatHost 挂 underPopup 降至 15，低于 shell（z-index: 20）。
+ */
+.app-preview > .eds-tooltip-panel > [data-app-client-float-host] {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* 仅浮标触发区可点；禁止对 overlay 子层 blanket 设 pointer-events: auto（会盖住整页列表）。 */
+.app-preview > .eds-tooltip-panel > [data-app-client-float-host] [data-float-interactive] {
+  pointer-events: auto;
+}
+
+/* @deprecated 选择器：浮标在 .eds-tooltip-panel 内，非 .app-preview 直接子节点 */
+.app-preview > [data-app-client-float-host] {
+  pointer-events: none;
+}
+
+.app-preview > [data-app-client-float-host] [data-float-interactive] {
+  pointer-events: auto;
+}
+
+#app > .app-preview {
+  overflow: visible;
+}
+
+/* teleport 到 .app-preview 的 AnchoredTooltip 浮层（多签邀请、详情引导等） */
+.app-preview > [id^='eds-tooltip-v-'] {
+  z-index: 1100;
+}
+
+/*
+ * Hover / focus Tooltip：仅浮层命中区拦截指针，避免 tooltip 下方误触底层行。
+ * 离场动画 inner 带 floatingInnerPassThrough，:has 不匹配故不拦截。
+ * 多签邀请关闭/离场时须穿透至浮标（1101），见 multiSignInvitationPanel.css。
+ */
+body > [id^='eds-tooltip-v-'] > div:first-child:has(> :not([class*='floatingInnerPassThrough'])),
+.app-preview
+  > [id^='eds-tooltip-v-']:not(:has(.multi-sign-invitation-panel-root))
+  > div:first-child:has(> :not([class*='floatingInnerPassThrough'])) {
   pointer-events: auto;
 }
 
 .app-popup-overlay-root > .app-popup-overlay-host > * {
   position: absolute;
   inset: 0;
+  pointer-events: none;
+}
+
+.app-popup-overlay-root > .app-popup-overlay-host .eds-popup {
   pointer-events: auto;
 }
 

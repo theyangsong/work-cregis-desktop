@@ -1,13 +1,15 @@
 /** Tasks Data List 页面数据 — 对齐 eds-desktop Showcase DataListPagePreview。 */
 
-/** 首列 min-width（含 cell 左右 padding）；EgCryptoCombo min-width 与之同步。 */
-export const CURRENCY_DATA_LIST_COLUMN_MIN_WIDTH = '210px';
+import { buildStatusRowValues } from './list-field/tasksListFieldStatusRowData';
 
-/** 第二列 Submitter：较高 min-width，在 DataList 均分 extra 时占据更多列宽。 */
+/** 接收方列 min-width（含 cell 左右 padding）。 */
+export const CURRENCY_DATA_LIST_COLUMN_MIN_WIDTH = '160px';
+
+/** 第一列 Submitter：较高 min-width，在 DataList 均分 extra 时占据更多列宽。 */
 export const GENERAL_STRUCTURE_DATA_LIST_COLUMN_MIN_WIDTH = '190px';
 
-/** 第三列 Payout Wallets min-width（含 cell 左右 padding）。 */
-export const BUSINESS_TYPE_DATA_LIST_COLUMN_MIN_WIDTH = '160px';
+/** 第四列发送方 min-width（含 cell 左右 padding）。 */
+export const BUSINESS_TYPE_DATA_LIST_COLUMN_MIN_WIDTH = '170px';
 
 /** Status 列 min-width（含 cell padding；EgTag lg + truncate 展示 Approved 长文案）。 */
 export const STATUS_DATA_LIST_COLUMN_MIN_WIDTH = '120px';
@@ -18,14 +20,14 @@ export const STATUS_DATA_LIST_COLUMN_DISPLAY_ORDER = 2;
 /** Payout Wallets 列 display-order：Status 展示时降低优先级。 */
 export const BUSINESS_TYPE_DATA_LIST_COLUMN_DISPLAY_ORDER = 5;
 
-/** 第四列金额列 min-width（含 cell 左右 padding）。 */
-export const AMOUNT_DATA_LIST_COLUMN_MIN_WIDTH = '160px';
+/** 第二列金额列 min-width（含 cell 左右 padding）。 */
+export const AMOUNT_DATA_LIST_COLUMN_MIN_WIDTH = '200px';
 
 /** 记录类模块（含 Status 列）第二列 min-width：原 190px − 20。 */
 export const RECORDS_GENERAL_STRUCTURE_DATA_LIST_COLUMN_MIN_WIDTH = '170px';
 
-/** 记录类模块（含 Status 列）金额列 min-width：原 160px + 20。 */
-export const RECORDS_AMOUNT_DATA_LIST_COLUMN_MIN_WIDTH = '180px';
+/** 记录类模块（含 Status 列）金额列 min-width：200px + 20。 */
+export const RECORDS_AMOUNT_DATA_LIST_COLUMN_MIN_WIDTH = '220px';
 
 /** 尾列操作列 min-width（含 cell 左右 padding）。 */
 export const ACTION_DATA_LIST_COLUMN_MIN_WIDTH = '120px';
@@ -70,19 +72,19 @@ export const DATA_LIST_FIGMA_COLUMNS = {
   },
   sortable: {
     label: 'Initiating party',
-    secondaryLabel: 'Application Time',
+    secondaryLabel: 'Operation Type',
     minWidth: '190px',
     align: 'left' as const,
   },
   businessType: {
     label: 'Outbound Wallet',
-    minWidth: '160px',
+    minWidth: '170px',
     align: 'left' as const,
   },
   amount: {
     label: 'Amount',
-    secondaryLabel: 'Type of Business',
-    minWidth: '160px',
+    secondaryLabel: 'Application Time',
+    minWidth: '200px',
     align: 'left' as const,
   },
   plain: {
@@ -108,6 +110,8 @@ export type DataListColumnDataSource =
   | 'business-type'
   | 'status'
   | 'amount'
+  | 'receiver'
+  | 'created-time'
   | 'action';
 
 export type DataListPreviewColumnSetting = {
@@ -171,59 +175,201 @@ export function tasksDataListShowsActionColumn(menuItem: string | undefined): bo
   return menuItem === 'Approval' || menuItem === 'Signing';
 }
 
+/** 我发起的 · 待审批行操作列主按钮文案。 */
+export const SENT_REQUEST_WITHDRAW_ACTION_LABEL = 'Withdraw request';
+
+/** 我发起的 · 「待审批」「待签名」行展示撤回申请。 */
+const SENT_REQUEST_WITHDRAWABLE_STATUS_LABELS = new Set([
+  'Pending Approval',
+  'Waiting for signature',
+]);
+
+export function sentRequestRowShowsWithdrawAction(
+  rowIndex: number,
+  menuItem?: string,
+): boolean {
+  if (menuItem !== 'Sent Request') {
+    return false;
+  }
+  return SENT_REQUEST_WITHDRAWABLE_STATUS_LABELS.has(
+    buildStatusRowValues(rowIndex, menuItem).label,
+  );
+}
+
 /** 待办类菜单保留 Batch；已办 / 记录类不展示。 */
 export function tasksDataListShowsBatch(menuItem: string | undefined): boolean {
   return menuItem === 'Approval' || menuItem === 'Signing';
 }
 
-/** Sent Request 隐藏 Initiator 列后，首列额外分配 30px（210 → 240）。 */
+/** Sent Request 金额列 min-width。 */
+export const SENT_REQUEST_AMOUNT_DATA_LIST_COLUMN_MIN_WIDTH = '200px';
+
+/** Sent Request 操作类型列 min-width（空间不足时优先隐藏/缩窄）。 */
+export const SENT_REQUEST_OPERATION_TYPE_DATA_LIST_COLUMN_MIN_WIDTH =
+  GENERAL_STRUCTURE_DATA_LIST_COLUMN_MIN_WIDTH;
+
+/** @deprecated 别名；Sent Request 第二列已改为操作类型。 */
+export const SENT_REQUEST_CREATED_TIME_DATA_LIST_COLUMN_MIN_WIDTH =
+  SENT_REQUEST_OPERATION_TYPE_DATA_LIST_COLUMN_MIN_WIDTH;
+
+/** @deprecated 别名；Sent Request 操作类型列不再固定 width。 */
+export const SENT_REQUEST_CREATED_TIME_DATA_LIST_COLUMN_WIDTH =
+  SENT_REQUEST_OPERATION_TYPE_DATA_LIST_COLUMN_MIN_WIDTH;
+
+/** Sent Request 发送方列 min-width。 */
+export const SENT_REQUEST_SENDER_DATA_LIST_COLUMN_MIN_WIDTH = '160px';
+
+/** Sent Request 接收方列 min-width。 */
+export const SENT_REQUEST_RECEIVER_DATA_LIST_COLUMN_MIN_WIDTH = '150px';
+
+/** Sent Request 审批进度列 min-width。 */
+export const SENT_REQUEST_STATUS_DATA_LIST_COLUMN_MIN_WIDTH = '150px';
+
+/** Sent Request 响应式列优先级（display-order 越大越先隐藏；Action 须最大以钉住尾列）。 */
+export const SENT_REQUEST_AMOUNT_DATA_LIST_COLUMN_DISPLAY_ORDER = 1;
+export const SENT_REQUEST_RECEIVER_DATA_LIST_COLUMN_DISPLAY_ORDER = 2;
+export const SENT_REQUEST_SENDER_DATA_LIST_COLUMN_DISPLAY_ORDER = 3;
+export const SENT_REQUEST_CREATED_TIME_DATA_LIST_COLUMN_DISPLAY_ORDER = 7;
+export const SENT_REQUEST_STATUS_DATA_LIST_COLUMN_DISPLAY_ORDER = 8;
+export const SENT_REQUEST_ACTION_DATA_LIST_COLUMN_DISPLAY_ORDER = 10;
+
+/** @deprecated Sent Request 接收方列已改为 min-width 钉死，剩余空间分给 1–3 列。 */
 export const SENT_REQUEST_CURRENCY_DATA_LIST_COLUMN_WIDTH = '240px';
 
-/** Sent Request 第二列额外分配 100px（160 → 260；原 60 + 40）。 */
+/** @deprecated Sent Request 发送方列已参与 flex 均分，不再固定 width。 */
 export const SENT_REQUEST_BUSINESS_TYPE_DATA_LIST_COLUMN_WIDTH = '260px';
 
-/** Sent Request 不展示第二列（Initiator | Created Time）。 */
+/** Sent Request 不展示第一列（Initiator | Operation Type 组合）。 */
 export function tasksDataListShowsGeneralStructureColumn(menuItem: string | undefined): boolean {
   return menuItem !== 'Sent Request';
 }
 
-/** Sent Request 首列固定 240px（min 210 + 分配 30），不参与 flex 均分。 */
-export function tasksDataListCurrencyColumnWidth(menuItem: string | undefined): string | undefined {
-  if (menuItem === 'Sent Request') return SENT_REQUEST_CURRENCY_DATA_LIST_COLUMN_WIDTH;
+/** Sent Request 接收方列钉在 min-width（不参与 flex 均分）。 */
+export function tasksDataListReceiverColumnWidth(menuItem: string | undefined): string | undefined {
+  if (menuItem === 'Sent Request') return SENT_REQUEST_RECEIVER_DATA_LIST_COLUMN_MIN_WIDTH;
   return undefined;
 }
 
-/** Sent Request 第二列固定 260px（min 160 + 分配 100），不参与 flex 均分。 */
+/** @deprecated 币种列已移除；保留别名供旧引用迁移。 */
+export function tasksDataListCurrencyColumnWidth(menuItem: string | undefined): string | undefined {
+  return tasksDataListReceiverColumnWidth(menuItem);
+}
+
+/** Sent Request 发送方列不设固定 width，与 1、2 列均分剩余空间。 */
 export function tasksDataListBusinessTypeColumnWidth(
+  _menuItem: string | undefined,
+): string | undefined {
+  return undefined;
+}
+
+/** Sent Request 操作类型列 min-width（list-field-general-structure · operationTypeOnly）。 */
+export function tasksDataListBusinessTypeColumnMinWidth(
+  menuItem: string | undefined,
+  fallbackMinWidth: string,
+): string {
+  if (menuItem === 'Sent Request') return SENT_REQUEST_SENDER_DATA_LIST_COLUMN_MIN_WIDTH;
+  return fallbackMinWidth;
+}
+
+export function tasksDataListReceiverColumnMinWidth(
+  menuItem: string | undefined,
+  fallbackMinWidth: string,
+): string {
+  if (menuItem === 'Sent Request') return SENT_REQUEST_RECEIVER_DATA_LIST_COLUMN_MIN_WIDTH;
+  return fallbackMinWidth;
+}
+
+export function tasksDataListCreatedTimeColumnMinWidth(
   menuItem: string | undefined,
 ): string | undefined {
-  if (menuItem === 'Sent Request') return SENT_REQUEST_BUSINESS_TYPE_DATA_LIST_COLUMN_WIDTH;
+  if (menuItem === 'Sent Request') return SENT_REQUEST_OPERATION_TYPE_DATA_LIST_COLUMN_MIN_WIDTH;
   return undefined;
 }
 
-/** Sent Request 第二列表头：Payout Wallets | Created Time combo。 */
-export function tasksDataListBusinessTypeColumnShowsComboHeader(
+/** @deprecated 使用 tasksDataListCreatedTimeColumnMinWidth */
+export function tasksDataListCreatedTimeColumnWidth(
   menuItem: string | undefined,
-): boolean {
+): string | undefined {
+  return tasksDataListCreatedTimeColumnMinWidth(menuItem);
+}
+
+export function tasksDataListStatusColumnMinWidth(menuItem: string | undefined): string {
+  if (menuItem === 'Sent Request') return SENT_REQUEST_STATUS_DATA_LIST_COLUMN_MIN_WIDTH;
+  return STATUS_DATA_LIST_COLUMN_MIN_WIDTH;
+}
+
+/** Sent Request 审批进度列钉在 min-width（不参与 flex 均分）。 */
+export function tasksDataListStatusColumnWidth(menuItem: string | undefined): string | undefined {
+  if (menuItem === 'Sent Request') return SENT_REQUEST_STATUS_DATA_LIST_COLUMN_MIN_WIDTH;
+  return undefined;
+}
+
+export function tasksDataListStatusColumnDisplayOrder(menuItem: string | undefined): number {
+  if (menuItem === 'Sent Request') return SENT_REQUEST_STATUS_DATA_LIST_COLUMN_DISPLAY_ORDER;
+  return STATUS_DATA_LIST_COLUMN_DISPLAY_ORDER;
+}
+
+export function tasksDataListCreatedTimeColumnDisplayOrder(
+  menuItem: string | undefined,
+): number | undefined {
+  if (menuItem === 'Sent Request') return SENT_REQUEST_CREATED_TIME_DATA_LIST_COLUMN_DISPLAY_ORDER;
+  return undefined;
+}
+
+export function tasksDataListBusinessTypeColumnDisplayOrder(
+  menuItem: string | undefined,
+  showStatusColumn: boolean,
+): number {
+  if (menuItem === 'Sent Request') return SENT_REQUEST_SENDER_DATA_LIST_COLUMN_DISPLAY_ORDER;
+  return showStatusColumn ? BUSINESS_TYPE_DATA_LIST_COLUMN_DISPLAY_ORDER : 4;
+}
+
+export function tasksDataListReceiverColumnDisplayOrder(
+  menuItem: string | undefined,
+): number | undefined {
+  if (menuItem === 'Sent Request') return SENT_REQUEST_RECEIVER_DATA_LIST_COLUMN_DISPLAY_ORDER;
+  return 3;
+}
+
+export function tasksDataListAmountColumnDisplayOrder(
+  menuItem: string | undefined,
+): number | undefined {
+  if (menuItem === 'Sent Request') return SENT_REQUEST_AMOUNT_DATA_LIST_COLUMN_DISPLAY_ORDER;
+  return undefined;
+}
+
+export function tasksDataListActionColumnDisplayOrder(
+  menuItem: string | undefined,
+): number | undefined {
+  if (menuItem === 'Sent Request') return SENT_REQUEST_ACTION_DATA_LIST_COLUMN_DISPLAY_ORDER;
+  return undefined;
+}
+
+/** Sent Request 第二列：操作类型（独立列，非 Initiator | Operation Type 组合）。 */
+export function tasksDataListShowsCreatedTimeColumn(menuItem: string | undefined): boolean {
   return menuItem === 'Sent Request';
 }
 
-/** Sent Request 第二列副表头文案（Created Time）。 */
+/** @deprecated Sent Request 申请时间已独立为第二列；发送方列不再使用组合表头。 */
+export function tasksDataListBusinessTypeColumnShowsComboHeader(
+  _menuItem: string | undefined,
+): boolean {
+  return false;
+}
+
 export function tasksDataListBusinessTypeColumnSecondaryLabel(
-  menuItem: string | undefined,
+  _menuItem: string | undefined,
 ): string {
-  if (menuItem === 'Sent Request') return DATA_LIST_FIGMA_COLUMNS.sortable.secondaryLabel;
   return '';
 }
 
-/** Sent Request 第二列副表头 Created Time 可排序。 */
 export function tasksDataListBusinessTypeColumnSecondarySortable(
-  menuItem: string | undefined,
+  _menuItem: string | undefined,
 ): boolean {
-  return menuItem === 'Sent Request';
+  return false;
 }
 
-/** Sent Request 尾列 Amount 参与 flex 均分（与 Status 列共享多余空间）。 */
+/** Sent Request 第 1–3 列（金额 / 操作类型 / 发送方）无固定 width，均分剩余空间。 */
 export function tasksDataListAmountColumnFlexGrow(menuItem: string | undefined): boolean {
   return menuItem === 'Sent Request';
 }
@@ -238,11 +384,11 @@ export function tasksDataListShowsStatusColumn(menuItem: string | undefined): bo
   );
 }
 
-/** 已办 / 记录类菜单 Amount 列右对齐；待办类左对齐。 */
+/** 已办 / 记录类菜单 Amount 列左对齐；批处理 selectMode 与常态一致。 */
 export function tasksDataListAmountColumnAlign(
-  menuItem: string | undefined,
+  _menuItem: string | undefined,
 ): DataListColumnAlign {
-  return tasksDataListShowsStatusColumn(menuItem) ? 'right' : 'left';
+  return 'left';
 }
 
 /** Status 列表头：Approved → Approval Results；All Records / Sent Request → Approval Progress；Signed → Signing Results。 */
@@ -262,6 +408,7 @@ export function tasksDataListGeneralStructureColumnMinWidth(menuItem: string | u
 
 /** 记录类模块金额列 min-width。 */
 export function tasksDataListAmountColumnMinWidth(menuItem: string | undefined): string {
+  if (menuItem === 'Sent Request') return SENT_REQUEST_AMOUNT_DATA_LIST_COLUMN_MIN_WIDTH;
   if (tasksDataListShowsStatusColumn(menuItem)) {
     return RECORDS_AMOUNT_DATA_LIST_COLUMN_MIN_WIDTH;
   }
@@ -274,54 +421,83 @@ export function tasksDataListPrimaryActionLabel(menuItem: string | undefined): s
   return DATA_LIST_PRIMARY_ACTION_LABEL;
 }
 
+function defaultDataListColumnLabelForSource(dataSource: DataListColumnDataSource): string {
+  switch (dataSource) {
+    case 'general-structure':
+      return DATA_LIST_FIGMA_COLUMNS.sortable.label;
+    case 'amount':
+      return DATA_LIST_FIGMA_COLUMNS.amount.label;
+    case 'receiver':
+      return 'To Address';
+    case 'currency':
+      return DATA_LIST_FIGMA_COLUMNS.combo.label;
+    case 'business-type':
+      return 'Sender';
+    case 'action':
+      return DATA_LIST_FIGMA_COLUMNS.actions.label;
+    default:
+      return 'Header';
+  }
+}
+
+function defaultDataListColumnSecondaryLabelForSource(
+  dataSource: DataListColumnDataSource,
+): string | undefined {
+  switch (dataSource) {
+    case 'general-structure':
+      return DATA_LIST_FIGMA_COLUMNS.sortable.secondaryLabel;
+    case 'amount':
+      return DATA_LIST_FIGMA_COLUMNS.amount.secondaryLabel;
+    case 'currency':
+      return DATA_LIST_FIGMA_COLUMNS.combo.secondaryLabel;
+    default:
+      return undefined;
+  }
+}
+
 function defaultDataListColumnAlign(index: number): DataListColumnAlign {
   if (index >= DATA_LIST_PREVIEW_COLUMN_COUNT) return 'right';
   return 'left';
 }
 
 function defaultDataListColumnLabel(index: number): string {
-  const labels = [
-    DATA_LIST_FIGMA_COLUMNS.combo.label,
-    DATA_LIST_FIGMA_COLUMNS.sortable.label,
-    DATA_LIST_FIGMA_COLUMNS.businessType.label,
-    DATA_LIST_FIGMA_COLUMNS.amount.label,
-    DATA_LIST_FIGMA_COLUMNS.actions.label,
-  ];
-  return labels[index - 1] ?? 'Header';
+  return defaultDataListColumnLabelForSource(defaultDataListColumnDataSource(index));
+}
+
+function defaultDataListColumnDataSource(index: number): DataListColumnDataSource {
+  if (index === 1) return 'general-structure';
+  if (index === 2) return 'amount';
+  if (index === 3) return 'receiver';
+  if (index === 4) return 'business-type';
+  if (index === 5) return 'action';
+  return 'placeholder';
 }
 
 function defaultDataListColumnMinWidthForSource(
   dataSource: DataListColumnDataSource,
-  index: number,
 ): string {
-  if (dataSource === 'currency' && index === 1) return CURRENCY_DATA_LIST_COLUMN_MIN_WIDTH;
-  if (dataSource === 'general-structure' && index === 2) {
+  if (dataSource === 'currency') return CURRENCY_DATA_LIST_COLUMN_MIN_WIDTH;
+  if (dataSource === 'receiver') return CURRENCY_DATA_LIST_COLUMN_MIN_WIDTH;
+  if (dataSource === 'general-structure') {
     return GENERAL_STRUCTURE_DATA_LIST_COLUMN_MIN_WIDTH;
   }
-  if (dataSource === 'business-type' && index === 3) {
+  if (dataSource === 'business-type') {
     return BUSINESS_TYPE_DATA_LIST_COLUMN_MIN_WIDTH;
   }
-  if (dataSource === 'amount' && index === 4) return AMOUNT_DATA_LIST_COLUMN_MIN_WIDTH;
-  if (dataSource === 'action' && index === 5) return ACTION_DATA_LIST_COLUMN_MIN_WIDTH;
-  return defaultDataListColumnMinWidth(index);
+  if (dataSource === 'amount') return AMOUNT_DATA_LIST_COLUMN_MIN_WIDTH;
+  if (dataSource === 'action') return ACTION_DATA_LIST_COLUMN_MIN_WIDTH;
+  return '160px';
 }
 
 export function resolveDataListColumnMinWidthFromDataSource(
   dataSource: DataListColumnDataSource,
-  columnIndex: number,
+  _columnIndex?: number,
 ): string {
-  return defaultDataListColumnMinWidthForSource(dataSource, columnIndex);
+  return defaultDataListColumnMinWidthForSource(dataSource);
 }
 
 function defaultDataListColumnMinWidth(index: number): string {
-  const widths = [
-    DATA_LIST_FIGMA_COLUMNS.combo.minWidth,
-    DATA_LIST_FIGMA_COLUMNS.sortable.minWidth,
-    DATA_LIST_FIGMA_COLUMNS.businessType.minWidth,
-    AMOUNT_DATA_LIST_COLUMN_MIN_WIDTH,
-    DATA_LIST_FIGMA_COLUMNS.actions.minWidth,
-  ];
-  return widths[index - 1] ?? '160px';
+  return defaultDataListColumnMinWidthForSource(defaultDataListColumnDataSource(index));
 }
 
 export function dataListColumnSettingDefaults(): Record<string, string | boolean> {
@@ -330,36 +506,94 @@ export function dataListColumnSettingDefaults(): Record<string, string | boolean
   };
 
   for (let index = 1; index <= DATA_LIST_PREVIEW_COLUMN_COUNT; index += 1) {
-    const dataSource: DataListColumnDataSource =
-      index === 1
-        ? 'currency'
-        : index === 2
-          ? 'general-structure'
-          : index === 3
-            ? 'business-type'
-            : index === 4
-              ? 'amount'
-              : 'action';
-    entries[`columnMinWidth${index}`] = defaultDataListColumnMinWidthForSource(dataSource, index);
+    const dataSource = defaultDataListColumnDataSource(index);
+    entries[`columnMinWidth${index}`] = defaultDataListColumnMinWidthForSource(dataSource);
     entries[`columnAlign${index}`] = defaultDataListColumnAlign(index);
     entries[`columnDataSource${index}`] = dataSource;
-    entries[`columnLabel${index}`] = defaultDataListColumnLabel(index);
-    if (index === 1) {
-      entries.columnSecondaryLabel1 = DATA_LIST_FIGMA_COLUMNS.combo.secondaryLabel;
-      entries.columnSecondarySortable1 = false;
+    entries[`columnLabel${index}`] = defaultDataListColumnLabelForSource(dataSource);
+    const secondaryLabel = defaultDataListColumnSecondaryLabelForSource(dataSource);
+    if (secondaryLabel) {
+      entries[`columnSecondaryLabel${index}`] = secondaryLabel;
     }
-    if (index === 2) {
-      entries.columnSecondaryLabel2 = DATA_LIST_FIGMA_COLUMNS.sortable.secondaryLabel;
-      entries.columnSecondarySortable2 = true;
+    if (dataSource === 'amount') {
+      entries[`columnSecondarySortable${index}`] = true;
     }
-    if (index === 4) {
-      entries.columnSecondaryLabel4 = DATA_LIST_FIGMA_COLUMNS.amount.secondaryLabel;
-      entries.columnSecondarySortable4 = false;
-    }
-    entries[`columnSortable${index}`] = index === 4;
+    entries[`columnSortable${index}`] = dataSource === 'amount';
   }
 
   return entries;
+}
+
+/**
+ * HMR / 旧会话：currency 组合列 → 发起方｜业务类型 + 金额｜申请时间 + 接收方 + 发送方；
+ * 或发送方/接收方列序颠倒（col3 发送方、col4 接收方）→ 交换为接收方第三、发送方第四。
+ */
+function swapDataListColumnSettings(
+  state: Record<string, unknown>,
+  indexA: number,
+  indexB: number,
+): void {
+  const suffixes = [
+    'DataSource',
+    'MinWidth',
+    'Align',
+    'Label',
+    'SecondaryLabel',
+    'SecondarySortable',
+    'Sortable',
+  ] as const;
+
+  for (const suffix of suffixes) {
+    const keyA = `column${suffix}${indexA}`;
+    const keyB = `column${suffix}${indexB}`;
+    if (!(keyA in state) && !(keyB in state)) continue;
+    const temp = state[keyA];
+    state[keyA] = state[keyB];
+    state[keyB] = temp;
+  }
+}
+
+export function migrateDataListColumnSettings(state: Record<string, unknown>): boolean {
+  const firstSource = String(state.columnDataSource1 ?? '');
+  const col3Source = String(state.columnDataSource3 ?? '');
+  const col4Source = String(state.columnDataSource4 ?? '');
+
+  if (firstSource === 'currency' || col4Source === 'amount') {
+    Object.assign(state, dataListColumnSettingDefaults());
+    return true;
+  }
+
+  if (col3Source === 'business-type' && col4Source === 'receiver') {
+    swapDataListColumnSettings(state, 3, 4);
+    return true;
+  }
+
+  const secondaryLabel1 = String(state.columnSecondaryLabel1 ?? '');
+  const secondaryLabel2 = String(state.columnSecondaryLabel2 ?? '');
+  if (secondaryLabel1 === 'Application Time' && secondaryLabel2 === 'Type of Business') {
+    state.columnSecondaryLabel1 = 'Operation Type';
+    state.columnSecondaryLabel2 = 'Application Time';
+    state.columnSecondarySortable1 = false;
+    state.columnSecondarySortable2 = true;
+    return true;
+  }
+
+  if (String(state.columnSecondaryLabel1 ?? '') === 'Type of Business') {
+    state.columnSecondaryLabel1 = 'Operation Type';
+    return true;
+  }
+
+  let migrated = false;
+  for (let index = 1; index <= DATA_LIST_PREVIEW_COLUMN_COUNT; index += 1) {
+    const key = `columnDataSource${index}`;
+    if (String(state[key] ?? '') !== 'currency') continue;
+    state[key] = 'receiver';
+    state[`columnMinWidth${index}`] = defaultDataListColumnMinWidthForSource('receiver');
+    state[`columnLabel${index}`] = defaultDataListColumnLabelForSource('receiver');
+    migrated = true;
+  }
+
+  return migrated;
 }
 
 export function iconButtonProItemDefaults(
@@ -440,50 +674,34 @@ export function readDataListColumnSettings(
             ? 'business-type'
             : dataSourceRaw === 'amount'
               ? 'amount'
-              : dataSourceRaw === 'action'
+              : dataSourceRaw === 'receiver'
+                ? 'receiver'
+                : dataSourceRaw === 'action'
                 ? 'action'
                 : 'placeholder';
-    const labelRaw = String(state[`columnLabel${index}`] ?? defaultDataListColumnLabel(index)).trim();
+    const labelRaw = String(
+      state[`columnLabel${index}`] ?? defaultDataListColumnLabelForSource(dataSource),
+    ).trim();
+    const secondaryLabelDefault = defaultDataListColumnSecondaryLabelForSource(dataSource);
     const secondaryLabelRaw =
-      index === 1
-        ? String(
-            state.columnSecondaryLabel1 ?? DATA_LIST_FIGMA_COLUMNS.combo.secondaryLabel,
-          ).trim()
-        : index === 2
-          ? String(
-              state.columnSecondaryLabel2 ?? DATA_LIST_FIGMA_COLUMNS.sortable.secondaryLabel,
-            ).trim()
-          : index === 4
-            ? String(
-                state.columnSecondaryLabel4 ?? DATA_LIST_FIGMA_COLUMNS.amount.secondaryLabel,
-              ).trim()
-            : undefined;
+      state[`columnSecondaryLabel${index}`] != null
+        ? String(state[`columnSecondaryLabel${index}`]).trim()
+        : undefined;
 
     return {
-      minWidth: minWidthRaw || defaultDataListColumnMinWidthForSource(dataSource, index),
+      minWidth: minWidthRaw || defaultDataListColumnMinWidthForSource(dataSource),
       align,
       sortable:
-        index === 4
+        dataSource === 'amount'
           ? String(state[`columnSortable${index}`] ?? 'true') !== 'false'
           : Boolean(state[`columnSortable${index}`]),
       dataSource,
-      label: labelRaw || defaultDataListColumnLabel(index),
-      secondaryLabel:
-        index === 1
-          ? secondaryLabelRaw || DATA_LIST_FIGMA_COLUMNS.combo.secondaryLabel
-          : index === 2
-            ? secondaryLabelRaw || DATA_LIST_FIGMA_COLUMNS.sortable.secondaryLabel
-            : index === 4
-              ? secondaryLabelRaw || DATA_LIST_FIGMA_COLUMNS.amount.secondaryLabel
-              : undefined,
+      label: labelRaw || defaultDataListColumnLabelForSource(dataSource),
+      secondaryLabel: secondaryLabelRaw || secondaryLabelDefault,
       secondarySortable:
-        index === 1
-          ? Boolean(state.columnSecondarySortable1)
-          : index === 2
-            ? Boolean(state.columnSecondarySortable2)
-            : index === 4
-              ? Boolean(state.columnSecondarySortable4)
-              : undefined,
+        dataSource === 'general-structure'
+          ? Boolean(state[`columnSecondarySortable${index}`] ?? true)
+          : Boolean(state[`columnSecondarySortable${index}`]),
     };
   });
 }

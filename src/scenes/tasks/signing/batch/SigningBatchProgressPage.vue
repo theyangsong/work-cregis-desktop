@@ -61,8 +61,7 @@ function formatMetricCount(value: number) {
           :value="progressPercent"
           :aria-label="ui(statusLabelKey)"
         />
-      </div>
-      <div :class="styles.metrics">
+        <div :class="styles.metrics">
         <span :class="styles.metricItem">
           <span :class="styles.metricLabel">{{ ui('Runtime') }}:</span>
           <span :class="[styles.metricValue, styles.metricValueTime]">{{ elapsedTime }}</span>
@@ -95,6 +94,7 @@ function formatMetricCount(value: number) {
             <span :class="styles.metricCountUnit">{{ ui('Results') }}</span>
           </span>
         </span>
+      </div>
       </div>
     </div>
 

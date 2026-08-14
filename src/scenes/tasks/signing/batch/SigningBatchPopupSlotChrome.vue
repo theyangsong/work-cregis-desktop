@@ -34,9 +34,8 @@ const props = withDefaults(
     scrollFadeTopEnabled?: boolean;
     innerBackdrop?: boolean;
     contentInsetPreset?: PopupSlotContentInsetPreset;
-    /** 与内容区 motion-page 同步的 footer key（summary / detail / reasons）。 */
+    /** 与内容区 deform 同步的 footer 页（summary / detail / reasons）；仅切换内容，不做 motion-page。 */
     footerMotionKey?: string;
-    pageStackDirection?: 'forward' | 'backward' | 'none';
     /** contentFill 时内层滚动容器仍有内容被裁切（驱动 footer scrim）。 */
     nestedScrollOverflows?: boolean;
     contentFill?: boolean;
@@ -56,7 +55,6 @@ const props = withDefaults(
     toolbarDividerPinned: false,
     innerBackdrop: true,
     contentInsetPreset: 'md',
-    pageStackDirection: 'none',
     nestedScrollOverflows: false,
     contentFill: false,
     systemBarCloseIcon: 'eds-close-circle-fill',
@@ -279,74 +277,33 @@ defineExpose({
       ]"
     >
       <div :class="chromeScrimStyles.content">
-        <div
-          v-if="footerMotionKey"
-          class="motion-page-stack"
-          :class="styles.footerMotionStack"
-          :data-page-direction="pageStackDirection"
+        <SigningBatchPopupSlotFooterBody
+          v-if="showFooterToolbarRow() || showFooterPaginerRow()"
+          :key="footerMotionKey ?? 'default'"
+          :show-toolbar-divider="showToolbarDivider"
+          :show-paginer-row="showFooterPaginerRow()"
+          :show-toolbar-row="showFooterToolbarRow()"
+          :show-toolbar-cancel="showToolbarCancel"
+          :show-toolbar-confirm="showToolbarConfirm"
+          :toolbar-confirm-disabled="toolbarConfirmDisabled"
+          :toolbar-cancel-label="resolvedCancelLabel()"
+          :toolbar-confirm-label="resolvedConfirmLabel()"
+          :toolbar-cancel-tone="toolbarCancelTone"
+          :toolbar-cancel-variant="toolbarCancelVariant"
+          :toolbar-confirm-tone="toolbarConfirmTone"
+          @toolbar-cancel="emit('toolbar-cancel')"
+          @toolbar-confirm="emit('toolbar-confirm')"
         >
-          <Transition name="motion-page">
-            <div
-              :key="footerMotionKey"
-              class="motion-page"
-              :class="[
-                styles.footerMotionPage,
-                !showFooterToolbarRow() && !showFooterPaginerRow() && styles.footerMotionPageEmpty,
-              ]"
-            >
-              <SigningBatchPopupSlotFooterBody
-                v-if="showFooterToolbarRow() || showFooterPaginerRow()"
-                :show-toolbar-divider="showToolbarDivider"
-                :show-paginer-row="showFooterPaginerRow()"
-                :show-toolbar-row="showFooterToolbarRow()"
-                :show-toolbar-cancel="showToolbarCancel"
-                :show-toolbar-confirm="showToolbarConfirm"
-                :toolbar-confirm-disabled="toolbarConfirmDisabled"
-                :toolbar-cancel-label="resolvedCancelLabel()"
-                :toolbar-confirm-label="resolvedConfirmLabel()"
-                :toolbar-cancel-tone="toolbarCancelTone"
-                :toolbar-cancel-variant="toolbarCancelVariant"
-                :toolbar-confirm-tone="toolbarConfirmTone"
-                @toolbar-cancel="emit('toolbar-cancel')"
-                @toolbar-confirm="emit('toolbar-confirm')"
-              >
-                <template #footer>
-                  <slot name="footer" />
-                </template>
-                <template #footer-actions>
-                  <slot name="footer-actions" />
-                </template>
-              </SigningBatchPopupSlotFooterBody>
-            </div>
-          </Transition>
-        </div>
-        <div
-          v-else
-          :class="styles.footerMotionPage"
-        >
-          <SigningBatchPopupSlotFooterBody
-            :show-toolbar-divider="showToolbarDivider"
-            :show-paginer-row="showFooterPaginerRow()"
-            :show-toolbar-row="showFooterToolbarRow()"
-            :show-toolbar-cancel="showToolbarCancel"
-            :show-toolbar-confirm="showToolbarConfirm"
-            :toolbar-confirm-disabled="toolbarConfirmDisabled"
-            :toolbar-cancel-label="resolvedCancelLabel()"
-            :toolbar-confirm-label="resolvedConfirmLabel()"
-            :toolbar-cancel-tone="toolbarCancelTone"
-            :toolbar-cancel-variant="toolbarCancelVariant"
-            :toolbar-confirm-tone="toolbarConfirmTone"
-            @toolbar-cancel="emit('toolbar-cancel')"
-            @toolbar-confirm="emit('toolbar-confirm')"
-          >
-            <template #footer>
-              <slot name="footer" />
-            </template>
-            <template #footer-actions>
-              <slot name="footer-actions" />
-            </template>
-          </SigningBatchPopupSlotFooterBody>
-        </div>
+          <template v-if="$slots['toolbar-confirm']" #toolbar-confirm>
+            <slot name="toolbar-confirm" />
+          </template>
+          <template #footer>
+            <slot name="footer" />
+          </template>
+          <template #footer-actions>
+            <slot name="footer-actions" />
+          </template>
+        </SigningBatchPopupSlotFooterBody>
       </div>
     </footer>
   </div>

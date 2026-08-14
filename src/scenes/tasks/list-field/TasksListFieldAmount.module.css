@@ -19,6 +19,30 @@
   justify-content: flex-end;
 }
 
+.amountPrimaryRow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.amountCryptoIcon {
+  flex-shrink: 0;
+  width: var(--avatar-xs);
+  height: var(--avatar-xs);
+}
+
+.amountPrimaryRow :global(.eds-anchored-tooltip) {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.amountPrimaryRow :global(.eds-tag) {
+  flex-shrink: 0;
+}
+
 .amountPrimary {
   min-width: 0;
   max-width: 100%;

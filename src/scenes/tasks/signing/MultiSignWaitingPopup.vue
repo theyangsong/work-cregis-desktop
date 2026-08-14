@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { computed, toRef } from 'vue';
+import { computed, toRef, withDefaults } from 'vue';
 import { EgButton, EgPopup } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
 import { usePopupShellLifecycle } from '../shared/usePopupShellLifecycle';
 import ApprovalRemarkPopover from '../approval/ApprovalRemarkPopover.vue';
+import remarkTriggerStyles from '../shared/remarkPopoverTrigger.module.css';
 import {
-  isEvmMinerFeeShell,
-  resolveMinerFeePopoverTitleKey,
   resolveMinerFeeProfileFromDetail,
 } from '../shared/minerFeeProfile';
 import type { MinerFeeSelection } from '../shared/minerFeeProfile';
@@ -16,17 +15,23 @@ import {
   MULTI_SIGN_WAITING_POPUP_HEIGHT,
   MULTI_SIGN_WAITING_POPUP_WIDTH,
 } from './multiSignWaiting.constants';
-import type { SigningDetail } from './types';
+import type { MultiSignRoomPhase, MultiSignWaitingPerspective, SigningDetail } from './types';
 
-const props = defineProps<{
-  open: boolean;
-  detail: SigningDetail | null;
-  phase: 'waiting' | 'ready';
-  joinedCount: number;
-  remark: string;
-  minerFeeDisplay?: string | null;
-  dismissWithoutAnimation?: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    open: boolean;
+    detail: SigningDetail | null;
+    phase: MultiSignRoomPhase;
+    perspective?: MultiSignWaitingPerspective;
+    joinedCount: number;
+    remark: string;
+    minerFeeDisplay?: string | null;
+    dismissWithoutAnimation?: boolean;
+  }>(),
+  {
+    perspective: 'signer',
+  },
+);
 
 const emit = defineEmits<{
   'update:open': [value: boolean];
@@ -50,27 +55,17 @@ const minerFeeProfile = computed(() =>
   props.detail ? resolveMinerFeeProfileFromDetail(props.detail) : null,
 );
 
-const usesEvmMinerFeeShell = computed(
-  () => minerFeeProfile.value != null && isEvmMinerFeeShell(minerFeeProfile.value.kind),
-);
-
-const minerFeePopoverTitle = computed(() => {
-  if (usesEvmMinerFeeShell.value) {
-    return ui('Gas fee');
-  }
-  if (!minerFeeProfile.value) {
-    return ui('Gas fee');
-  }
-  return ui(resolveMinerFeePopoverTitleKey(minerFeeProfile.value));
-});
-
 const panelModel = computed(() =>
   props.detail
     ? buildMultiSignWaitingPanelModel(props.detail, props.joinedCount, ui)
     : null,
 );
 
-const isSignEnabled = computed(() => props.phase === 'ready');
+const isSignerPerspective = computed(() => props.perspective === 'signer');
+
+const isSignEnabled = computed(
+  () => isSignerPerspective.value && props.phase === 'ready',
+);
 
 const guardedPopupOpen = computed({
   get: () => popupOpen.value,
@@ -107,31 +102,39 @@ function onRemarkDismiss() {
       v-if="detail && panelModel"
       :model="panelModel"
       :phase="phase"
+      :perspective="perspective"
       @close="onClose"
     >
-      <template #actions>
+      <template v-if="isSignerPerspective" #actions>
         <ApprovalRemarkPopover
           v-if="isSignEnabled && minerFeeProfile"
           boundary-selector=".app-preview"
-          :title="minerFeePopoverTitle"
+          :title="ui('Remark')"
           :remark="remark"
-          :show-miner-fee="usesEvmMinerFeeShell"
           :miner-fee-profile="minerFeeProfile"
           require-miner-fee
+          miner-fee-confirm-tone="danger"
           @update:remark="emit('update:remark', $event)"
           @confirm="onReadyConfirm"
           @dismiss="onRemarkDismiss"
         >
           <template #trigger="{ active, onClick }">
-            <EgButton
-              tone="decor"
-              variant="solid"
-              size="md"
-              :aria-expanded="active"
-              @click.stop="onClick"
+            <span
+              :class="[
+                remarkTriggerStyles.remarkTrigger,
+                active && remarkTriggerStyles.remarkTriggerPassPressed,
+              ]"
             >
-              {{ ui('Sign') }}
-            </EgButton>
+              <EgButton
+                tone="decor"
+                variant="solid"
+                size="md"
+                :aria-expanded="active"
+                @click.stop="onClick"
+              >
+                {{ ui('Sign') }}
+              </EgButton>
+            </span>
           </template>
         </ApprovalRemarkPopover>
         <EgButton

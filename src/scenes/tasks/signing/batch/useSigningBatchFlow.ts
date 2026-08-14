@@ -61,7 +61,11 @@ export function useSigningBatchFlow(options: {
   const signConfirmOpen = ref(false);
   const stopConfirmOpen = batchSigningStopConfirmOpen;
   const quotaAlertOpen = ref(false);
-  const quotaFailure = ref<{ requiredUsd: number; remainingUsd: number } | null>(null);
+  const quotaFailure = ref<{
+    requiredUsd: number;
+    remainingUsd: number;
+    overageFeeUsd: number;
+  } | null>(null);
   const verifyOpen = ref(false);
 
   const pendingRowIndexes = ref<number[]>([]);
@@ -214,10 +218,11 @@ export function useSigningBatchFlow(options: {
   }
 
   function filterRowIndexesForSelect(rowIndexes: number[]): number[] {
-    if (!selectCurrencyKey.value) return rowIndexes;
     return rowIndexes.filter((rowIndex) => {
       const row = buildBatchSigningRowModel(rowIndex);
-      return row.isSingleSign && row.currencyKey === selectCurrencyKey.value;
+      if (!row.isSingleSign) return false;
+      if (!selectCurrencyKey.value) return true;
+      return row.currencyKey === selectCurrencyKey.value;
     });
   }
 
@@ -313,6 +318,7 @@ export function useSigningBatchFlow(options: {
       quotaFailure.value = {
         requiredUsd: quota.requiredUsd,
         remainingUsd: quota.remainingUsd,
+        overageFeeUsd: quota.overageFeeUsd,
       };
       quotaAlertOpen.value = true;
       return;
@@ -324,6 +330,12 @@ export function useSigningBatchFlow(options: {
   function onQuotaAlertClose() {
     quotaAlertOpen.value = false;
     quotaFailure.value = null;
+  }
+
+  function onQuotaAlertContinue() {
+    quotaAlertOpen.value = false;
+    quotaFailure.value = null;
+    verifyOpen.value = true;
   }
 
   function onVerifyCancel() {
@@ -416,13 +428,8 @@ export function useSigningBatchFlow(options: {
     if (!options.selectMode.value || !options.enabled.value) return false;
     const row = buildBatchSigningRowModel(rowIndex);
     if (!row.isSingleSign) return true;
-    if (
-      selectCurrencyKey.value
-      && buildBatchSigningRowModel(rowIndex).currencyKey !== selectCurrencyKey.value
-    ) {
-      return true;
-    }
-    return false;
+    if (!selectCurrencyKey.value) return false;
+    return row.currencyKey !== selectCurrencyKey.value;
   }
 
   return {
@@ -455,6 +462,7 @@ export function useSigningBatchFlow(options: {
     onSignConfirmCancel,
     onSignConfirmProceed,
     onQuotaAlertClose,
+    onQuotaAlertContinue,
     onVerifyCancel,
     onVerifyConfirm,
     onVerifyClosed,

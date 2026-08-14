@@ -1,0 +1,81 @@
+.triggerMetrics {
+  display: inline-flex;
+  max-width: 100%;
+}
+
+.guideHost {
+  display: block;
+}
+
+/*
+ * Showcase `/components/popovers` · scenario=guide（Figma preset 256）。
+ * 引导场景：match-primary 填充 + TopTool；仅 .guideHost 内覆盖 EgPopover 视觉。
+ */
+.guideHost :global(> .eds-popover svg) {
+  filter: none;
+}
+
+.guideHost :global(> .eds-popover.desktopTokens .effect-popover-box) {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  background: transparent;
+}
+
+.guideHost :global(> .eds-popover > div > svg > path:first-of-type) {
+  fill: var(--material-match-primary);
+}
+
+.guideHost :global(> .eds-popover > div > svg > path:last-of-type) {
+  fill: transparent;
+  mix-blend-mode: normal;
+}
+
+.guideHost :global(> .eds-popover .eds-popover-content > div:first-child p) {
+  padding: var(--spacing-3) var(--spacing-4) var(--spacing-1);
+  color: var(--text-same-white-primary);
+}
+
+.guideHost :global(> .eds-popover .eds-popover-content > div:first-child .eds-icon-button),
+.guideHost :global(> .eds-popover .eds-popover-content > div:first-child .eds-icon-button:hover:not(:disabled):not(.isDisabled)),
+.guideHost :global(> .eds-popover .eds-popover-content > div:first-child .eds-icon-button:focus-visible:not(:disabled):not(.isDisabled)),
+.guideHost :global(> .eds-popover .eds-popover-content > div:first-child .eds-icon-button:active:not(:disabled):not(.isDisabled)) {
+  background-color: transparent;
+}
+
+.guideHost :global(> .eds-popover .eds-popover-content > div:first-child .eds-icon-button > span) {
+  color: var(--material-same-white-quaternary) !important;
+}
+
+.guideHost :global(> .eds-popover .eds-popover-content > div:first-child .eds-icon-button .eds-icon .eds-i-f),
+.guideHost :global(> .eds-popover .eds-popover-content > div:first-child .eds-icon-button .eds-icon svg path) {
+  fill: currentColor !important;
+}
+
+.guideHost :global(> .eds-popover .eds-popover-content > div:first-child .eds-icon-button:hover:not(:disabled):not(.isDisabled) > span),
+.guideHost :global(> .eds-popover .eds-popover-content > div:first-child .eds-icon-button:focus-visible:not(:disabled):not(.isDisabled) > span) {
+  color: var(--material-same-white-secondary) !important;
+}
+
+.guideHost :global(> .eds-popover .eds-popover-content > div:first-child .eds-icon-button:active:not(:disabled):not(.isDisabled) > span) {
+  color: var(--material-same-white-quaternary) !important;
+}
+
+.guideSlot {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-4);
+  width: 100%;
+}
+
+.guideBody {
+  margin: 0;
+  font-size: var(--eds-body-small-size);
+  font-weight: var(--eds-body-small-weight);
+  line-height: var(--eds-body-small-line-height);
+  color: var(--text-same-white-primary);
+}
+
+.guideAction {
+  align-self: flex-end;
+}

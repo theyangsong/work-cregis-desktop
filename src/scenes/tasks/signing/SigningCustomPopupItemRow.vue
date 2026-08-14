@@ -68,13 +68,17 @@ function itemHasValueTrailingActions(item: DetailItemData): boolean {
   );
 }
 
+function itemRowCopyable(item: DetailItemData): boolean {
+  return Boolean(item.showValueCopy && item.value);
+}
+
 async function onCopyItemValue(
   copyKey: string,
   value: string,
-  event: MouseEvent,
+  event?: MouseEvent,
 ) {
-  event.stopPropagation();
-  event.preventDefault();
+  event?.stopPropagation();
+  event?.preventDefault();
   try {
     await navigator.clipboard.writeText(value);
     copiedItemKey.value = copyKey;
@@ -86,10 +90,25 @@ async function onCopyItemValue(
     /* ignore */
   }
 }
+
+function onItemRowCopyClick(item: DetailItemData, itemIndex: number, event?: MouseEvent) {
+  if (!itemRowCopyable(item)) return;
+  void onCopyItemValue(itemCopyKey(item, itemIndex), item.value, event);
+}
 </script>
 
 <template>
-  <div :class="styles.itemRow">
+  <div
+    :class="[
+      styles.itemRow,
+      itemRowCopyable(item) && styles.itemRowCopyable,
+    ]"
+    :role="itemRowCopyable(item) ? 'button' : undefined"
+    :tabindex="itemRowCopyable(item) ? 0 : undefined"
+    @click="onItemRowCopyClick(item, itemIndex, $event)"
+    @keydown.enter.prevent="onItemRowCopyClick(item, itemIndex)"
+    @keydown.space.prevent="onItemRowCopyClick(item, itemIndex)"
+  >
     <div :class="styles.itemTitle">
       <EgIcon
         v-if="itemShowsTitleIcon(item)"

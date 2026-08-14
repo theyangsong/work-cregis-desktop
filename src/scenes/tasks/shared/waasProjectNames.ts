@@ -14,5 +14,6 @@ export function isWaasPayoutTransferType(value: string): boolean {
 }
 
 export function resolveWaasProjectNameForRow(rowIndex: number): string {
-  return WAAS_PAYOUT_PROJECT_NAMES[rowIndex % WAAS_PAYOUT_PROJECT_NAMES.length]!;
+  const effectiveRowIndex = rowIndex === 0 ? 5 : rowIndex === 5 ? 0 : rowIndex;
+  return WAAS_PAYOUT_PROJECT_NAMES[effectiveRowIndex % WAAS_PAYOUT_PROJECT_NAMES.length]!;
 }

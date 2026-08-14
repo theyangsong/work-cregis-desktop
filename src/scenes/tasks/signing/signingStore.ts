@@ -6,6 +6,10 @@ import type { SigningDetail, SigningStatus } from './types';
 
 const MOCK_PASSWORD = '111111';
 
+export function verifyTradePassword(password: string): boolean {
+  return password === MOCK_PASSWORD;
+}
+
 export const signingStoreRevision = ref(0);
 
 function touchSigningStore() {

@@ -1,8 +1,15 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { EgDivider, EgListFieldOverflowText } from '@eds/desktop-components';
+import {
+  EgCrypto,
+  EgDivider,
+  EgListFieldOverflowText,
+  EgTag,
+  type CryptoName,
+} from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
 import { formatGroupedDecimalAmount } from '@/utils/formatGroupedDisplay';
+import { resolveCryptoNameFromSymbol } from './listFieldCryptoResolve';
 import ExpiryCountdown from '../shared/ExpiryCountdown.vue';
 import styles from './TasksListFieldAmount.module.css';
 
@@ -24,6 +31,19 @@ const fiatValue = computed(() =>
 const cryptoValue = computed(() =>
   formatGroupedDecimalAmount(String(props.customize.cryptoValue ?? '12,500.000001')),
 );
+const cryptoSymbol = computed(() => {
+  if (amountType.value === 'crypto') {
+    return String(props.customize.cryptoSymbol ?? 'BTC');
+  }
+  return String(props.customize.cryptoSymbol ?? 'USDT');
+});
+const cryptoPrimaryText = computed(() => `${cryptoValue.value} ${cryptoSymbol.value}`);
+const showAmountCryptoIcon = computed(() => props.customize.showCryptoIcon !== false);
+const cryptoName = computed((): CryptoName => {
+  const explicit = String(props.customize.cryptoName ?? '').trim();
+  if (explicit) return explicit as CryptoName;
+  return resolveCryptoNameFromSymbol(cryptoSymbol.value) ?? 'eds-btc-bitcoin';
+});
 const secondaryValueRaw = computed(() => String(props.customize.secondaryValue ?? '').trim());
 const useTransferTypeSecondary = computed(() => secondaryValueRaw.value.length > 0);
 const showCountdown = computed(
@@ -37,6 +57,11 @@ const secondaryValue = computed(() => ui(secondaryValueRaw.value));
 const tooltipTrigger = computed(
   () => String(props.customize.tooltipTrigger ?? 'hover') as 'hover' | 'focus',
 );
+const showNetworkTag = computed(() => props.customize.showNetwork !== false);
+const networkTagLabel = computed(() => {
+  const label = String(props.customize.networkLabel ?? '').trim();
+  return label ? ui(label) : '';
+});
 
 /** Data List 单元格内：填满可用宽度并启用 tail 省略（同 Showcase amount 列）。 */
 const cellMinWidthStyle = computed(() => {
@@ -63,12 +88,29 @@ const cellMinWidthStyle = computed(() => {
     :class="[styles.amountPreview, alignEnd && styles.amountPreviewAlignEnd]"
     :style="cellMinWidthStyle"
   >
-    <EgListFieldOverflowText
-      :text="cryptoValue"
-      variant="primary"
-      tabular
-      :tooltip-trigger="tooltipTrigger"
-    />
+    <div :class="styles.amountPrimaryRow">
+      <EgCrypto
+        v-if="showAmountCryptoIcon"
+        :name="cryptoName"
+        fit
+        :class="styles.amountCryptoIcon"
+        :label="cryptoSymbol"
+      />
+      <EgListFieldOverflowText
+        :text="cryptoPrimaryText"
+        variant="primary"
+        tabular
+        :tooltip-trigger="tooltipTrigger"
+      />
+      <EgTag
+        v-if="showNetworkTag && networkTagLabel"
+        size="sm"
+        system-type="stroke-subtle"
+        truncate
+      >
+        {{ networkTagLabel }}
+      </EgTag>
+    </div>
   </div>
   <div
     v-else
@@ -76,12 +118,29 @@ const cellMinWidthStyle = computed(() => {
     :class="[styles.amountPreview, alignEnd && styles.amountPreviewAlignEnd]"
     :style="cellMinWidthStyle"
   >
-    <EgListFieldOverflowText
-      :text="cryptoValue"
-      variant="primary"
-      tabular
-      :tooltip-trigger="tooltipTrigger"
-    />
+    <div :class="styles.amountPrimaryRow">
+      <EgCrypto
+        v-if="showAmountCryptoIcon"
+        :name="cryptoName"
+        fit
+        :class="styles.amountCryptoIcon"
+        :label="cryptoSymbol"
+      />
+      <EgListFieldOverflowText
+        :text="cryptoPrimaryText"
+        variant="primary"
+        tabular
+        :tooltip-trigger="tooltipTrigger"
+      />
+      <EgTag
+        v-if="showNetworkTag && networkTagLabel"
+        size="sm"
+        system-type="stroke-subtle"
+        truncate
+      >
+        {{ networkTagLabel }}
+      </EgTag>
+    </div>
     <div v-if="showCountdown" :class="styles.amountSecondaryRow">
       <EgListFieldOverflowText
         :text="secondaryValue"
@@ -91,6 +150,8 @@ const cellMinWidthStyle = computed(() => {
       />
       <EgDivider type="page" direction="vertical" />
       <ExpiryCountdown
+        display="list"
+        :hours="String(customize.countdownHours ?? '0')"
         :minutes="String(customize.countdownMinutes ?? '30')"
         :seconds="String(customize.countdownSeconds ?? '00')"
       />

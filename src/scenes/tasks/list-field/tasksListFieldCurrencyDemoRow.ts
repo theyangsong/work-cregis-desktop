@@ -64,7 +64,7 @@ function buildDemoSideAddressOverrides(
   return entries;
 }
 
-/** 第 3 条演示行：发送方 23 地址；接收方 Danger + 5 自定义 Tag。 */
+/** 第 3 条演示行：发送方 23 笔订单（单地址）；接收方 Danger + 5 自定义 Tag。 */
 export function applyCurrencyDemoRowOverrides(
   customize: Record<string, unknown>,
   rowIndex: number,
@@ -79,9 +79,9 @@ export function applyCurrencyDemoRowOverrides(
   if (rowIndex === CURRENCY_DEMO_ROW_WITH_TAGS_INDEX) {
     return {
       ...customize,
-      fromAddressCount: '23',
+      fromAddressCount: '1',
+      fromOrderCount: '23',
       fromAlias1: 'Mr. Wang',
-      ...buildDemoSideAddressOverrides(customize, 'from', 23, rowIndex),
       [currencyAddressTagsEnabledKey('from', 1)]: false,
       [currencyAddressTagsEnabledKey('to', 1)]: true,
       ...currencyAddressRiskTagOverrides('to', 1, 1, true),

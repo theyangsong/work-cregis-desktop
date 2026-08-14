@@ -1,6 +1,6 @@
 /**
  * Signing custom popup — 对齐 EgVerify / EgReminder 的 Popup Box host 契约。
- * EgPopup alertPanelShell 会把插槽直子设为 flex + center（默认 row），导致 656×516 内容塌缩；
+ * EgPopup alertPanelShell 会把插槽直子设为 flex + center（默认 row），导致 656×480 内容塌缩；
  * 在 `.eds-popup-box-content` 上挂 `eds-signing-custom-popup` 并覆写 host + 直子 layout。
  */
 
