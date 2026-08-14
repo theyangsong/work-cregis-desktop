@@ -113,7 +113,6 @@ function onRemarkDismiss() {
           :remark="remark"
           :miner-fee-profile="minerFeeProfile"
           require-miner-fee
-          miner-fee-confirm-tone="danger"
           @update:remark="emit('update:remark', $event)"
           @confirm="onReadyConfirm"
           @dismiss="onRemarkDismiss"

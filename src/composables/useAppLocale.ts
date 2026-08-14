@@ -2,7 +2,7 @@ import { onMounted, ref, type Ref } from 'vue';
 
 export type AppLocale = 'zh-CN' | 'en';
 
-const LOCALE_STORAGE_KEY = 'cregis-locale';
+const LOCALE_STORAGE_KEY = 'cregis-locale-pref';
 
 export const APP_LOCALE_OPTIONS = [
   { value: 'zh-CN', label: '简体中文' },
@@ -28,17 +28,14 @@ export function applyAppLocale(
 ) {
   locale.value = next;
   target.lang = next;
-  if (options?.persist !== false) {
+  if (options?.persist) {
     localStorage.setItem(LOCALE_STORAGE_KEY, next);
   }
 }
 
 export function initAppLocale() {
   if (initialized || typeof window === 'undefined') return;
-  const next = readStoredLocale();
-  applyAppLocale(next, document.documentElement, {
-    persist: localStorage.getItem(LOCALE_STORAGE_KEY) != null,
-  });
+  applyAppLocale(readStoredLocale(), document.documentElement);
   initialized = true;
 }
 
@@ -48,7 +45,7 @@ export function useAppLocale() {
   });
 
   function setLocale(next: AppLocale) {
-    applyAppLocale(next);
+    applyAppLocale(next, document.documentElement, { persist: true });
   }
 
   return { locale, setLocale };
