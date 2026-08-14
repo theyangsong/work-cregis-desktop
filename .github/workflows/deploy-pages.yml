@@ -71,8 +71,11 @@ jobs:
         working-directory: eds-desktop
         run: pnpm install --frozen-lockfile
 
+      - name: Verify eds-desktop checkout
+        run: test -f ../eds-desktop/packages/components/src/index.ts
+
       - name: Build
-        run: pnpm build
+        run: pnpm build:pages
 
       - name: Add SPA fallback for GitHub Pages
         run: cp dist/index.html dist/404.html

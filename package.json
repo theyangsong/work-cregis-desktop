@@ -10,6 +10,7 @@
     "dev:clean": "rm -rf node_modules/.vite && vite",
     "prebuild": "node scripts/verify-list-field-crypto.mjs && node scripts/verify-miner-fee-profiles.mjs && pnpm --dir ../eds-desktop build:tokens && pnpm --dir ../eds-desktop build:components",
     "build": "vue-tsc --noEmit && vite build",
+    "build:pages": "pnpm prebuild && vite build",
     "preview": "vite preview",
     "typecheck": "vue-tsc --noEmit"
   },
