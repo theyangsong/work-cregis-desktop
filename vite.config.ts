@@ -106,8 +106,8 @@ export default defineConfig({
   resolve: {
     alias: [
       {
-        find: '@eds/desktop-components/',
-        replacement: `${EDS_COMPONENTS_SRC_DIR}/`,
+        find: /^@eds\/desktop-components\/(.+)$/,
+        replacement: `${EDS_COMPONENTS_SRC_DIR}/$1`,
       },
       {
         find: '@eds/desktop-components',

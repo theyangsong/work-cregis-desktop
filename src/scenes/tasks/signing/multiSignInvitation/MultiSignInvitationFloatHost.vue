@@ -13,12 +13,9 @@ import { signingBatchSelectModeActive } from '@/scenes/tasks/signing/batch/signi
 import MultiSignInvitationPanel from './MultiSignInvitationPanel.vue';
 import { signingFlowRegistry } from '@/scenes/tasks/signing/signingFlowContext';
 import {
-  consumeSkipMultiSignInvitationAutoOpenOnce,
-  markMultiSignInvitationAutoOpenConsumed,
   multiSignCollaborationModuleActive,
   pendingMultiSignInvitationCount,
   pendingMultiSignInvitations,
-  shouldAutoOpenMultiSignInvitationPanel,
 } from './multiSignInvitationStore';
 import {
   MULTI_SIGN_INVITATION_PANEL_MAX_HEIGHT,
@@ -43,7 +40,6 @@ const toastMotionActive = ref(false);
 
 let toastTimer: ReturnType<typeof setTimeout> | undefined;
 let toastLeaveTimer: ReturnType<typeof setTimeout> | undefined;
-let autoOpenTimer: ReturnType<typeof setTimeout> | undefined;
 
 /** 离开待签名后再进入时递增，强制 remount EgAnchoredTooltip（配合 v-if 清 teleport 残留）。 */
 const floatMountGeneration = ref(0);
@@ -86,13 +82,6 @@ function readDsOpen(): boolean {
     return openState.value;
   }
   return Boolean(openState);
-}
-
-function clearAutoOpenTimer() {
-  if (autoOpenTimer !== undefined) {
-    clearTimeout(autoOpenTimer);
-    autoOpenTimer = undefined;
-  }
 }
 
 function dismissPanel() {
@@ -162,23 +151,6 @@ function onBadgeClick(event: MouseEvent) {
   }
 
   openPanel();
-}
-
-function scheduleAutoOpen() {
-  clearAutoOpenTimer();
-  if (consumeSkipMultiSignInvitationAutoOpenOnce()) {
-    return;
-  }
-  if (!shouldAutoOpenMultiSignInvitationPanel()) return;
-  if (clientPopupActive.value) return;
-  if (signingBatchSelectModeActive.value) return;
-
-  autoOpenTimer = setTimeout(async () => {
-    await nextTick();
-    if (!shouldAutoOpenMultiSignInvitationPanel()) return;
-    openPanel();
-    markMultiSignInvitationAutoOpenConsumed();
-  }, 320);
 }
 
 function onPanelOpen() {
@@ -267,27 +239,20 @@ function onJoinInvitation(id: string) {
 }
 
 watch(
-  () => [pendingMultiSignInvitationCount.value, multiSignCollaborationModuleActive.value] as const,
-  ([count, collaborationActive]) => {
+  () => pendingMultiSignInvitationCount.value,
+  (count) => {
     if (count === 0) {
       dismissPanel();
-      return;
-    }
-    if (collaborationActive && !clientPopupActive.value) {
-      scheduleAutoOpen();
     }
   },
-  { immediate: true },
 );
 
 watch(clientPopupActive, () => {
-  clearAutoOpenTimer();
   dismissPanel();
 });
 
 watch(signingBatchSelectModeActive, (active) => {
   if (active) {
-    clearAutoOpenTimer();
     dismissPanel();
   }
 });
@@ -295,7 +260,6 @@ watch(signingBatchSelectModeActive, (active) => {
 watch(showFloat, (visible) => {
   if (!visible) {
     panelExpanded.value = false;
-    clearAutoOpenTimer();
     closeAllAnchoredTooltips();
     floatHadBeenHidden = true;
     return;
@@ -309,7 +273,6 @@ watch(showFloat, (visible) => {
 });
 
 onBeforeUnmount(() => {
-  clearAutoOpenTimer();
   if (toastTimer !== undefined) clearTimeout(toastTimer);
   clearToastLeaveTimer();
   dismissPanel();

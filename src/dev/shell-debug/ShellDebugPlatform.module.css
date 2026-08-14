@@ -7,8 +7,12 @@
 
 .launcherColumn {
   position: fixed;
+  right: max(
+    var(--spacing-4),
+    calc(50vw - min(var(--app-preview-width), 100vw) / 2 - var(--spacing-8) - var(--graphic-sm))
+  );
   bottom: calc(50vh - min(var(--app-preview-height), 100vh) / 2 + var(--spacing-5));
-  left: calc(50% + min(var(--app-preview-width), 100vw) / 2 + var(--spacing-8));
+  left: auto;
   display: flex;
   flex-direction: column;
   gap: var(--spacing-5);
@@ -48,10 +52,8 @@
   pointer-events: none;
 }
 
-@media (max-width: 960px) {
+@media (max-width: 1399px) {
   .launcherColumn {
-    right: var(--spacing-4);
     bottom: var(--spacing-5);
-    left: auto;
   }
 }

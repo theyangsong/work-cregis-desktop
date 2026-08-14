@@ -13,26 +13,32 @@ const locale: Ref<AppLocale> = ref('zh-CN');
 let initialized = false;
 
 function readStoredLocale(): AppLocale {
-  if (typeof window === 'undefined') return 'en';
+  if (typeof window === 'undefined') return 'zh-CN';
 
   const stored = localStorage.getItem(LOCALE_STORAGE_KEY);
   if (stored === 'zh-CN' || stored === 'en') return stored;
 
-  const htmlLang = document.documentElement.lang.trim();
-  if (htmlLang === 'zh-CN') return 'zh-CN';
-
   return 'zh-CN';
 }
 
-export function applyAppLocale(next: AppLocale, target: HTMLElement = document.documentElement) {
+export function applyAppLocale(
+  next: AppLocale,
+  target: HTMLElement = document.documentElement,
+  options?: { persist?: boolean },
+) {
   locale.value = next;
   target.lang = next;
-  localStorage.setItem(LOCALE_STORAGE_KEY, next);
+  if (options?.persist !== false) {
+    localStorage.setItem(LOCALE_STORAGE_KEY, next);
+  }
 }
 
 export function initAppLocale() {
   if (initialized || typeof window === 'undefined') return;
-  applyAppLocale(readStoredLocale());
+  const next = readStoredLocale();
+  applyAppLocale(next, document.documentElement, {
+    persist: localStorage.getItem(LOCALE_STORAGE_KEY) != null,
+  });
   initialized = true;
 }
 

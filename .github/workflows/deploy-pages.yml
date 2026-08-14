@@ -63,6 +63,7 @@ jobs:
           else
             echo "VITE_BASE_PATH=/${REPO}/" >> "$GITHUB_ENV"
           fi
+          echo "VITE_SHELL_DEBUG=true" >> "$GITHUB_ENV"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

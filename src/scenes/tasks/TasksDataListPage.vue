@@ -79,7 +79,6 @@ import {
   registerSigningBatchFlow,
   setSigningBatchSelectModeActive,
 } from './signing/batch/signingBatchFlowContext';
-import { markSkipMultiSignInvitationAutoOpenOnce } from './signing/multiSignInvitation/multiSignInvitationStore';
 import { setBatchSigningListRefreshHandler, suspendBatchSigningProgressPopup } from './signing/batch/batchSigningProgressUiStore';
 import { useSigningBatchFlow } from './signing/batch/useSigningBatchFlow';
 import SigningBatchNetworkPickerMenu from './signing/batch/SigningBatchNetworkPickerMenu.vue';
@@ -549,7 +548,6 @@ watch(
   (active, wasActive) => {
     if (wasActive && !active) {
       closeAllAnchoredTooltips();
-      markSkipMultiSignInvitationAutoOpenOnce();
     }
     setSigningBatchSelectModeActive(active);
   },
