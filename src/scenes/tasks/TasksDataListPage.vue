@@ -1052,37 +1052,6 @@ const displayBatchActions = computed(() => {
           </EgDataListColumn>
 
           <EgDataListColumn
-            v-if="showCreatedTimeColumn"
-            prop="operationType"
-            :label="ui('Operation Type')"
-            :min-width="createdTimeColumnMinWidth"
-            align="left"
-            :sortable="false"
-            :display-order="createdTimeColumnDisplayOrder"
-          >
-            <template #header>
-              <div :class="pageStyles.comboHeaderSegment">
-                <div :class="pageStyles.comboHeaderSegmentTextWrap">
-                  <EgDataListCellOverflow
-                    :content-class="pageStyles.comboHeaderSegmentText"
-                    context="header"
-                  >
-                    {{ ui('Operation Type') }}
-                  </EgDataListCellOverflow>
-                </div>
-              </div>
-            </template>
-            <template #default="{ data }">
-              <TasksDataListColumnCell
-                data-source="general-structure"
-                :column-min-width="createdTimeColumnMinWidth"
-                :menu-item="toolbarTitle"
-                :row-index="Number(data.id)"
-              />
-            </template>
-          </EgDataListColumn>
-
-          <EgDataListColumn
             prop="receiver"
             :label="ui(previewColumnSettings[2].label)"
             :min-width="receiverColumnMinWidth"
@@ -1147,6 +1116,38 @@ const displayBatchActions = computed(() => {
                 :data-source="previewColumnSettings[3].dataSource"
                 :column-min-width="businessTypeColumnMinWidth"
                 :column-align="businessTypeColumnAlign"
+                :menu-item="toolbarTitle"
+                :row-index="Number(data.id)"
+              />
+            </template>
+          </EgDataListColumn>
+
+          <!-- Sent Request：业务类型列须在接收方/发送方之后（与 display-order 一致，避免窄屏错列）。 -->
+          <EgDataListColumn
+            v-if="showCreatedTimeColumn"
+            prop="operationType"
+            :label="ui('Operation Type')"
+            :min-width="createdTimeColumnMinWidth"
+            align="left"
+            :sortable="false"
+            :display-order="createdTimeColumnDisplayOrder"
+          >
+            <template #header>
+              <div :class="pageStyles.comboHeaderSegment">
+                <div :class="pageStyles.comboHeaderSegmentTextWrap">
+                  <EgDataListCellOverflow
+                    :content-class="pageStyles.comboHeaderSegmentText"
+                    context="header"
+                  >
+                    {{ ui('Operation Type') }}
+                  </EgDataListCellOverflow>
+                </div>
+              </div>
+            </template>
+            <template #default="{ data }">
+              <TasksDataListColumnCell
+                data-source="general-structure"
+                :column-min-width="createdTimeColumnMinWidth"
                 :menu-item="toolbarTitle"
                 :row-index="Number(data.id)"
               />

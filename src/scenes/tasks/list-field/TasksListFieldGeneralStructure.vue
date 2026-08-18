@@ -59,10 +59,16 @@ const businessTypeSecondaryParts = computed(() => {
   };
 });
 const showBusinessTypeSecondary = computed(
-  () => isDoubleLine.value && secondaryValueRaw.value.length > 0 && businessTypeSecondaryParts.value != null,
+  () =>
+    (operationTypeOnly.value || isDoubleLine.value)
+    && secondaryValueRaw.value.length > 0
+    && businessTypeSecondaryParts.value != null,
 );
 const showPlainSecondary = computed(
-  () => isDoubleLine.value && secondaryValueRaw.value.length > 0 && businessTypeSecondaryParts.value == null,
+  () =>
+    (operationTypeOnly.value || isDoubleLine.value)
+    && secondaryValueRaw.value.length > 0
+    && businessTypeSecondaryParts.value == null,
 );
 const showCountdownOnSecondary = computed(
   () => showBusinessTypeSecondary.value && Boolean(props.customize.showCountdown),
