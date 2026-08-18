@@ -326,3 +326,21 @@ body > [id^='eds-tooltip-v-'] > div:first-child:has(> :not([class*='floatingInne
   max-height: 100%;
   overflow: hidden;
 }
+
+/*
+ * Nav Bar / Module Menu 线稿 icon：生产构建须显式锁定 token 描边宽，
+ * 避免 SVG stroke-width 随缩放变细（GitHub Pages 与本地 dev 一致）。
+ */
+.app-shell-container
+  .eds-nav-bar
+  :is(
+    [class*='moduleIconGlyph'],
+    [class*='moduleRowIcon'],
+    [class*='bottomIconGlyph']
+  ):not([class*='moduleIconGlyphAppEntry'])
+  :global(.eds-i-s),
+.app-shell-container .eds-module-menu [class*='itemIcon'] :global(.eds-i-s) {
+  stroke: currentColor;
+  stroke-width: var(--stroke-lg);
+  vector-effect: non-scaling-stroke;
+}
