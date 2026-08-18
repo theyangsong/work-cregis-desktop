@@ -13,13 +13,6 @@ export function parseCurrencyAddressCount(value: unknown): number {
   return Math.min(Math.floor(parsed), MAX_CURRENCY_ADDRESS_COUNT);
 }
 
-/** 多订单地址侧栏：解析订单数；无效时返回 0（调用方可用 `|| undefined` 省略）。 */
-export function parseCurrencyOrderCount(value: unknown): number {
-  const parsed = Number(String(value ?? '').trim());
-  if (!Number.isFinite(parsed) || parsed < 1) return 0;
-  return Math.floor(parsed);
-}
-
 export function currencyAddressTagsEnabledKey(
   side: 'from' | 'to',
   addressIndex: number,

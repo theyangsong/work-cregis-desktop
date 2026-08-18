@@ -38,12 +38,12 @@ function onCancel() {
   <EgPopup
     v-if="popupMounted"
     v-model:open="popupOpen"
-    uses="reminder"
-    reminder-type="echo"
+    uses="dialog"
+    dialog-type="compose"
     @close="onPopupClosed"
   >
     <EgReminder
-      type="echo"
+      type="compose"
       :title="ui('Stop Signing')"
       :show-secondary-text="false"
       :confirm-label="ui('Confirm')"

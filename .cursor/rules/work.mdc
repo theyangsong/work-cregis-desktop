@@ -41,7 +41,7 @@ alwaysApply: true
 
 ### 1.1 Desktop-only
 
-**【必须】** 只使用 `@eds/desktop-tokens`、`@eds/desktop-components`（规划中的 `@eds/desktop-scenes` 同理）。
+**【必须】** 只使用 `@eds/desktop-tokens`、`@eds/desktop-animations`、`@eds/desktop-components`。
 
 **【禁止】**
 
@@ -86,7 +86,7 @@ alwaysApply: true
 
 改 Popover / token / 组件 API → **切换 eds-desktop 仓库**改，或告知用户属 DS 范围。
 
-**消费 DS**：`link:../eds-desktop/packages/{tokens,components}`；Vite alias `@eds/desktop-components` → DS 源码。
+**消费 DS**：`link:../eds-desktop/packages/{tokens,animations,components}`；Vite alias `@eds/desktop-components` / `@eds/desktop-animations` → DS 源码。
 
 **同步 eds-desktop**（仅用户明确要求时）：`../eds-desktop` build → 本仓库 `pnpm install` → **重启 dev**。只同步 `packages/tokens`、`packages/components` 与可 sync 的 list-field 辅助；不含 showcase/Website。**无反向 sync**。
 

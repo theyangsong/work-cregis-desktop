@@ -14,6 +14,8 @@
       "@/*": ["src/*"],
       "@eds/desktop-components": ["../eds-desktop/packages/components/src/index.ts"],
       "@eds/desktop-components/*": ["../eds-desktop/packages/components/src/*"],
+      "@eds/desktop-animations": ["../eds-desktop/packages/animations/src/index.ts"],
+      "@eds/desktop-animations/*": ["../eds-desktop/packages/animations/src/*"],
       "@eds/desktop-tokens": ["../eds-desktop/packages/tokens"],
       "@eds/desktop-tokens/*": ["../eds-desktop/packages/tokens/*"]
     },

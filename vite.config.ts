@@ -7,6 +7,8 @@ import { defineConfig } from 'vite';
 const EDS_ROOT = resolve(__dirname, '../eds-desktop');
 const EDS_COMPONENTS_SRC = resolve(EDS_ROOT, 'packages/components/src/index.ts');
 const EDS_COMPONENTS_SRC_DIR = resolve(EDS_ROOT, 'packages/components/src');
+const EDS_ANIMATIONS_SRC = resolve(EDS_ROOT, 'packages/animations/src/index.ts');
+const EDS_ANIMATIONS_SRC_DIR = resolve(EDS_ROOT, 'packages/animations/src');
 const EDS_ICONS_DIR = resolve(EDS_COMPONENTS_SRC_DIR, 'atoms/icons');
 const EDS_ICON_REGISTRY = resolve(EDS_ICONS_DIR, 'iconRegistry.ts');
 const EDS_TOKENS_SPEC_DIR = resolve(EDS_ROOT, 'packages/tokens/spec');
@@ -63,6 +65,7 @@ function watchEdsDesktopPackages(): Plugin {
     configureServer(server) {
       server.watcher.add([
         EDS_COMPONENTS_SRC_DIR,
+        EDS_ANIMATIONS_SRC_DIR,
         EDS_TOKENS_SPEC_DIR,
         EDS_TOKENS_DIST_DIR,
       ]);
@@ -84,6 +87,11 @@ function watchEdsDesktopPackages(): Plugin {
         }
 
         if (file.startsWith(EDS_COMPONENTS_SRC_DIR) && /\.(vue|css|ts)$/.test(file)) {
+          scheduleFullReload(server);
+          return;
+        }
+
+        if (file.startsWith(EDS_ANIMATIONS_SRC_DIR) && /\.(vue|css|ts)$/.test(file)) {
           scheduleFullReload(server);
           return;
         }
@@ -114,13 +122,17 @@ export default defineConfig({
         replacement: EDS_COMPONENTS_SRC,
       },
       {
+        find: '@eds/desktop-animations',
+        replacement: EDS_ANIMATIONS_SRC,
+      },
+      {
         find: '@',
         replacement: resolve(__dirname, 'src'),
       },
     ],
   },
   optimizeDeps: {
-    exclude: ['@eds/desktop-components'],
+    exclude: ['@eds/desktop-components', '@eds/desktop-animations'],
   },
   server: {
     host: true,
@@ -133,6 +145,7 @@ export default defineConfig({
       ignored: [
         '**/node_modules/**',
         '!**/packages/components/**',
+        '!**/packages/animations/**',
         '!**/packages/tokens/dist/**',
         '!**/packages/tokens/spec/**',
       ],

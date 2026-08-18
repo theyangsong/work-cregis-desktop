@@ -57,14 +57,14 @@ function onContinueSending() {
   <EgPopup
     v-if="popupMounted"
     v-model:open="popupOpen"
-    uses="reminder"
-    reminder-type="echo"
+    uses="dialog"
+    dialog-type="compose"
     alert-vertical-align="offset-top"
     @close="onPopupClosed"
   >
     <EgReminder
       :class="styles.host"
-      type="echo"
+      type="compose"
       :title="ui('Withdrawal quota exceeded')"
       :show-secondary-text="false"
     >

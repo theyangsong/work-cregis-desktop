@@ -16,7 +16,7 @@ import { buildTasksListFieldCurrencyCustomize } from '../list-field/tasksListFie
 import { buildCurrencySideAddressData } from '../list-field/listFieldCurrencyAddressCustomize';
 import { buildCurrencyAddressTags } from '../list-field/listFieldCurrencyTagCustomize';
 import type { CryptoAddressSideTags } from '@eds/desktop-components';
-import { parseCurrencyOrderCount } from '../list-field/listFieldCurrencyShared';
+import { parseCurrencyAddressCount } from '../list-field/listFieldCurrencyShared';
 import { resolveCurrencyRowPreset } from '../list-field/tasksListFieldCurrencyRowData';
 import { DATA_LIST_FIGMA_COLUMNS } from '../tasksDataListPageData';
 import type { ApprovalAddressEntry } from './types';
@@ -158,11 +158,11 @@ export function buildApprovalDetailRowFields(rowIndex: number) {
     payoutWalletSignLabel: formatApprovalPayoutWalletSignLabel(rowIndex),
     senderSummary: fromSide.address,
     senderCount: fromSide.count,
-    senderOrderCount: parseCurrencyOrderCount(customize.fromOrderCount) || undefined,
+    senderOrderCount: parseCurrencyAddressCount(customize.fromOrderCount) || undefined,
     senders,
     receiverSummary: toSide.address,
     receiverCount: toSide.count,
-    receiverOrderCount: parseCurrencyOrderCount(customize.toOrderCount) || undefined,
+    receiverOrderCount: parseCurrencyAddressCount(customize.toOrderCount) || undefined,
     receivers,
   };
 }

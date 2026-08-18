@@ -74,8 +74,8 @@ const showRowTag = computed(
 );
 const displayRowTagLabel = computed(() => ui(String(props.rowTagLabel ?? 'Tag')));
 
-function tagLabel(label: string): string {
-  return ui(label);
+function tagLabel(label: string | undefined): string {
+  return ui(label ?? '');
 }
 const showSecondaryText = computed(() => secondaryLineText.value.length > 0);
 const showTags = computed(() => hasAddressTags(props.tags?.system, props.tags?.custom));

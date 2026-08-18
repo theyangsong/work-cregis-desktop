@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@eds/desktop-animations':
+        specifier: link:../eds-desktop/packages/animations
+        version: link:../eds-desktop/packages/animations
       '@eds/desktop-components':
         specifier: link:../eds-desktop/packages/components
         version: link:../eds-desktop/packages/components

@@ -326,34 +326,3 @@ body > [id^='eds-tooltip-v-'] > div:first-child:has(> :not([class*='floatingInne
   max-height: 100%;
   overflow: hidden;
 }
-
-/*
- * Token 线稿 icon（EgIcon .eds-i-s）：锁定 --stroke-lg + non-scaling-stroke。
- * SVG 32px viewBox 缩至 --icon-md/lg 时，若无 vector-effect 描边会同比变细（Pages 生产构建尤甚）。
- * 真源：eds-desktop/.cursor/rules/stroke-svg-scaling.mdc
- * 注意：global.css 是普通样式表，不可使用 CSS Modules 的 :global()。
- */
-.app-preview .eds-icon .eds-i-s,
-body > [id^='eds-tooltip-v-'] .eds-icon .eds-i-s,
-.eds-flotation-menu .eds-icon .eds-i-s,
-body .desktopTokens .eds-icon .eds-i-s {
-  stroke: currentColor;
-  stroke-width: var(--stroke-lg);
-  vector-effect: non-scaling-stroke;
-}
-
-/* fixed 调色板 stroke icon：保留 SVG 原 stroke-width，仅补 non-scaling（无 .eds-i-s 类名） */
-.app-preview .eds-icon path[stroke-width]:not(.eds-i-s),
-.app-preview .eds-icon line:not(.eds-i-s),
-.app-preview .eds-icon polyline:not(.eds-i-s),
-body > [id^='eds-tooltip-v-'] .eds-icon path[stroke-width]:not(.eds-i-s),
-body > [id^='eds-tooltip-v-'] .eds-icon line:not(.eds-i-s),
-body > [id^='eds-tooltip-v-'] .eds-icon polyline:not(.eds-i-s),
-.eds-flotation-menu .eds-icon path[stroke-width]:not(.eds-i-s),
-.eds-flotation-menu .eds-icon line:not(.eds-i-s),
-.eds-flotation-menu .eds-icon polyline:not(.eds-i-s),
-body .desktopTokens .eds-icon path[stroke-width]:not(.eds-i-s),
-body .desktopTokens .eds-icon line:not(.eds-i-s),
-body .desktopTokens .eds-icon polyline:not(.eds-i-s) {
-  vector-effect: non-scaling-stroke;
-}

@@ -3,12 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Cregis desktop business app — built on @eds/desktop-tokens and @eds/desktop-components",
+  "description": "Cregis desktop business app — built on @eds/desktop-tokens, @eds/desktop-animations, and @eds/desktop-components",
   "scripts": {
-    "predev": "node scripts/verify-list-field-crypto.mjs && node scripts/verify-miner-fee-profiles.mjs && pnpm --dir ../eds-desktop build:tokens",
+    "predev": "node scripts/verify-list-field-crypto.mjs && node scripts/verify-miner-fee-profiles.mjs && pnpm --dir ../eds-desktop build:tokens && pnpm --dir ../eds-desktop build:animations",
     "dev": "vite",
     "dev:clean": "rm -rf node_modules/.vite && vite",
-    "prebuild": "node scripts/verify-list-field-crypto.mjs && node scripts/verify-miner-fee-profiles.mjs && pnpm --dir ../eds-desktop build:tokens && pnpm --dir ../eds-desktop build:components",
+    "prebuild": "node scripts/verify-list-field-crypto.mjs && node scripts/verify-miner-fee-profiles.mjs && pnpm --dir ../eds-desktop build:tokens && pnpm --dir ../eds-desktop build:animations && pnpm --dir ../eds-desktop build:components",
     "build": "vue-tsc --noEmit && vite build",
     "build:pages": "pnpm prebuild && vite build",
     "preview": "vite preview",
@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@eds/desktop-components": "link:../eds-desktop/packages/components",
+    "@eds/desktop-animations": "link:../eds-desktop/packages/animations",
     "@eds/desktop-tokens": "link:../eds-desktop/packages/tokens",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"

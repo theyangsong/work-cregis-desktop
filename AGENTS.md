@@ -4,7 +4,7 @@
 
 ## 硬约束（违反即错误）
 
-1. **只允许** `@eds/desktop-tokens`、`@eds/desktop-components`（及未来的 `@eds/desktop-scenes`）。
+1. **只允许** `@eds/desktop-tokens`、`@eds/desktop-animations`、`@eds/desktop-components`（及未来的 patterns / workflows）。
 2. **禁止** `@eds/website-tokens`、`@eds/website-components`，以及任何 Website 排版 / 壳层 CSS。
 3. **禁止**从 `eds-desktop/apps/showcase/**` 复制样式、token 名或集成方式。
 4. **排版 token** 以 `../eds-desktop/packages/tokens/spec/typography/semantic.json` 为准。  
@@ -16,7 +16,7 @@
 
 ## 对齐引用库（硬约束）
 
-**引用库** = 同级目录 `../eds-desktop` 的 `packages/tokens`、`packages/components`（dev 经 Vite alias 消费源码）。用户说「对齐引用库」或组件行为与 Showcase 不一致时，**必须先读引用库再改业务代码**。
+**引用库** = 同级目录 `../eds-desktop` 的 `packages/tokens`、`packages/animations`、`packages/components`（dev 经 Vite alias 消费源码）。用户说「对齐引用库」或组件行为与 Showcase 不一致时，**必须先读引用库再改业务代码**。
 
 | 变更类型 | 改哪里 | 不要 |
 |----------|--------|------|
