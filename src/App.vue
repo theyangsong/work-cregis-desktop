@@ -10,7 +10,7 @@ import MultiSignInvitationFloatHost from '@/scenes/tasks/signing/multiSignInvita
     panel-kind="container"
     panel-radius="radius-lg"
     :scrollable="true"
-    class="app-preview"
+    class="app-preview desktopTokens"
   >
     <EgContainer class="app-shell-container">
       <RouterView />
