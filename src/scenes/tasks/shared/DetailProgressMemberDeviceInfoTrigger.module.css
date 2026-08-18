@@ -99,7 +99,3 @@
 .copyButtonCopied :global(.eds-icon path) {
   fill: var(--status-success);
 }
-
-.copyButtonCopied :global(.eds-icon .eds-i-s) {
-  stroke: var(--status-success);
-}

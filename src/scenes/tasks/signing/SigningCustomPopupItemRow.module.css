@@ -33,8 +33,10 @@
   color: var(--stroke-base-secondary);
 }
 
+/* 对齐 EgDetail.itemTitleIcon：屏上 1.1px */
 .itemTitleIcon :global(.eds-i-s) {
   stroke-width: var(--stroke-md);
+  vector-effect: non-scaling-stroke;
 }
 
 .itemTitleText {
@@ -95,8 +97,4 @@
 .copyButtonCopied :global(.eds-icon .eds-i-f),
 .copyButtonCopied :global(.eds-icon path) {
   fill: var(--status-success);
-}
-
-.copyButtonCopied :global(.eds-icon .eds-i-s) {
-  stroke: var(--status-success);
 }

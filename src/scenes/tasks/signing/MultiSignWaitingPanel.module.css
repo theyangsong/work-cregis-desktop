@@ -144,12 +144,6 @@
   fill: currentColor;
 }
 
-.statusIconReady :global(.eds-i-s),
-.statusIconFailed :global(.eds-i-s),
-.statusIconWaiting :global(.eds-i-s) {
-  stroke: currentColor;
-}
-
 .statusIconFailed {
   background: var(--status-danger);
   color: var(--material-same-white-primary);

@@ -63,10 +63,6 @@
   color: var(--event-hover-base);
 }
 
-.launcherButton:hover:not(.launcherButtonDevActive) .launcherIcon :global(.eds-i-s) {
-  stroke: var(--event-hover-base);
-}
-
 .launcherButton:hover:not(.launcherButtonDevActive) .launcherLabel {
   color: var(--event-hover-base);
 }
@@ -85,13 +81,6 @@
   color: var(--stroke-base-secondary);
 }
 
-.launcherButtonDevActive .launcherIcon :global(.eds-i-s),
-.launcherButtonDevActive:hover .launcherIcon :global(.eds-i-s),
-.launcherButtonDevActive:focus .launcherIcon :global(.eds-i-s),
-.launcherButtonDevActive:focus-visible .launcherIcon :global(.eds-i-s) {
-  stroke: var(--stroke-base-secondary);
-}
-
 .launcherButtonDevActive .launcherLabel,
 .launcherButtonDevActive:hover .launcherLabel,
 .launcherButtonDevActive:focus .launcherLabel,
@@ -106,12 +95,6 @@
   justify-content: center;
   color: var(--stroke-base-secondary);
   transition: color var(--motion-duration-hover) var(--motion-easing-standard);
-}
-
-.launcherIcon :global(.eds-i-s) {
-  stroke: var(--stroke-base-secondary);
-  stroke-width: var(--stroke-lg);
-  transition: stroke var(--motion-duration-hover) var(--motion-easing-standard);
 }
 
 .launcherLabel {
