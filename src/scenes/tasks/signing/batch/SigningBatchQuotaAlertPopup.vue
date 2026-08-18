@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed, toRef } from 'vue';
-import { EgDialog, EgPopup } from '@eds/desktop-components';
+import { EgButton, EgPopup, EgReminder } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
 import { formatGroupedDecimalAmount } from '@/utils/formatGroupedDisplay';
 import { usePopupShellLifecycle } from '../../shared/usePopupShellLifecycle';
+import styles from './SigningBatchQuotaAlertPopup.module.css';
 
 const props = defineProps<{
   open: boolean;
@@ -56,19 +57,40 @@ function onContinueSending() {
   <EgPopup
     v-if="popupMounted"
     v-model:open="popupOpen"
-    uses="dialog"
-    dialog-type="standard"
+    uses="reminder"
+    reminder-type="echo"
     alert-vertical-align="offset-top"
     @close="onPopupClosed"
   >
-    <EgDialog
-      type="standard"
+    <EgReminder
+      :class="styles.host"
+      type="echo"
       :title="ui('Withdrawal quota exceeded')"
-      :secondary-text="message"
-      :confirm-label="ui('Continue sending')"
-      :cancel-label="ui('Increase quota')"
-      @cancel="onIncreaseQuota"
-      @confirm="onContinueSending"
-    />
+      :show-secondary-text="false"
+    >
+      <p :class="styles.message">{{ message }}</p>
+      <template #actions>
+        <div :class="styles.toolbarBar">
+          <div :class="styles.toolbarActions">
+            <EgButton
+              tone="decor"
+              variant="text"
+              size="lg"
+              @click="onIncreaseQuota"
+            >
+              {{ ui('Increase quota') }}
+            </EgButton>
+            <EgButton
+              tone="decor"
+              variant="solid"
+              size="lg"
+              @click="onContinueSending"
+            >
+              {{ ui('Continue sending') }}
+            </EgButton>
+          </div>
+        </div>
+      </template>
+    </EgReminder>
   </EgPopup>
 </template>
