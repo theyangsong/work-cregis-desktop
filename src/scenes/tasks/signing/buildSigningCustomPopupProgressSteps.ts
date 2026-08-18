@@ -11,8 +11,8 @@ function buildThreeStepProgress(
   options: { failedIndex?: number } = {},
 ): SigningCustomPopupProgressStep[] {
   const labels: Record<ProgressStepKey, string> = {
-    sign: translate('Signature step'),
-    broadcast: translate('Broadcast step'),
+    sign: translate('Sign'),
+    broadcast: translate('Broadcast'),
     'on-chain': translate('On-chain confirmation'),
   };
 

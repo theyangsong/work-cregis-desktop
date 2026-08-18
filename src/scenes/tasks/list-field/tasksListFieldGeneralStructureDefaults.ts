@@ -67,7 +67,7 @@ export function buildTasksListFieldGeneralStructureCustomize(
       customize.countdownMinutes = transferType.countdownMinutes;
       customize.countdownSeconds = transferType.countdownSeconds;
       customize.countdownAlign = transferType.countdownAlign ?? 'left';
-      customize.countdownSuffixKey = 'Until Timeout';
+      customize.countdownSuffixKey = 'Expires in xx:xx';
     }
   }
   return customize;

@@ -91,7 +91,7 @@ function onConfirmStopSigning() {
                 size="md"
                 @click="onClick"
               >
-                {{ ui('Stop signing') }}
+                {{ ui('Stop Signing') }}
               </EgButton>
             </template>
           </SigningBatchStopConfirmPopover>

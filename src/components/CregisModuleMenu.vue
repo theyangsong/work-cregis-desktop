@@ -20,6 +20,7 @@ import {
   resolveCregisModuleMenuFlotationTitle,
 } from '@/presets/module-menu/cregisModuleMenuFlotationTitle';
 import type { ModuleMenuPresetGroup } from '@/presets/module-menu/cregisModuleMenuGroups';
+import { resolveTasksModuleMenuDisplayLabel } from '@/scenes/tasks/tasksDataListPageData';
 
 const props = defineProps<{
   title: CregisModuleMenuBusinessTitle;
@@ -30,7 +31,7 @@ const emit = defineEmits<{
   itemSelect: [label: string];
 }>();
 
-const { ui } = useAppI18n();
+const { ui, locale } = useAppI18n();
 
 const flotationMenuItems = computed(() =>
   cregisModuleMenuTitleFlotationItems.map((item) => ({
@@ -43,6 +44,10 @@ const flotationMenuProps = computed(() => ({
   ...cregisModuleMenuTitleFlotationProps,
   addLabel: ui(cregisModuleMenuTitleFlotationProps.addLabel),
 }));
+
+function moduleMenuItemLabel(label: string) {
+  return ui(resolveTasksModuleMenuDisplayLabel(label, locale.value));
+}
 
 function onItemClick(label: string) {
   emit('itemSelect', label);
@@ -95,7 +100,7 @@ const menuTitle = computed(() => {
       >
         <EgModuleMenuItem
           :tier="item.tier ?? 1"
-          :label="ui(item.label)"
+          :label="moduleMenuItemLabel(item.label)"
           :message="item.message?.trim() || undefined"
           :message-type="item.messageType ?? 'subtle'"
           :message-focus-background="item.focusBackground ?? 'inherit'"

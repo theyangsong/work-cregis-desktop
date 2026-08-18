@@ -135,7 +135,7 @@ function openPanel() {
 
 /**
  * click-toggle=false：仅此 handler 开/关；须 stop 到 trigger，避免 DS 默认 click 双触发。
- * 与 ShellDebugLauncherAnchored / work.mdc §7.3.1 同模式。
+ * 与 ShellDebugLauncherAnchored / work.mdc §7.3 同模式。
  */
 function onBadgeClick(event: MouseEvent) {
   event.preventDefault();
@@ -229,7 +229,7 @@ function onJoinInvitation(id: string) {
   }
 
   if (result === 'shard-missing') {
-    showToast(ui('Wallet shard not imported'));
+    showToast(ui('Wallet Shard Not Imported'));
     return;
   }
 

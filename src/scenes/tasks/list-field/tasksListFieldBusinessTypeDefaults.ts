@@ -20,7 +20,7 @@ const defaultFromAddress = buildCurrencySideAddressData('from', {
   ...defaultFromSide,
 });
 
-/** 发送方列：别名 / 地址 + 副行钱包名（与详情出款钱包同源）。 */
+/** 发送方列：主行钱包名 + 副行地址（from 侧；与详情出款钱包同源）。 */
 export const tasksListFieldBusinessTypeDefaults: Record<string, unknown> = {
   ...defaultFromSide,
   symbol: 'ZEC',

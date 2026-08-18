@@ -40,7 +40,7 @@ const PROFILE_KIND_BY_FAMILY: Record<CryptoAddressFamily, MinerFeeProfileKind> =
 const DEFAULT_MINER_FEE_PROFILE_KIND: MinerFeeProfileKind = 'evm';
 
 /** 四套矿工费 Popover topTool 统一文案 key（i18n → 矿工费）。 */
-export const MINER_FEE_POPOVER_TITLE_KEY = 'Gas fee';
+export const MINER_FEE_POPOVER_TITLE_KEY = 'Gas Fee';
 
 export function isEvmMinerFeeShell(kind: MinerFeeProfileKind): boolean {
   return kind === 'evm';

@@ -1,1220 +1,442 @@
-# EDS Desktop — 业务项目侧集成与约束规范
-
-> **适用范围**：所有引用 `@eds/desktop-tokens`、`@eds/desktop-components` 的 Desktop 客户端 / 业务应用。  
-> **不适用**：`eds-desktop` 内的 Showcase / Storybook（壳层使用 Website token，见 eds-desktop 内部 `showcase-token-scope.mdc`）。  
-> **权威源**：设计系统约定以 `eds-desktop/.cursor/rules/eds-project.mdc` 及 `packages/tokens/spec/**` 为准；本文档为 consumer 侧执行摘要。
-
+---
+description: work-cregis-desktop 唯一业务规范 — Desktop 客户端、DS 边界、i18n、顶底毛玻璃、Popup、场景定稿
+globs: **/*
+alwaysApply: true
 ---
 
-## 1. 目标
+# work-cregis-desktop 业务集成规范
 
-业务项目侧必须：
+> **项目**：Desktop 客户端（非 Showcase / 非 Website 壳）。  
+> **入口**：改代码前先读根目录 `AGENTS.md`。  
+> **DS 权威**：`../eds-desktop/.cursor/rules/eds-project.mdc`、`packages/tokens/spec/**`。  
+> **Showcase 无兜底**：Showcase 外层 Website 壳会继承无效 token；本仓库无效 token 直接失效。
 
-1. **100% 消费 Desktop 设计系统**，不得混入 Website / Showcase 壳层。
-2. **所有样式数值**通过 Desktop 语义 token / 组件 props 表达，禁止裸 px、hex、私造 CSS 变量。
-3. **所有 UI 交互**优先使用 DS 组件组合（如 `EgFlotation` Combo），禁止手搓平行实现。
-4. **自动化校验**：使用设计系统外 `var(--*)` 时，工具链必须报错并提示维护流程。
-5. **禁止复制**：所有业务页面（含后续新增）不得向用户提供复制能力（见 §1.1）。
+**规则用语**
 
-### 1.1 禁止复制（硬约束）
-
-| 禁止 | 说明 |
+| 标记 | 含义 |
 |------|------|
-| 复制按钮 / Menu | `showValueCopy`、`EgListFieldHashLikeLine` 复制、`CryptoAddressSide` 复制、`navigator.clipboard` 等 |
-| 局部放开选区 | 不得在页面 CSS 对业务区设 `user-select: text` 绕过 shell |
-| 例外 | 输入框 / `textarea` / `contenteditable` 内编辑所需选区（`global.css` 已白名单） |
-
-**展示**：哈希、编号、地址、金额等一律只读；溢出用 `EgListFieldOverflowText` / `EgTextOverflowTooltip`（无复制）。`copyOnRowHover` 等业务默认保持 `false`。
+| **【必须】** | 违反即错误，PR 须修正 |
+| **【禁止】** | 不得出现的行为或实现 |
+| **【定稿】** | 产品/设计已锁定数值与结构，不得擅自改 |
 
 ---
 
-## 2. 依赖边界（硬约束）
+## 0. 速查索引
 
-### 2.1 允许
+| 主题 | 章节 |
+|------|------|
+| 禁止复制、Desktop-only | §1 |
+| 本仓库 vs eds-desktop、同步、dev HMR | §2 |
+| DOM、EgPopup 挂载位置 | §3 |
+| Eg* 组件用法 | §4 |
+| UI 文案 i18n | §5 |
+| Token、千分位、顶底毛玻璃、网络名称 | §6 |
+| EgPopup 生命周期、批处理、多签、钱包列、Shell Debug | §7 |
+| lint、PR 清单 | §8 |
+| 文件索引 | §9 |
 
-| 包 | 用途 |
+---
+
+## 1. 全局硬约束
+
+### 1.1 Desktop-only
+
+**【必须】** 只使用 `@eds/desktop-tokens`、`@eds/desktop-components`（规划中的 `@eds/desktop-scenes` 同理）。
+
+**【禁止】**
+
+| 项 | 原因 |
 |----|------|
-| `@eds/desktop-tokens` | 颜色、间距、圆角、排版、动效、effect 等 CSS 变量与工具类 |
-| `@eds/desktop-components` | Vue 3 组件（`Eg*`） |
-| （规划）`@eds/desktop-scenes` | 业务场景薄封装（若未来发布） |
+| `@eds/website-*` | 与 Desktop token 体系不同 |
+| 从 `eds-desktop/apps/showcase/**` 复制 CSS / 集成 / token 名 | Showcase 靠 Website 壳继承变量 |
+| Desktop spec 不存在的 token（如 `--eds-footnote-medium-*`） | 正确名为 `--eds-footnote-*` |
+| `@import '@eds/desktop-components/style.css'`（dist 快照） | dev/build 须 alias 到 DS 源码 |
 
-### 2.2 禁止
+排版 token 查：`../eds-desktop/packages/tokens/spec/typography/semantic.json`。
 
-| 禁止项 | 原因 |
-|--------|------|
-| `@eds/website-tokens`、`@eds/website-components` | Website 与 Desktop 是不同 token 体系 |
-| 从 `eds-desktop/apps/showcase/**` 复制 CSS、集成方式、文档壳样式 | Showcase 外层为 Website 壳，变量会从壳层继承，在客户端会失效 |
-| `@import '@eds/desktop-components/style.css'`（生产 dist 快照） | dist 易过期；dev/build 应 alias 到源码或 sync 后刷新 link |
-| 使用 Desktop spec **不存在**的 token 名（如 `--eds-footnote-medium-*`） | Desktop 为 `--eds-footnote-*`；`-medium-` 等为 Website 档位命名 |
+### 1.2 禁止复制
 
-### 2.3 同步约定
+**【禁止】** 向用户提供任何复制能力：`showValueCopy`、`EgListFieldHashLikeLine` 复制、`CryptoAddressSide` 复制、`navigator.clipboard`、复制按钮/Menu。
 
-**单向边界（DS 改 → 业务跟；业务改 → 不污染 DS）：** 见 `.cursor/rules/eds-one-way-boundary.mdc`。本仓库 **只改** `src/**`；**禁止**在本会话改 `../eds-desktop/packages/**`（须切换 eds-desktop 仓库）。
+**【必须】** 哈希/编号/地址/金额只读展示；溢出用 `EgListFieldOverflowText` / `EgTextOverflowTooltip`（无复制）。`copyOnRowHover` 保持 `false`。
 
-- 在 **eds-desktop** 说「同步」= `pnpm build:tokens && pnpm build:components` + 对所有 `link:` consumer 执行 `pnpm install`，并运行 `sync-list-field-currency.mjs`（list-field 运行时辅助）。
-- 在 **业务项目** 说「同步 eds-desktop」= 先在 `../eds-desktop` build，再本项目 `pnpm install`，**重启 dev server**。
-- 同步 **仅**传播 `packages/tokens`、`packages/components`，以及 **可 sync 的** list-field 辅助文件；**不包含** showcase、Website 包；**无反向** sync（业务 `src/**` 不写回 DS）。
+**【禁止】** 业务区 CSS 设 `user-select: text` 绕过 shell（输入框 / `textarea` / `contenteditable` 除外，`global.css` 已白名单）。
 
-### 2.3.1 对齐引用库
+### 1.3 样式与组件总则
 
-用户说「对齐引用库」或排查 DS 行为异常时，**以 `../eds-desktop/packages/**` 为权威实现**；Showcase 的 `ListFieldPreviewPanel.vue` 等仅作 **集成参考**（禁止复制 Website 壳 CSS）。
+**【必须】** 样式用 Desktop 语义 token + 组件 props；交互优先 DS 组合（如 `EgFlotation` Combo）。
 
-1. **组件逻辑 / 交互**（Tooltip、浮层边界、BatchBar、排序、地址 Menu…）→ 改 `packages/components`，不在 `work-cregis-desktop` 复刻。
-2. **业务薄封装**（`TasksListField*`）→ 按 Showcase `ListFieldPreviewPanel.vue` 选型：**所有可读文本**（含哈希/编号/地址）用 `EgListFieldOverflowText`（只读 Tooltip，**无复制**）；**禁止** `EgListFieldHashLikeLine` / `CryptoAddressSide` 复制 Menu（§1.1）。
-3. **先 diff 再改**：`rg` 引用库中组件名 / prop 名，再改业务文件。
-4. **引用库无现成能力时先询问用户**，确认方案后再改 `packages/**` 或业务侧，勿擅自扩展 DS API / token。
+**【禁止】** 裸 `px`/hex/`font-weight: 数字`；私造 `--*`；用 `--scale-*` 冒充 `--radius-md` 等语义 token；覆盖 `Eg*` 根节点 `class`/`style` 或内部 DOM。
 
-### 2.3.2 开发改动须 dev 实时生效（硬约束）
+**【必须】** `var(--*)` 仅在 `@eds/desktop-tokens/json` 白名单或 `token-allowlist.business.json` 已批条目内；否则 `pnpm lint:ds-tokens` 失败。缺 token → 向 eds-desktop 申请，**不得**私造。
 
-**凡 UI / 样式 / 交互改动，保存后须在 `pnpm dev` 下即时可见（HMR 或 full-reload）。禁止只跑 `pnpm build` 就当验收完成、让用户自行重启或猜是否要刷新。**
+---
 
-| 范围 | 机制 | Agent 必做 |
-|------|------|------------|
-| **业务 `src/**`**（Vue、CSS Module、TS 逻辑） | Vite HMR；CSS Module / `.vue` 保存后应自动更新 | 改前确认 `pnpm dev` 在跑；未跑则 **先启动**；改后若页面未更新 → 硬刷新 → 仍无效再重启 dev |
-| **引用库 `../eds-desktop/packages/**`** | dev alias 源码 + `watchEdsDesktopPackages`（见 `vite.config.ts`） | 同左；**禁止**改 `packages/components/dist` 或 `@import '@eds/desktop-components/style.css'` |
-| **Token spec** | `tokens/spec` 变更 → 自动 `build:tokens` → full-reload | 等待 reload 完成后再目测 |
-| **同步 eds-desktop** | build + `pnpm install` + **重启 dev** | 同步 ≠ 日常 HMR；仅用户明确要求「同步」时执行 |
+## 2. 仓库边界与工程
 
-**引用库 alias（锁死）**
+### 2.1 DS ↔ 业务单向边界
 
-| 项 | 约定 |
-|----|------|
-| **Alias** | `@eds/desktop-components` → `../eds-desktop/packages/components/src/index.ts` |
-| **监听** | `vite.config.ts` 内 `watchEdsDesktopPackages` 显式 `watcher.add` `packages/components` + `packages/tokens` |
-| **全局样式** | `src/styles/desktop-components-scope.css` 须 `@import` `interactionHoverTooltip.css` 等 DS glue（与 showcase 一致） |
-| **同步 ≠ 实时** | 用户说「同步 eds-desktop」= build + install + **重启 dev**；日常改 `packages/**` 源码 **不需要** sync/build dist |
+**方向**：eds-desktop 改 → 本 App 跟；本 App 改 → 不写回 eds-desktop。
 
-**禁止**
+| 本仓库可改 | 本仓库禁止改 |
+|------------|--------------|
+| `src/**` | `../eds-desktop/packages/**` |
+| `token-allowlist.business.json` | `../eds-desktop/apps/showcase/**` |
+| `scripts/verify-*.mjs` | 把业务逻辑抄进 DS 包 |
 
-- 只提交代码、不确认 dev 是否已热更新
-- 用 `pnpm build` 代替 dev 目测样式/交互
-- 让用户「自己刷新看看」而未先排查 dev / HMR
+改 Popover / token / 组件 API → **切换 eds-desktop 仓库**改，或告知用户属 DS 范围。
 
-**排查「改了但页面没变」**：dev 是否在跑 → 是否误改 dist → 浏览器硬刷新 → 重启 `pnpm dev` → 是否改错文件/分支。
+**消费 DS**：`link:../eds-desktop/packages/{tokens,components}`；Vite alias `@eds/desktop-components` → DS 源码。
+
+**同步 eds-desktop**（仅用户明确要求时）：`../eds-desktop` build → 本仓库 `pnpm install` → **重启 dev**。只同步 `packages/tokens`、`packages/components` 与可 sync 的 list-field 辅助；不含 showcase/Website。**无反向 sync**。
+
+### 2.2 对齐引用库
+
+**【必须】** DS 行为以 `../eds-desktop/packages/**` 为准；Showcase `ListFieldPreviewPanel.vue` 仅作集成参考。
+
+| 变更类型 | 改哪里 |
+|----------|--------|
+| Tooltip、BatchBar、DataList 等 DS 行为 | `packages/components` |
+| `TasksListField*` 薄封装 | 业务 `src/**`，对齐 Showcase 选型 |
+
+**【必须】** 所有可读文本（含哈希/编号/地址）用 `EgListFieldOverflowText`。**【禁止】** `EgListFieldHashLikeLine` / `CryptoAddressSide` 复制 Menu。
+
+### 2.3 dev 实时生效
+
+**【必须】** UI/样式/交互改后，在 `pnpm dev` 下保存即 HMR/full-reload 可见。**【禁止】** 只 `pnpm build` 不 dev 就当验收完成。
+
+| 范围 | Agent 动作 |
+|------|------------|
+| `src/**` | 确认 dev 在跑；未更新 → 硬刷新 → 重启 dev |
+| `../eds-desktop/packages/**` | 走 alias 源码；**禁止**改 `dist` |
+| 同步 eds-desktop | build + install + 重启 dev（≠ 日常 HMR） |
 
 ### 2.4 list-field 本地扩展（sync 禁止覆盖）
 
-`src/scenes/tasks/list-field/listFieldCryptoSampleAddresses.ts` 为 **work-cregis-desktop 业务专用**，含 showcase 精简版没有的导出：
+`src/scenes/tasks/list-field/listFieldCryptoSampleAddresses.ts` 含业务专用导出：`getPinnedAddressForRow`、`ton`/`sui`、`familyOverride`、`DEMO_ADDRESS_POOL_MIN = 23`。
 
-| 扩展 | 用途 |
-|------|------|
-| `getPinnedAddressForRow` | 首列 preset 行固定真实地址 |
-| `ton` / `sui` | 额外地址族与格式校验 |
-| `familyOverride` | 按 preset 覆盖地址族 |
-| `DEMO_ADDRESS_POOL_MIN = 23` | Mr. Wang (23) 等演示地址池 |
-
-**硬约束：**
-
-1. **禁止**用 showcase 同名文件整文件替换；sync 脚本已对 `work-cregis-desktop` **跳过**该文件（`eds-desktop/scripts/sync-list-field-currency.mjs` → `CONSUMER_SKIP_COPY`）。
-2. **禁止**从 sync 产物中删除上述 marker；`pnpm dev` / `pnpm build` 前会跑 `scripts/verify-list-field-crypto.mjs`，缺失则 **fail fast**（避免整页空白）。
-3. 若需对齐 showcase 基座逻辑，**手动 diff** `eds-desktop/apps/showcase/src/views/scenes/previews/listFieldCryptoSampleAddresses.ts` 后 **合并**，保留业务扩展导出。
-4. Agent 改 sync 脚本时 **不得**移除 `work-cregis-desktop` 对该文件的 skip 配置。
-
-**仍会被 sync 覆盖的文件**（须与 showcase 对齐）：`listFieldCurrencyShared.ts`、`listFieldCryptoResolve.ts`；`listFieldCurrencyTagCustomize.ts` 仅校验 marker，不自动复制。
-
-**页面空白排查**：若 Tasks Data List 整页空白，优先检查该文件是否仍含 `getPinnedAddressForRow`；运行 `node scripts/verify-list-field-crypto.mjs`。
+**【禁止】** showcase 同名文件整文件替换（sync 已 skip）。**【必须】** 保留 marker；`node scripts/verify-list-field-crypto.mjs` 校验。Tasks 整页空白 → 先查此文件。
 
 ---
 
-## 3. 启动链（必须一次性接好）
-
-在应用入口（如 `main.ts`）按顺序初始化：
-
-```typescript
-import { createApp } from 'vue';
-import {
-  initEdsDesktopRuntime,
-  initThemeProvider,
-  rescanCornerSmoothing,
-} from '@eds/desktop-components';
-import { initLiquidGlass } from '@eds/desktop-tokens/liquid-glass';
-import '@eds/desktop-tokens/fonts';
-import '@eds/desktop-tokens';
-import './styles/desktop-components-scope.css';
-
-initLiquidGlass();
-initEdsDesktopRuntime();   // Figma/iOS squircle 圆角（--corner-smoothing）
-initThemeProvider();     // light/dark 主题
-
-const app = createApp(App);
-app.use(router).mount('#app');
-
-// 路由切换、Teleport 挂载后补扫圆角
-router.afterEach(() => {
-  requestAnimationFrame(() => rescanCornerSmoothing());
-});
-```
-
-### 3.1 `desktop-components-scope.css`（示例）
-
-只 import 组件库全局 reset 与交互样式，**不要** import 未 scoped 的全量 dist CSS：
-
-```css
-@import '@eds/desktop-components/src/styles/global.css';
-@import '@eds/desktop-components/src/styles/interactionHoverTooltip.css';
-/* 业务侧 list-field 等扩展 typography 可在此追加 */
-```
-
-Dev 环境建议 Vite alias 指向 `eds-desktop/packages/components/src`，与 Showcase 一致。
-
----
-
-## 4. DOM 与 Token 作用域
-
-### 4.1 推荐结构
+## 3. DOM 与挂载
 
 ```
-#app                              ← 宿主布局（居中、预览框尺寸等业务约定）
-└─ .app-preview.desktopTokens     ← Desktop 真实边界（EgTooltip / effect-container-box）
-   ├─ EgContainer
-   │  └─ EgLayout
-   │     └─ 业务页面
-   └─ AppPopupOverlayHost         ← EgPopup shell（与 Container 同级，禁止挂在业务页内）
+#app
+└─ .app-preview.desktopTokens     ← Desktop token 边界；EgTooltip container
+   ├─ EgContainer → EgLayout → 业务页
+   └─ AppPopupOverlayHost         ← 与 EgContainer 同级
 ```
-
-### 4.2 规则
 
 | 规则 | 说明 |
 |------|------|
-| `.desktopTokens` 必须是**包裹层** | 包在 `EgInput`、`EgLayout` 等 subtree 外层 |
-| **禁止**把 `.desktopTokens` 打在 `Eg*` 组件根节点上 | PostCSS scoped 生成 `.desktopTokens .hash`，同元素匹配失败会导致尺寸异常 |
-| Desktop token 作用域 | 仅在 `.desktopTokens` 子树内生效 |
-| 业务根建立排版基线 | 避免继承宿主 `body` 错误字号（如 Website 18px body-medium 泄漏） |
-| **EgPopup 挂载** | Popup host 与 `EgContainer` 同级（见 `App.vue`）；遮罩须覆盖整块 `.app-preview`；**禁止**挂在 DataList / 列表页 subtree 内 |
-| **EgPopup 叠层动效** | 下层暂挂须走 EgPopup 出场/入场，**禁止** CSS `visibility:hidden`；懒挂载须 `usePopupShellLifecycle`（见 §7.1） |
+| **【必须】** `.desktopTokens` 作包裹层 | **【禁止】** 打在 `Eg*` 根节点上 |
+| **【必须】** `EgPopup` host 与 `EgContainer` 同级 | 遮罩覆盖整块 `.app-preview` |
+| **【禁止】** Popup 挂在列表页 subtree 内 | 遮罩会被裁切 |
+| **【必须】** 懒挂载 Popup 用 `usePopupShellLifecycle` | 见 §7.1 |
 
-### 4.3 业务-only 变量（非 DS token）
-
-窗口尺寸、品牌壳层背景等 **不属于 DS** 的变量（如 `--app-preview-width`、`--cregis-shell-bg`）：
-
-- 集中定义在 `src/styles/global.css` 或 `token-allowlist.business.json`
-- **每条须注释说明、维护者批准**
-- 不得扩散为通用排版/颜色 substitute
+启动链见 `main.ts`：`initLiquidGlass` → `initEdsDesktopRuntime` → `initThemeProvider`；样式 `src/styles/desktop-components-scope.css`（import DS `global.css` + `interactionHoverTooltip.css`，**不** import dist 全量 CSS）。
 
 ---
 
-## 5. 组件用法契约（封闭实现）
+## 4. 组件契约
 
-来源：`@eds/desktop-components` README。
+**允许**：语义 props（`size`/`tone`/`variant`）、`v-model`、具名 slot。
 
-### 5.1 允许
+**【禁止】** 手搓 `AnchoredTooltip + 菜单` 代替 `EgFlotation`；拆改组件内部 DOM。
 
-- 语义 props：`size`、`tone`、`variant`、`disabled`、`loading` 等
-- 数据与文案：`v-model`、`placeholder`、事件 `@clear`、`@row-click` 等
-- **具名 slot** 内容（Button 文案、Input `#suffix`、DataList 列 slot 等）
+**Tooltip 默认 `maxWidth`（勿传 `maxWidth` 覆盖）**
 
-### 5.2 禁止
-
-| 禁止 | 示例 |
+| 组件 | 默认 |
 |------|------|
-| 根节点 `class` / `style` 改外观 | `<EgInput class="my-input" style="height:40px" />` |
-| 外层 CSS 覆盖组件内部样式 | `.my-page .eds-input-field { padding: … }` |
-| 拆改组件内部 DOM | 复制粘贴组件 template 再改结构 |
-| 样式逃逸 props | `inputClass`、`fieldStyle`、`panelRadius`（除非组件 API 已发布） |
-| 重新实现 DS 已有交互 | 手搓 `AnchoredTooltip + 菜单` 代替 `EgFlotation` |
-| 覆盖 Tooltip 默认面板宽度 | 传 `:max-width`；CSS 改 `.eds-tooltip-panel` 宽度（`.eds-anchored-tooltip` 仅约束 trigger 布局，见 §5.4） |
+| `EgListFieldOverflowText` / `EgTextOverflowTooltip` | 360 |
+| `EgDataListCellOverflow` header / cell | 240 / 480 |
 
-### 5.4 Tooltip 默认宽度（继承引用库）
+---
 
-溢出 Tooltip **不传** `maxWidth`，由 DS 组件默认值决定（与 showcase 一致）：
+## 5. UI 文案 i18n
 
-| 组件 | 默认 `maxWidth` |
-|------|-----------------|
-| `EgListFieldOverflowText` / `EgTextOverflowTooltip` | 360（`TEXT_OVERFLOW_TOOLTIP_MAX_WIDTH`） |
-| `EgDataListCellOverflow` `context="header"` | 240（`DATA_LIST_HEADER_OVERFLOW_TOOLTIP_MAX_WIDTH`） |
-| `EgDataListCellOverflow` `context="cell"` | 480（`DATA_LIST_CELL_OVERFLOW_TOOLTIP_MAX_WIDTH`） |
-| 哈希 / 地址溢出 Tooltip | 480（`COPYABLE_OVERFLOW_TOOLTIP_MAX_WIDTH`）— **业务侧勿接复制 Menu**（§1.1） |
+### 5.1 五条规则
 
-业务 CSS 可像 showcase `listFieldScene.module.css` 一样约束 **trigger**（如 `.amountSecondaryRow :global(.eds-anchored-tooltip) { max-width: 100% }`），**勿**额外覆盖 `.amountPreview` 等容器下的 tooltip 宽度。
+1. **【必须】** zh-cn 真源：`src/i18n/uiTextZhCN.ts`。en/zh-TW 仅来自 Excel + `collaborationLocaleOverrides.ts`。**【禁止】** Agent 自行翻译。
+2. **【必须】** key 不在 `I18N_DOC_ALIGNED_KEYS`（表外）→ en / zh-TW / zh-CN **均显示 catalog 简体中文**（便于核查缺失）。
+3. **【必须】** 所有 UI 固定文案走 `useAppI18n().ui()` 或 `translateUiText()`：列头、按钮、Tag、弹窗标题、tooltip、popover、toast、aria-label、placeholder。
+4. **【禁止】** 对字段 **value** 调 `ui()`：人名、地址、哈希、编号、金额、时间、设备值、用户输入、Remark。
+5. **en 大小写**（以 Excel / `I18N_DOC_EN_LABELS` 为准，文档已有词不二次改）：标签 Title Case；段落 Sentence case；`MPC`/`TxID` 等保持原文。
 
-### 5.3 正确示例
+### 5.2 标签 vs 数据
+
+| 走 `ui()` | 不走 `ui()` |
+|-----------|-------------|
+| Detail **title**、列头、Tag 文案 | Detail **value**、单元格姓名/地址/金额 |
+| Popover 标题、按钮 | 用户备注、交易 hash |
 
 ```vue
-<EgDataList
-  v-model:select-mode="selectMode"
-  :data-list="rows"
-  :column-height="66"
->
-  <EgDataListColumn prop="name" label="Name" min-width="240px" />
-</EgDataList>
+<span>{{ ui('Device Type') }}</span>
+<span>{{ deviceInfo.deviceType }}</span>
 ```
+
+### 5.3 文件与同步
+
+| 文件 | 作用 |
+|------|------|
+| `uiTextZhCN.ts` | zh-cn catalog（勿随意改值） |
+| `uiTextZhTW.ts` | Excel 同步填充 |
+| `i18nDocAlignedKeys.ts` | 表内 key 集合 |
+| `i18nDocEnLabels.ts` | catalog key ≠ 文档 en-us 时的 en 映射 |
+| `translateUiText.ts` | 运行时唯一入口 |
+| `i18n-alignment-report.json` | 对齐报告 |
+
+同步：`python3 scripts/sync-i18n-from-excel.py`（**不写** `uiTextZhCN.ts`）。
+
+**【禁止】** UI 标签硬编码中英；**【禁止】** `ui(member.name)`。同义 zh-cn 不同 en → 用 `I18N_DOC_EN_LABELS`，**勿**用 `COLLABORATION_KEY_RENAMES` 合并。
+
+### 5.4 Alert 弹窗
+
+**【必须】** `EgPopup uses="dialog" dialog-type="standard"`。**【禁止】** `uses="reminder"`（已废弃）。
 
 ---
 
-## 6. 自写样式：Token 使用规范
+## 6. 样式与展示
 
-与 `eds-project.mdc` §1 完全一致；**业务项目所有 `.module.css` / 全局 CSS 均适用**。
+### 6.1 Token
 
-### 6.1 核心原则
+查：`eds-desktop/packages/tokens/spec/scale/semantic.json`、`typography/semantic.json`、`@eds/desktop-tokens/json`。
 
-1. **先判断语义角色，再选 token**（圆角、间距、描边、排版各有语义层）。
-2. **禁止**因数值碰巧相同就用 `--scale-*` 代替 `--radius-md`、`--spacing-3` 等。
-3. **禁止**裸 `12px`、`1px`、`font-weight: 500`、hex 颜色（除非维护者书面批准硬编码）。
-4. **颜色**仅 `var(--material-*)` / `var(--text-*)` / `var(--stroke-*)` 等，遵守 Display P3。
-5. **排版**使用整组角色 token（size + weight + line-height 同角色），如 `--eds-body-small-strong-*`。
-6. **禁止在业务 CSS 私定义 `--my-panel-gap`** 等 DS 未发布变量名；禁止 `--foo: var(--radius-md)` 再引用 `--foo`。
-7. **动效**：hover 用 `var(--motion-transition-hover)`；**click / focus / selected 禁止 transition**（`.motion-none`）。
-8. **数字展示**：使用 `formatGroupedNumber`（`@eds/desktop-components`），禁止各处手写 `toLocaleString`；复合金额/文案见 **§6.4**。
-9. **嵌套滚动**（§6 eds-project）：`overscroll-behavior: none` + wheel 边界 `preventDefault` + `scrollTop` 钳制。
+**【必须】** 颜色 `var(--material-*)` / `var(--text-*)` / `var(--stroke-*)`；排版整组角色 token；hover 用 `var(--motion-transition-hover)`；click/focus/selected **禁止** transition。
 
-### 6.2 常用语义映射
+### 6.2 数字千分位
 
-| 设计稿描述 | 应使用 |
-|------------|--------|
-| 圆角 12 | `var(--radius-md)` |
-| 描边 1px | `var(--stroke-sm)` |
-| 间距 12 | `var(--spacing-3)` |
-| 正文 13 常规 | `--eds-body-small-*` |
-| 正文 13 中黑 | `--eds-body-small-strong-*` |
-| 工具栏标签 11 | `--eds-bar-*` + Bar 子像素策略（见 §1.1 eds-project） |
+**【必须】** 展示态数字千分位：`formatGroupedNumber`（DS）或 `src/utils/formatGroupedDisplay.ts`（金额/复合/阈值/矿工费/延迟）。
 
-### 6.3 查 token 的权威路径
+**【禁止】** 手写 `toLocaleString`；格式化输入态 `v-model`、倒计时 `MM:SS`、ID（`SIG-*`）。
 
-```
-eds-desktop/packages/tokens/spec/scale/semantic.json
-eds-desktop/packages/tokens/spec/typography/semantic.json
-eds-desktop/packages/tokens/dist/css/**          （build 后）
-eds-desktop/packages/tokens/dist/json/tokens.json （机器可读清单）
-```
-
-**不存在于 spec/dist → 停止编码 → 向 EDS 维护者确认**（新增 token / 批准硬编码 / 登记业务例外）。
-
-### 6.4 数字千分位展示（锁死）
-
-**原则**：客户端**展示态**数字须千分位分组；输入框、`v-model`、纯编号/ID **不**格式化。
-
-#### 工具（按场景选用）
-
-| 层级 | 入口 | 用途 |
-|------|------|------|
-| DS 基座 | `formatGroupedNumber`（`@eds/desktop-components`） | 整数、计数、Paginer/BatchBar/Detail 工具栏等 |
-| 业务封装 | `src/utils/formatGroupedDisplay.ts` | 金额、复合文案、阈值、矿工费模板 |
-
-**`formatGroupedDisplay.ts` 导出**
-
-| 函数 | 用途 | 示例 |
-|------|------|------|
-| `formatGroupedNumber` | re-export DS；整数/计数 | `128` → `128`；`128456` → `128,456` |
-| `formatGroupedDecimalAmount` | 金额字符串；`$` 前缀；**小数部分原样保留** | `128456.789012` → `128,456.789012`；`$79.00001` → `$79.00001` |
-| `formatGroupedAmountText` | 复合文案内所有数字 token | `128456.789012 USDT ≈ $32,114,197.25` |
-| `formatGroupedThresholdString` | 多签阈值 | `3 / 4`（大数同样分组） |
-| `formatGroupedLatencyLabel` | 延迟 ms 后缀 | `2100ms` → `2,100ms`；`无网络` 不变 |
-| `formatGroupedTemplateValue` | 矿工费 UI 模板 `{bandwidth}` 等变量 | TRON 资源行、激活说明 |
-
-#### 必须格式化的展示入口
-
-- 列表金额列：`buildAmountRowValues` + `TasksListFieldAmount.vue`（预设行亦须走 formatter）
-- Detail / 多签等待侧栏：金额、地址计数 `(n)`、阈值、参与人数
-- 矿工费：EVM / TON / TRON 报价与 `buildSigningCustomPopupItems`
-- MPC 网络延迟：`SigningFooterLatencyToolbar`（`formatGroupedLatencyLabel`）
-- Paginer 统计 `statNumber`、Module Menu 角标（`formatModuleMenuBadgeCount`）
-
-#### DS 已内置（勿重复包一层）
-
-`EgPaginer`（`data-volume-count`）、`BatchBarActionItem`、`Detail` 工具栏 current/total、`PaginationItem` 等已在引用库内调用 `formatGroupedNumber`。
-
-#### 禁止 / 例外
-
-| 禁止 | 原因 |
+| 函数 | 用途 |
 |------|------|
-| 手写 `toLocaleString` / 正则手搓千分位 | 与 DS locale 行为不一致 |
-| 对倒计时 `30:00`、`MM:SS` 套 `formatGroupedAmountText` | 会误改时间片段 |
-| 对输入态、`v-model` 绑定值格式化 | 展示层职责；输入由控件自身处理 |
-| 对 ID / 编号格式化 | 如 `SIG-000001`、`TP-20260717-001` |
+| `formatGroupedDecimalAmount` | 金额，小数原样保留 |
+| `formatGroupedAmountText` | 复合文案内数字 |
+| `formatGroupedThresholdString` | 多签阈值 `3 / 4` |
+| `formatGroupedLatencyLabel` | `2100ms` → `2,100ms` |
 
-#### 接入示例
+### 6.3 顶底毛玻璃（Top & Bottom Mask）
 
-```typescript
-import {
-  formatGroupedNumber,
-  formatGroupedDecimalAmount,
-  formatGroupedAmountText,
-} from '@/utils/formatGroupedDisplay';
+**DS 真源**：`../eds-desktop/.cursor/rules/top&botton-mask.mdc`、`Skid.vue`。  
+**本仓库 composable**：`src/scenes/tasks/shared/useScrollChromeScrim.ts`。  
+**示例**：`SigningBatchNetworkPickerMenu.vue`、`SigningBatchPopupSlotChrome.vue`。
 
-// 列表 / 详情金额
-const cryptoValue = formatGroupedDecimalAmount(preset.cryptoValue);
+**【禁止】**
 
-// Detail 多地址（Sender / Receiver）
-createDetailApplyItemRow('sender', {
-  value: address,
-  tag: primary?.alias,
-  addressLayout: 'multi-collapsed',
-  addressCount: detail.senderCount,
-  valueEntries: detail.senders.map((entry) => ({
-    value: entry.address,
-    tag: entry.alias,
-    tagBeforeValue: true,
-  })),
-  addressViewMoreLabel: translate('View more'),
-});
+- `src/**` 自造 fixed header + 内层滚动，或单独顶栏 `backdrop-filter`
+- scrim 用不透明 `var(--box-page)` / hex（须 `var(--effect-mask)` + `var(--eds-blur-bg)`）
+- 业务 CSS 覆盖 `EgSkid` / sticky 顶底 `background`
+- 祖先 `transform` / `filter` / `opacity < 1` 包住滚动区
 
-// 矿工费 / 复合金额行
-value: formatGroupedAmountText(detail.amountDisplay),
+**【必须】** 仅两条路径：
+
+| 场景 | 做法 |
+|------|------|
+| Layout Skid | `<EgLayout #skid>` + `<EgSkid>`，不外包自定义顶栏 |
+| Popup / Flotation 自定义壳 | `useScrollChromeScrim` + `topScrim` / `bottomScrim` |
+
+**【必须】** 单滚动容器：`overflow-y: auto` 包住 sticky 顶 + 正文 + sticky 底；`height: 100%` + `min-height: 0`。
+
+**状态机**（`ε = 2px`）：
+
+```text
+canScroll   = scrollHeight - clientHeight > 2
+topScrim    = canScroll && scrollTop > 2
+bottomScrim = canScroll && scrollTop + clientHeight < scrollHeight - 2
 ```
 
-### 6.5 Scroll chrome 毛玻璃 / Top & Bottom Mask（锁死 · 强推）
+| 滚动位置 | 顶栏 | 底栏 |
+|----------|------|------|
+| 不可滚 | 实色 | 实色 |
+| 顶部 | 实色 | scrim |
+| 中间 | scrim | scrim |
+| 底部 | scrim | 实色 |
 
-> **详案（必读）**：`.cursor/rules/top&botton-mask.mdc`（本仓库）· `../eds-desktop/.cursor/rules/top&botton-mask.mdc`（DS 真源）  
-> Agent：`alwaysApply: true` — 凡 sticky 顶底 + 溢出滚动，**禁止**手搓平行实现。
+**顶栏未滚动时为实色是正确行为，不是 bug。**
 
-**单滚动容器**内 sticky 顶/底栏 + `useScrollChromeScrim`（`src/scenes/tasks/shared/useScrollChromeScrim.ts`）。Skid 场景直接用 **`EgSkid`**（DS 内建同等状态机 + `.eds-frosted-page-chrome`）。
-
-| 条件 | `topScrim` | `bottomScrim` |
-|------|------------|---------------|
-| 不可滚动 | ❌ | ❌ |
-| 在顶部（`scrollTop ≤ ε`） | ❌ | ✅ |
-| 中间段 | ✅ | ✅ |
-| 在底部 | ✅ | ❌ |
-
-```typescript
-const { canScroll, topScrim, bottomScrim } = useScrollChromeScrim(scrollRef, { contentRef });
+```css
+background: var(--effect-mask);
+-webkit-backdrop-filter: var(--eds-blur-bg);
+backdrop-filter: var(--eds-blur-bg);
 ```
 
-| 变体 | 默认底 | 开 scrim |
-|------|--------|----------|
-| Flotation 顶栏（网络选择器） | `material-hide` | `background: var(--effect-mask)` + `eds-blur-bg`（**半透明**，禁止实色挡 blur） |
-| Popup 底栏（`SigningBatchPopupSlotChrome`） | `box-page` | `transparent` + `::before` effect-mask + blur |
+Flotation 底缘虚化：`bottomScrim` → 滚动容器 `mask-image` bottom fade。改 mask 不透明度 → 只改 eds-desktop `effect-mask` token，再同步。
 
-**结构硬约束**：唯一 `overflow-y: auto`；sticky 在滚动容器内；外壳明确 `height` + `min-height: 0`；祖先勿 `transform`/`filter` 破坏 backdrop。
+### 6.4 网络名称
 
-**底缘虚化（Flotation 列表）**：`bottomScrim` → 滚动容器 `mask-image` bottom fade（非 sticky 底栏时）。
+**【必须】** 链 Tag / 网络展示用 **链全名**；币种只在金额列。**【禁止】** `BSC`、`USDT-Ethereum`、`BTC-Bitcoin` 等缩写或拼接。
 
-### 6.6 网络名称（链 Tag / 展示文案 · 锁死）
-
-**原则**：网络 Tag / 链展示文案只写 **链全名**；**币种**（BTC、ETH、USDT…）只出现在金额 / 符号列，**禁止** `币种-网络` 拼接或链缩写当网络名。
-
-| 禁止 | 正确示例 |
-|------|----------|
-| `BSC`、`BNB-BSC` | **BNB Smart Chain** |
-| `BTC-Bitcoin`、`USDT-Ethereum`、`ETH-Ethereum` | **Bitcoin**、**Ethereum**（Tag）；金额列仍可为 `1,000 USDT` |
-| 未用到的链凭空加 demo | 用到哪条链写哪条，名称按下列表 |
-
-#### L1 主网（参考）
-
-Bitcoin · **Ethereum Mainnet**（批处理分组）/ **Ethereum**（多签 Tag、列表 chain Tag）· Solana · **BNB Smart Chain** · Cardano · Avalanche · **Tron** · NEAR · Sui · Sei · Aptos · **The Open Network**
-
-#### L2 / 侧链（参考）
-
-Arbitrum One · Arbitrum Nova · Optimism · Base · Polygon PoS · Polygon zkEVM · Scroll · zkSync Era
-
-#### 场景对照（勿混用）
-
-| 场景 | 约定 | 权威文件 |
-|------|------|----------|
-| 列表币种 chain Tag | `networkLabel` → `EgCryptoCombo` `:chain-label` | `tasksListFieldCurrencyRowPresets.ts` |
-| 多签邀请金额行网络 Tag | 短链名：`Ethereum`、`Bitcoin`、`BNB Smart Chain`… | `buildMultiSignInvitationDemoData.ts` |
-| 批处理网络分组 / 矿工费壳 | **`Ethereum Mainnet`**、**`The Open Network`**、**`Tron`**、**`Bitcoin`** | `batchNetworkGroup.ts` |
-| 审批列表金额列 | `符号-网络` 连写（如 `USDT-BNB Smart Chain`）为**金额列**格式，非 Tag | `buildApprovalDetailRowFields.ts` |
-
-**Agent**：改 UI 时先 `rg networkLabel` / `chain-label`；名称不对只改正文，**不**为凑覆盖而新增未使用链。
+| 场景 | 名称约定 | 权威文件 |
+|------|----------|----------|
+| 列表 chain Tag | `Ethereum`、`Bitcoin`、`BNB Smart Chain`… | `tasksListFieldCurrencyRowPresets.ts` |
+| 批处理分组 | `Ethereum Mainnet`、`The Open Network`、`Tron`、`Bitcoin` | `batchNetworkGroup.ts` |
+| 审批金额列 | `USDT-BNB Smart Chain` 为**金额列**格式，非 Tag | `buildApprovalDetailRowFields.ts` |
 
 ---
 
-## 7. 架构模式（禁止平行实现）
+## 7. 架构与场景定稿
 
-| 场景 | 必须使用 |
-|------|----------|
-| 点击展开下拉 / 浮层菜单 | `EgFlotation` Combo（`#trigger` + Menu + Items） |
-| Data List 列单元格 | `EgDataListColumn` slot + List Field 场景组件 |
-| EgPopup / 全屏详情·弹窗 | `AppPopupOverlayHost`（`App.vue`，与 `EgContainer` 同级） |
-| Module Menu 标题下拉 | `EgFlotation` + `triggerKind: module-menu` |
-| Nav Bar 模块 / 图标 | `EgIcon size="md"` 对应容器 `--icon-lg`（勿混淆 prop 与 token） |
-| Data List 空态 | 默认 `eds-business-7`，非第三方 icon 包 |
+### 7.1 EgPopup
 
-Showcase 文档页是**用法说明书**，不是可复制 CSS 库。
+**真源**：`src/scenes/tasks/shared/usePopupShellLifecycle.ts`  
+**示例**：`ApprovalFlowHost.vue`、`SigningFlowHost.vue`、`*DetailPopup.vue`、`TradePasswordVerifyPopup.vue`
 
-### 7.1 EgPopup 叠层与动效（锁死 — 勿反复手改）
+#### 逻辑态 vs 视觉态
 
-**权威**：`eds-project.mdc` §7 EgPopup（外壳 vs 内容、`.motion-layout` + `shellKeepMounted`）；Showcase `PopupPreview.vue` 为**常驻挂载**只切 `v-model:open`。业务侧 **懒挂载**（`v-if` 宿主 / Detail 点行才 mount）须走 composable，否则入场/叠层动效必错。
-
-**真源实现**：`src/scenes/tasks/shared/usePopupShellLifecycle.ts`  
-**集成示例**：`ApprovalFlowHost.vue` / `SigningFlowHost.vue` · `TradePasswordVerifyPopup.vue` · `ApprovalDetailPopup.vue` · `AddressViewMoreReminderPopup.vue`
-
-#### 挂载与栈
-
-```
-.app-preview
-└─ AppPopupOverlayHost          ← 与 EgContainer 同级，absolute inset:0
-   └─ *FlowHost
-      ├─ DetailPopup            ← 下层（uses=detail）
-      ├─ TradePasswordVerifyPopup
-      ├─ AddressViewMoreReminderPopup / Progress / MultiSign …
-      └─ …
-```
-
-| 规则 | 说明 |
+| 变量 | 含义 |
 |------|------|
-| 遮罩范围 | EgPopup 根 `100%×100%`，父级须为 `.app-preview` 内 overlay host |
-| 逻辑 open vs 视觉 open | flow 的 `detailOpen` / `verifyOpen` = **逻辑态**；EgPopup 的 `v-model:open` = **视觉态**（由 lifecycle 驱动） |
-| 叠层 suspend | 上层打开时下层 `suspended: true`，**不是**关 flow、**不是** CSS 隐藏 |
+| flow `detailOpen` / `verifyOpen` | 逻辑态（业务应保持打开） |
+| EgPopup `v-model:open` | 视觉态（lifecycle 驱动） |
 
-#### `usePopupShellLifecycle` 契约
+#### lifecycle 契约
 
 ```typescript
 usePopupShellLifecycle({
-  open,           // Ref / getter：逻辑上应保持打开（如 flow.detailOpen）
-  suspended?,     // Ref / getter：上层 Popup 打开时为 true
-  onBeforeOpen?,  // 如 closeAllAnchoredTooltips、resetVerify
-  onClosed,       // EgPopup 出场结束后：emit update:open false、popup-closed、popupMounted=false
+  open,
+  suspended?,      // 上层 Popup 打开时为 true
+  onBeforeOpen?,
+  onClosed,         // EgPopup 出场结束后清数据、emit update:open false
 });
 ```
 
 | 阶段 | 行为 |
 |------|------|
-| **入场** | `open && !suspended` → `popupMounted=true`（EgPopup `open=false`）→ `nextTick` → `requestAnimationFrame` → `popupOpen=true` |
-| **真关闭** | `open=false` → `popupOpen=false` → 出场动效 → `@close` → `onClosed()`（可卸数据） |
-| **内联关闭**（关闭钮 / 取消 / 自定义面板 `@close`） | **仅** `popupOpen=false`；**禁止**同 handler 内 `emit('update:open', false)`（见下节） |
-| **暂挂（上层打开）** | `open=true && suspended=true` → **instant 卸 shell**（无出场动效，避免与上层入场叠多层 motion）→ **不**调 `onClosed` |
-| **恢复（上层关闭）** | `suspended=false` 且 `open` 仍为 true → 再次走延迟入场 |
-| **watch** | 必须 `{ immediate: true }` — Detail 懒挂载首帧 `open=true` 时也要触发，否则点行无反应 |
+| 入场 | `open && !suspended` → mount → `nextTick` → `rAF` → `popupOpen=true` |
+| 真关闭 | `open=false` → `popupOpen=false` → 出场 → `@close` → `onClosed()` |
+| 内联关闭（关闭钮/取消） | **仅** `popupOpen=false` |
+| 暂挂 | `open && suspended` → instant 卸 shell，**不调** `onClosed` |
+| watch | `{ immediate: true }` |
 
-#### 禁止（回归高发）
+**【禁止】** `visibility:hidden` 暂挂下层；内联关闭时同时 `emit('update:open', false)`（关闭钮与点遮罩动效不一致）；上层打开时 `v-if` 卸下层。
 
-| 禁止 | 后果 |
+#### suspend 映射
+
+| 下层 | `shellSuspended` |
+|------|------------------|
+| Detail | `verifyOpen` \|\| `viewMoreOpen`（Signing 另加 progress/multiSign） |
+| 地址查看更多 | 其上有 Verify（Signing 另加 progress/multiSign） |
+
+#### Popup 尺寸【定稿】
+
+| uses | 尺寸 |
 |------|------|
-| `visibility: hidden` / `pointer-events: none` 暂挂下层 | 下层瞬间消失，与上层 EgPopup 动效不同步 |
-| 懒挂载首帧 `open=true` 且无 lifecycle | 跳过 microFloat 入场；或 watch 不触发、点行无反应 |
-| 上层打开时 `v-if` 卸下层 | 跳过出场动效 |
-| 上层打开时下层仍走 EgPopup 出场动效 | 与上层入场叠加，出现「多层 motion」；suspend 须 instant 卸 shell（§7.1） |
-| suspend 触发的 `@close` / `onClosed` 清数据 | Detail 被误关、翻页状态丢失 |
-| 内联关闭时 **同时** `popupOpen=false` + `emit('update:open', false)` | lifecycle 在 EgPopup 出场前 `teardown()`，关闭钮与点遮罩动效不一致（§7.1.1） |
-| 在 FlowHost 手写 `verifyPopupMounted` 且与 EgPopup 内部 lifecycle 重复 | 双重卸载或动效竞态 |
-| 显式传 `micro-float`（可省略） | 非必须；EgPopup 默认 `microFloat: true` |
+| `verify` + `single-trade-password` | 328×416 |
+| `detail` | 880×620 |
+| `custom` md / lg / sm | 780×560 / 880×620 / 656×516（`batchSigning.constants.ts`） |
 
-#### Approval / Signing 叠层映射
+**【禁止】** 自订 `box-width`/`box-height`；照抄 Showcase `PopupPreview` 常驻挂载（业务须懒挂载 + lifecycle）。
 
-| 下层 | `shellSuspended` 条件 |
-|------|------------------------|
-| Detail | `verifyOpen` \|\| `viewMoreOpen`（Signing 另加 `progressOpen` \|\| `multiSignOpen`） |
-| 地址查看更多 Reminder | 其上有 Verify（Signing 另加 progress / multiSign） |
+#### 其它 Popup 定稿
 
-Verify（`TradePasswordVerifyPopup`）为最上层之一，**不设** `suspended`；须 `useVerifySubmit` + i18n 文案 + `@cancel` / `@switch` 关闭。
+- Remark Popover 宽 **336**（`POPOVER_PRESET_WIDTH_BASE`），**禁止** 256
+- 矿工费多页切换：**必须** `useMotionLayoutDeformPageSwitch`；glue CSS 已在 `desktop-components-scope.css`
+- Popover 展开时触发按钮保持点按态（`remarkPopoverTrigger.module.css`）
+- Detail 须 `toolbar-divider-pinned`；验证成功翻下一条：`pendingAutoAdvanceId` → Verify 关闭后再 `loadDetail`；`:toolbar-page-key="detail.id"`
 
-#### 7.1.1 关闭动效一致性（锁死）
+### 7.2 批量签名 Signing Batch
 
-**原则**：凡关闭 Popup（点遮罩、Esc、EgDetail 关闭钮、自定义面板关闭、Verify 取消等），须走**同一条 EgPopup 出场链**；遮罩点击与关闭钮 **不得**出现两种动效。
+**范围**：`src/scenes/tasks/signing/batch/**`。Mock 密码：`111111`。
 
-**EgPopup 内部**（引用库 `Popup.vue`）：`open=false` → `runShellLeaveAnimation()`（`.motion-layout` + scrim）→ `emit('close')`。
+**入口**：有 `activeTask` → 进度页；已在多选 → toggle 退出；多币种 → `EgFlotation` + `SigningBatchNetworkPickerMenu`（**禁止**居中 EgPopup）；单币种直进多选。
 
-**业务侧正确分工**
+**【定稿】** Sign 确认/进度弹窗：`uses=custom` **780×560** + `SigningBatchPopupSlotChrome`，挂 `AppPopupOverlayHost`。
 
-| 层级 | 职责 |
-|------|------|
-| 内容层 `@close`（如 `EgDetail`、`MultiSignWaitingPanel`、Verify `@cancel`） | **只** `popupOpen.value = false` |
-| `usePopupShellLifecycle` `onClosed` / EgPopup `@close="onPopupClosed"` | 出场结束后 `emit('update:open', false)`、`popup-closed`、必要时 `popupMounted=false`、清业务数据 |
-
-**错误模式（回归高发）**
-
-```typescript
-// ❌ 关闭钮 — 动画被截断
-function onDetailClose() {
-  popupOpen.value = false;
-  emit('update:open', false); // lifecycle 见 props.open=false 且 popupOpen 已 false → 立刻 teardown
-}
-
-// ✅ 与点遮罩一致
-function onDetailClose() {
-  popupOpen.value = false;
-}
-```
-
-**时序对比**
-
-| 操作 | 行为 |
-|------|------|
-| 点遮罩 | `popupOpen=false` → 父级 `open` 仍为 true → 等 EgPopup `@close` → `onClosed()` |
-| 关闭钮（错误） | `popupOpen=false` + 立刻 `update:open=false` → **跳过**出场动效、`v-if` 卸 Popup |
-| 关闭钮（正确） | 同点遮罩 |
-
-**须遵守的文件模式**：`*DetailPopup.vue`、`TradePasswordVerifyPopup.vue`、`MultiSignWaitingPopup.vue`、`SigningProgressPopup.vue`、`AddressViewMoreReminderPopup.vue` 等 — 内联关闭 handler **不得**同步 `emit('update:open', false)`。
-
-关闭动画期间 **勿** `v-if` 卸掉 Detail 内容（`AGENTS.md` EgPopup 挂载 §）；数据清理放在 `onClosed`。
-
-#### 验证成功 → 自动翻下一条（motion-page）
-
-Verify 打开时 Detail 会 **suspend 出场**（EgDetail 卸载）。若验证成功后在同一 tick 立刻 `loadDetail(nextId)`，恢复时已是新条目，**`motion-page` 翻页动效丢失**。
-
-| 步骤 | 行为 |
-|------|------|
-| 1 | `finishSuccess` / `finishRejectSuccess` 只写入 `pendingAutoAdvanceId`，**不**立即 `loadDetail` |
-| 2 | Verify 关闭 → Detail `suspended=false` → shell 延迟 `open=true` |
-| 3 | `onShellOpened` → `onDetailShellOpened()` → `loadDetail(nextId)` |
-| 4 | EgDetail 已挂载旧条目 → `toolbar-page-key` 变化 → DS `motion-page` forward |
-
-须传 `:toolbar-page-key="detail.id"`；手动翻页仍走 `navigateRelative` + toolbar `@next`（EgDetail 内建 `contentNavDirection`）。
-
-**工具栏 module 分割线**：Detail Popup 须 `toolbar-divider-pinned`（DS `EgDetail` prop）；**禁止** CSS 强写 `.eds-divider` 透明度绕过 DS。
-
-#### 批处理 Remark Popover 宽度（锁死 336）
-
-批处理 Pass/Reject 与 Detail 内 Remark **共用** `ApprovalRemarkPopoverPanel`，Popover 壳须 **fixed 336**（`POPOVER_PRESET_WIDTH_BASE`），与 `ApprovalRemarkPopover.vue` 一致。
-
-| 禁止 | 原因 |
-|------|------|
-| `POPOVER_PRESET_WIDTH_GUIDE`（256） | 用户已定稿 336；256 为引导档，Remark 表单太窄 |
-| 再改 panel 结构（EgReminder / 460 Popup 宽） | 已收敛为 ComboTextarea + topTool + Confirm |
-
-`EgDataList`：`batch-popover-width-mode="fixed"` + `:batch-popover-width="POPOVER_PRESET_WIDTH_BASE"` + `batch-popover-top-tool` + `batch-popover-top-tool-closable`。
-
-#### 矿工费 Popover 多页切换 — Layout Deform（锁死）
-
-列表 ↔ 自定义子页须走 DS **`useMotionLayoutDeformPageSwitch`**，禁止 Vue `<Transition>` 或自写 transform。
-
-**权威**：`../eds-desktop/packages/components/docs/layout-deform-page-switch.md`（eds-project §7 摘要）
-
-| 必须 | 禁止 |
-|------|------|
-| shell `motion-layout-deform` + content 绑齐 `is-exiting` / `is-entering` | 只绑 `is-exiting` |
-| `switchTo` 前离屏/在页测量 `shellHeight`（`minerFeeMeasureHost`） | 写死高度 |
-| 测量完成后 shell **始终**绑 `height: shellHeight`（`data-shell-ready` 后再开 transition） | 仅 morph 帧绑高度 |
-| 子页 layout（padding、标题、Teleport、**scroll 模式 `data-*`**）绑 **`activePage`** 且 **morph 期间冻结** | 点击瞬间切 `data-*` / padding |
-| 只走 `switchTo(next)` | 手动 `shellHeight` + `v-if` 两套逻辑 |
-| glue CSS 已 `@import` 于 `src/styles/desktop-components-scope.css` | 漏 import 导致 `.is-exiting` 无 transition |
-| QA 场景注册 **`replaceShellDebugScenariosForPage`** | `registerShellDebugScenarios` 只增不删（HMR 幽灵项） |
-| QA Popover **`useContentMinHeight: true`**（整面板 **360px**）+ deform shell **`clamp ≥ shellDebugPopoverContentMinHeight`（298px）** | 关 min-height 或 shell 测高不 clamp（空态缩到 ~178px） |
-
-参考：`ApprovalRemarkPopoverPanel.vue`。
-
-#### Popover 触发按钮点按态（锁死）
-
-**规则**：按钮触发 Popover 且 Popover **已展开**时，触发按钮须保持 **点按态**（同 EgButton `:active` 伪类视觉），直至 Popover 关闭。
-
-| 场景 | 做法 |
-|------|------|
-| `EgAnchoredPopover` / `ApprovalRemarkPopover` | `#trigger="{ active, onClick }"`；`active === true` 时给按钮加点按样式 |
-| Detail 工具栏 Pass / Reject / Sign | 复用 `src/scenes/tasks/shared/remarkPopoverTrigger.module.css`（wrapper + pressed class） |
-| BatchBar Label | DS 已内置：`BatchBarActionItem :active="active && !loading"`，勿改 |
-
-**点按态 token（对齐 EgButton `:active`，非 `active` prop 展开态）**
-
-| 按钮 | 点按态 |
-|------|--------|
-| `tone="danger"` + `variant="text"`（驳回） | `color: var(--event-active-danger)` |
-| `tone="decor"` + `variant="solid"`（通过 / 签名） | `color: var(--text-face-secondary)` |
-
-| 禁止 | 原因 |
-|------|------|
-| 仅用 EgButton `active` prop 代替点按态 | text 的 `active` 是 Figma 展开态（`--event-focus` 背景）；solid 的 `active` 在 DS 无样式 |
-| Popover 展开时触发按钮视觉无变化 | 用户无法识别当前锚点 |
-
-**示例（Detail Remark）**
-
-```vue
-<template #trigger="{ active, onClick }">
-  <span :class="[styles.remarkTrigger, active && styles.remarkTriggerPassPressed]">
-    <EgButton tone="decor" variant="solid" :aria-expanded="active" @click.stop="onClick">…</EgButton>
-  </span>
-</template>
-```
-
-#### Verify 与 Popup 尺寸
-
-- `uses="verify"` + `verify-type="single-trade-password"`（328×416，不可改 Box 尺寸）
-- Alert 类 Popup（verify / reminder / custom 进度页等）默认 `alert-vertical-align="padding-top-md"`（未传时 DS 对 verify/reminder 亦默认顶边距）
-- `uses="detail"`：880×620（DS `DETAIL_PANEL_*`，不可改）
-- `uses="custom"`：**只许** Showcase `popupCustomBoxSizePresets`（`eds-desktop` `popupDocCustomize.ts`）— **md 780×560** / lg 880×620 / sm 656×516；业务侧经 `batchSigning.constants.ts` 等常量别名引用，**禁止**在组件或 CSS 里自订 `box-width` / `box-height`
-
-#### Showcase / AI 提示词片段（锁死）
-
-用户粘贴「Use the EDS Desktop Vue 3 component below…」类 Showcase / AI 用法片段时，片段**只描述组件 API 与插槽用法**，**不构成**可绕过本规范的许可。
-
-| 须遵守 | 禁止 |
-|--------|------|
-| 先读 `work.mdc` §7、`AGENTS.md` EgPopup 挂载、本节尺寸表、业务已定稿常量 | 因片段未写 `box-width` 就自填像素（如 1120×720）「让内容更宽」 |
-| `EgPopup`：`uses` + 已定稿 `box-width` / `box-height`（或 verify/reminder/detail 的 DS 预设） | 把进度/确认页嵌回列表主内容区代替 Popup shell |
-| 内容放进**默认插槽** + 已定稿 chrome（如 `SigningBatchPopupSlotChrome`） | 手搓平行 Popup 壳 / host CSS 撑满 `.app-preview` 冒充 Box 尺寸 |
-| 懒挂载 + `usePopupShellLifecycle`；挂 `AppPopupOverlayHost` | 照抄 Showcase `PopupPreview` 常驻 `v-model` 写法 |
-
-**真源**：`../eds-desktop/apps/showcase/src/views/components/previews/popupDocCustomize.ts` · 本仓库 `batchSigning.constants.ts`（`POPUP_CUSTOM_BOX_MD_*`）。
-
-#### Agent 改 Popup 前自检
-
-1. 是否仍用 CSS `.shellSuspended { visibility: hidden }`？→ 删，改 `suspended` 参数  
-2. Detail 点行是否无反应？→ lifecycle `immediate: true` + 懒挂载延迟 open  
-3. 上层出现下层是否闪没？→ 应用 suspend 出场，勿硬隐藏  
-4. 对照 Showcase：Showcase **不**测懒挂载；业务必须用 lifecycle，不能照抄 `PopupPreview` 的常驻写法  
-5. `uses=custom` 的 Box 是否引用已定稿 preset 常量？→ **禁止**自订宽高
-
-### 7.2 批量签名 Signing Batch（锁死）
-
-**范围**：`src/scenes/tasks/signing/batch/**` + `TasksDataListPage.vue` / `AppPopupOverlayHost.vue` / i18n。  
-**检查点**：`bf824ec`「签名审批没问题」（分支 `协作批处理`）。Mock 密码：`111111`。
-
-#### 入口流程
-
-```
-批处理按钮
-  → 有 activeTask？→ 进度页
-  → 已在多选？→ exitSelectMode（toggle 退出）
-  → 多币种？→ 币种选择（`currencyKey`）→ 该币种下全部符合条件单签多选
-  → 单币种 → 直接多选（过滤多签 + 非目标币种）
-多选 → Sign / Reject
-  Sign：直开 **780×560 确认弹窗**（非 BatchBar Popover）→ eligibility → 额度 → 密码 → **780×560 进度 EgPopup**
-  Reject：BatchBar **Popover**（标题「批量驳回」+ 备注，同审批）→ 密码 → 立即 batch reject → 退出 + 刷新
-```
-
-**币种分组（锁死）**：待签名单签数据按 `currencyKey`（`symbol|network`）分组；选择面板仅纳入 **单签** 待签名（与批处理入口过滤一致，不含多签）。每行：`symbol` + network `EgTag` / `spacing-05` / `{n} 条待签名` /「处理」。点选行按 `currencyKey` 过滤**全量**列表（禁止只滤当前页）。弹窗条件：去重币种数 > 1。真源：`groupPendingByCurrency.ts` · `buildBatchSigningRowModel.ts`（`buildCurrencyKey`）。
-
-**币种选择交互（锁死）**：多币种时用工具栏批处理按钮的 **`EgFlotation` Combo**（`#content` = `SigningBatchNetworkPickerMenu`），**禁止**居中 `EgPopup`。单币种仍直进多选；有 `activeTask` / 已在多选时走原 `onBatchButtonClick`（进度页 / toggle 退出）。
-
-**`#trigger`（锁死）**：视觉同 `EgIconButtonPro`，但 **禁止**把整颗 `EgIconButtonPro`（含 `button`）放进 `#trigger` — `AnchoredTooltip.resolveTriggerMetricsEl` 会量到含「批处理」文案的 48×38，主轴锚点错位。
+**币种选择 Flotation 要点**
 
 | 项 | 定稿 |
 |----|------|
-| 触发器结构 | `TasksDataListPage`：`batchProTriggerRoot` + **仅** `batchProIconSlot` 标 `data-eds-trigger-metrics`（`EgIconButton as="span"` + 图标）；文案 `batchProLabelWrap` 仍在 trigger 内可点 |
-| 展开聚焦态 | `expanded` → `batchFlotationTriggerExpanded`：icon 背景 `--event-focus`（对齐 `EgFlotationTrigger.expanded`） |
-| 宽 / 最大高 | `410` / `440`（`batchSigning.constants.ts`） |
-| 定位 | 主轴引用库 `--spacing-025`；交叉轴 `cross-axis-offset: 133`（`BATCH_NETWORK_PICKER_CROSS_AXIS_OFFSET_PX`） |
-| 文案 | 标题「批量签名」（`body-medium-strong`）；**无**副文案行 |
-| list 结构 | 标题在 `#header`（滚动置顶）；币种行组在 `#default` list（gap `spacing-1`）；组内各行 gap = `spacing-025` |
-| header padding | `spacing-2` / `spacing-3` / `spacing-1`（上/左右/下） |
-| item 行 | 左 `EgCrypto` + 右列：`symbol` + network `EgTag` / `spacing-05` / `{n} 条待签名` + `EgButton`「处理」`size="md"` |
-| item padding | 上下 `spacing-2`、左右 `spacing-3`；hover `--event-hover` + `motion-ease is-hover` |
-| item 图标 | 行内 `cryptoName`（与列表币种列 preset 一致）；宿主 `--avatar-md` + `EgCrypto fit` |
-| item 排版 | 标题 `body-medium`（15/400）；meta `gap` = `spacing-05`；副文案 `footnote` |
-| **整行可点** | `networkRow`：`role="button"` + `@click` + `Enter`/`Space` → `process`；**禁止**仅「处理」按钮可进多选 |
-| 「处理」按钮 | `EgButton` `@click.stop`（与整行点击同 `process`，不冒泡） |
-| **壳** | `EgFlotation` `#content` 内 **自建** `networkPickerRoot`（**禁止**再嵌套 `EgFlotationMenu`）；`effect-flotation-box` + `align-items: stretch` + 440×410 |
-| **滚动** | 单容器 `networkPickerList` + sticky `networkPickerHeader`；`useScrollChromeScrim` |
-| **标题默认** | `material-hide`；**未滚顶**无毛玻璃 |
-| **标题毛玻璃** | `topScrim` → `networkPickerHeaderScrim`（`effect-mask` + `eds-blur-bg`） |
-| **module 分割线** | `canScroll` 时标题底 `EgDivider` module（铺满 header 宽） |
-| **底缘虚化** | `bottomScrim` → `networkPickerListFadeBottom` |
-| 多选过滤 | `useTasksDataListPage` 在 **全量** `sortedDataList` 上按 `currencyKey` 过滤后再分页；禁止只滤当前页 |
+| `#trigger` | 仅 `batchProIconSlot` 标 `data-eds-trigger-metrics`；**禁止**整颗 `EgIconButtonPro` button |
+| 尺寸 | 410×440 max（`batchSigning.constants.ts`） |
+| 滚动 | `networkPickerList` + `useScrollChromeScrim`；顶未滚时标题实色 |
+| 过滤 | 全量 `sortedDataList` 按 `currencyKey`，**禁止**只滤当前页 |
+| 行点击 | 整行可点；图标宿主 `--avatar-md` + `EgCrypto fit` |
 
-**网络分组（锁死，对齐矿工费四类）**：`batchNetworkGroup.ts` — `evm` / `btc` / `ton-xrp` / `tron`；选择面板按 `currencyKey` 展示，过滤仍走全量 `sortedDataList`。
+**批处理复查【禁止回退】**
 
-#### 确认弹窗布局（锁死）
+| 规则 | 正确 | 错误 |
+|------|------|------|
+| 密码取消 | 只关 `verifyOpen`，保留 pending | `resetPendingBatchState` |
+| 批处理按钮 | 再点退出多选 | 多选中失效 |
+| 进度重入 | 任意 `activeTask` 可开 | 仅 `running` |
+| 写 store | 密码成功即 `createBatchSigningTask` | 整批结束才写 |
+| 矿工费 profile | `eligibility.signable[0]` | 取首条选中 |
+| 切菜单 | `dismissBatchPopups` + `exitSelectMode` | 弹窗残留 |
 
-| 项 | 定稿 |
-|----|------|
-| 壳 | `uses=custom` **780×560**；`SigningBatchPopupSlotChrome` + 默认插槽内容 |
-| 摘要页 | **不用** `batchPopupPageFill` / `batchPopupContentFill`；内容自然高度，`scrollBody` 可滚动（矿工费区不被裁切） |
-| 0 条可签 | 仍展示完整摘要（headline `0`、ineligible 统计）；底部工具栏常驻；Confirm **disabled** |
-| 子页 | `detail` / `reasons`：`SigningBatchPopupTopTool` + 返回；**无**系统关闭钮（`showSystemBarClose=false`）；`content-inset-preset="xs"` |
-| 子页 fill | 仅子页启用 `batchPopupContentFill` + `batchPopupPageFill`（DataList 撑满 + 斑马线） |
-| 矿工费 | 自定义矿工费 `ApprovalRemarkPopoverPanel`；profile 取 `eligibility.signable[0]` |
-| 自定义矿工费 cross-axis | `BATCH_NETWORK_PICKER_CROSS_AXIS_OFFSET_PX`（133）— Popover 视觉仍待确认 |
+**关键文件**：`useSigningBatchFlow.ts`、`SigningBatchFlowHost.vue`、`SigningBatchNetworkPickerMenu.vue`、`SigningBatchSignConfirmPopup.vue`、`SigningBatchProgressPopup.vue`、`batchSigning.constants.ts`。
 
-#### 详情 / 原因子页 DataList（锁死）
+### 7.3 多签
 
-| 列 | 定稿 |
-|----|------|
-| 付款钱包 | `business-type`（`TasksDataListColumnCell`）+ 发送方 `EgListFieldOverflowText` `primary` + 接收方 `secondary`；**无**独立发送方/接收方列 |
-| 业务类型 | `EgListFieldOverflowText`（钱包列已含类型信息时可保留冗余列，勿删除非产品确认） |
-| 金额 | `EgDataListColumn` `align="right"` + `TasksDataListColumnCell` `column-align="right"` |
-| 详情分页 | `SigningBatchSignDetailPanel`：`EgPaginer` + `fill` DataList |
-| 原因子页 | `SigningBatchSignReasonsPanel`：同表组件 + `EgPaginer` + `fill` DataList |
+**MultiSignWaiting 成员态**
 
-#### 进度弹窗（锁死）
+| presence | Tag | 设备标签 |
+|----------|-----|----------|
+| `joined` | 已加入 success | 有 |
+| `pending` | 待加入 warning | **无** |
+| `offline` | 无 | 无 |
 
-| 项 | 定稿 |
-|----|------|
-| 壳 | `SigningBatchProgressPopup` + `SigningBatchProgressShell`；`uses=custom` **780×560**；挂 `AppPopupOverlayHost` |
-| 无 float | **已移除** `SigningBatchProgressFloatHost` 及 float store；禁止折叠/最小化 |
-| 运行中锁定 | `status === 'running'`：仅「停止签名」/ 结束后「关闭」可退出；无系统关闭钮 |
-| 进度底栏 | `SigningBatchDataListPaginerShell` + `EgPaginer`；**停止签名** / **关闭** 在 Paginer `dataVolume` 行右侧 |
+**【必须】** 演示 `joinedCount = Math.max(1, required - 1)`。**【禁止】** `joinedCount = required`。
 
-#### Demo 数据（批处理演示）
+**多签邀请浮标**（`MultiSignInvitationFloatHost.vue`）
 
-`signingBatchDemoRowDistribution.ts`：AAVE·Base 等演示桶堆在待签名列表**尾部**（indices **68–127**，共 60 行）；前部 preset / 随机池不被占用。
+**【必须】** `EgAnchoredTooltip click-toggle="false"`；`onBadgeClick` 在 `button[data-eds-trigger-metrics]`；开前先 `closeAllAnchoredTooltips()`。Popup/批选/离页时 `dismissPanel()` 或 `v-if` 卸载（**禁止** `v-show` 留 teleport）。
 
-#### 硬约束（复查项，禁止回退）
+### 7.4 付款钱包列
 
-| 规则 | 正确行为 | 禁止 |
-|------|----------|------|
-| 密码取消 | `onVerifyCancel` **只**关 `verifyOpen`；保留 `pending*` / `eligibility` 可重试 | 取消密码时 `resetPendingBatchState` |
-| 批处理按钮 | 再点一次 → `exitSelectMode` | 多选中按钮失效 / 无法退出 |
-| 进度页重入 | **任意** `activeTask`（含 ended/stopped）可回进度页 | 仅 `status === 'running'` 才打开 |
-| 写 store 时机 | 密码成功即 `createBatchSigningTask`；进度页逐笔 `submitSigningAction` | 整批结束才写 / 不写 signingStore |
-| 矿工费 profile | `eligibility.signable[0]` | 取「首条选中」或非 signable 行 |
-| 确认弹窗 | `uses=custom` **780×560**（md）；默认插槽内 `SigningBatchPopupSlotChrome`（内容区 + 工具栏，对齐 Showcase Popup custom） | 手搓 host CSS 居中塌缩 |
-| 进度弹窗 | `uses=custom` **780×560**（md）；`SigningBatchProgressPopup` + 默认插槽 `SigningBatchProgressPage`；挂 `AppPopupOverlayHost` | 自订 `box-width`/`box-height`；内联占满主内容区 |
-| 切菜单 | `watch(enabled)` → `dismissBatchPopups` + `exitSelectMode` | 切 ModuleMenu 后弹窗残留 |
-| 停止签名 | `stopBatchSigningTask`：`signing` / `broadcasting` → `failed` | 停止后 in-flight 悬空 |
+**【定稿】** 第 3 行（`rowIndex === 2`）长名 `Payroll Payout Wallet` 溢出演示；其余短名。`titleTextSlot`（`flex: 0 1 auto`）包 `EgListFieldOverflowText`，Tag 紧跟文字（**禁止** host-flex 占满把 Tag 推到列右）。
 
-Popup **必须**挂在 `AppPopupOverlayHost`（与 `EgContainer` 同级），禁止挂列表页 subtree。
+### 7.5 Shell Debug（DEV only）
 
-#### 关键文件
+**【允许】** 只改 `src/dev/shell-debug/**`；import 业务已 export API。**【禁止】** 业务 `import src/dev/**`；为 QA 改 `src/scenes/**`。
 
-| 文件 | 职责 |
+详案：`src/dev/shell-debug/AGENTS.md`。
+
+---
+
+## 8. 校验与 PR
+
+**【必须】** `pnpm lint:ds-tokens`（脚本 `scripts/lint-ds-tokens.mjs`）。
+
+**PR 核心项**
+
+- [ ] 无 `@eds/website-*`、无 showcase CSS 复制
+- [ ] 无 `Eg*` 根覆盖、无私造 `--*`
+- [ ] 浮层用 `EgFlotation`；Popup 用 `usePopupShellLifecycle`
+- [ ] 内联关闭只 `popupOpen=false`（§7.1）
+- [ ] UI 文案走 `ui()`；字段 value 不 `ui()`（§5）
+- [ ] 展示数字千分位（§6.2）
+- [ ] Skid / `useScrollChromeScrim`（§6.3）
+- [ ] 网络 Tag 链全名（§6.4）
+- [ ] dev HMR 已目测（§2.3）
+- [ ] `listFieldCryptoSampleAddresses.ts` 业务扩展仍在
+
+---
+
+## 9. 文件索引
+
+| 主题 | 路径 |
 |------|------|
-| `signing/batch/useSigningBatchFlow.ts` | 入口、弹窗态、密码/确认链 |
-| `signing/batch/batchSigningTaskStore.ts` | 进度任务、逐笔 advance、stop |
-| `signing/batch/evaluateBatchEligibility.ts` | Signable / ineligible 拆分 |
-| `signing/batch/SigningBatchFlowHost.vue` | 批处理弹窗宿主 |
-| `signing/batch/SigningBatchProgressPopup.vue` | 进度 EgPopup 宿主（md） |
-| `signing/batch/SigningBatchProgressPage.vue` | 进度弹窗默认插槽内容 |
-| `signing/batch/SigningBatchNetworkPickerMenu.vue` | 币种选择 Flotation 面板 |
-| `signing/batch/SigningBatchSignConfirmPopup.vue` | 确认 EgPopup（摘要 / 详情 / 原因） |
-| `signing/batch/SigningBatchSignDetailPanel.vue` | 可签详情子页 + Paginer |
-| `signing/batch/SigningBatchSignReasonsPanel.vue` | 不可签原因子页 |
-| `signing/batch/SigningBatchDetailTable.vue` | 确认弹窗 DataList（钱包合并列） |
-| `signing/batch/SigningBatchProgressTable.vue` | 进度 DataList（状态列末位） |
-| `signing/batch/SigningBatchPopupSlotChrome.vue` | Popup custom 内容区 + 工具栏 |
-| `signing/batch/SigningBatchPopupTopTool.vue` | 子页 TopTool + 返回 |
-| `signing/batch/batchSigning.networkPickerMenu.css` | 网络选择器自建 shell（滚动 / header / bottom fade） |
-| `signing/batch/batchSigning.shared.module.css` | 批处理共享样式（网络行等） |
-| `signing/batch/groupPendingByCurrency.ts` | 待签名单签按 `currencyKey` 分组 |
-| `signing/batch/batchNetworkGroup.ts` | 矿工费四类网络分组 |
-| `signing/batch/signingBatchDemoRowDistribution.ts` | 演示行尾部分布（68–127） |
-| `signing/batch/batchSigning.constants.ts` | 宽/高/交叉轴偏移常量 |
-| `TasksDataListPage.vue` | Flotation 触发器 + 批处理集成 / selectMode |
-| `TasksDataListPage.module.css` | `batchProTrigger*` / `batchFlotationTriggerExpanded` |
-| `useTasksDataListPage.ts` | 批处理全量列表过滤（分页前） |
-| `AppPopupOverlayHost.vue` | 全局 Popup shell |
-
-#### 已知遗留（未做，勿误当回归）
-
-- `MOCK_QUOTA_INSUFFICIENT_ROW_MOD` 未接入额度不足演示
-- 超选 100 条仅 toast，未强制截断
-- 详情表「业务类型」列与钱包列信息冗余（待产品决定是否移除）
-- 矿工费 Popover `cross-axis-offset: 133` 可能仍需视觉确认
-- `useSigningFlow.ts` 旧 batch dead code 未清理
-- 进度页批处理按钮仍可见（冗余但无害）
-- i18n 重复 key `Cancel` 的 vite 警告（既有）
-
-### 7.3 多签等待 MultiSignWaiting（锁死）
-
-**真源**：`buildMultiSignWaitingPanelModel.ts` · `MultiSignWaitingPanel.vue` · `useSigningFlow.ts`（`startMultiSignRoom`）。
-
-#### 成员三态
-
-| presence | 右侧 Tag | 设备标签 | 样式 |
-|----------|----------|----------|------|
-| `joined` | 已加入 · `family="status"` · `size="lg"` · `status="success"` | 有 | 正常 |
-| `pending` | 待加入 · `status="warning"` | **无** | 正常 |
-| `offline` | **无** | **无** | `muted` |
-
-#### `joinedCount`（演示）
-
-```typescript
-// ✅ 2 已加入 + 1 待加入 + 其余离线（3/4 阈值时）
-multiSignJoinedCount.value = Math.max(1, required - 1);
-
-// ❌ 勿设为 required（会把 required 人全标已加入，无「待加入」）
-multiSignJoinedCount.value = required;
-```
-
-### 7.3.1 多签邀请浮标 · EgAnchoredTooltip（锁死）
-
-**真源**：`MultiSignInvitationFloatHost.vue` · `multiSignInvitationPanel.css` · `multiSignInvitationStore.ts`
-
-右下角「N 笔多签邀请」= `EgTooltip`（Popup Box 材质壳）+ `EgAnchoredTooltip`（Flotation 列表面板）。**开/关仅走业务 `onBadgeClick`**；DS 只负责 `openPanel` / `close` 与动效。
-
-#### 开关（锁死 · 勿再改回 click-toggle）
-
-| 必须 | 禁止 |
-|------|------|
-| `EgAnchoredTooltip` **`click-toggle="false"`** | `click-toggle="true"` 与 `onBadgeClick` 并存（双 toggle / 闪开即关） |
-| **`onBadgeClick`** 绑在 **`button` + `data-eds-trigger-metrics`**，`@click.stop.prevent`；以 **`panelExpanded`**（`@open`/`@close` 同步）判断开/关 | `@pointerdown.capture` 拦截 click；裸依赖 DS trigger 默认 click |
-| 开：`closeAllAnchoredTooltips()` → `openPanel()`；关：`dismissPanel()` | `readAnchoredOpen()` 驱动 UI 分支；`toggle()` 与 `panelExpanded` 并行 |
-| Popup / 批选 / 无邀请 / **离开待签名** 时 **`dismissPanel()`** 或 **`v-if` 卸载**（勿 `v-show` 隐藏留 teleport） | 用 `v-show` 只藏 trigger、teleport 残留导致切页后点不开 |
-| host **`pointer-events: none`** + **`data-float-interactive`**；teleport 关闭态穿透（`multiSignInvitationPanel.css` + `global.css` 排除） | `global.css` 对邀请 teleport  blanket `pointer-events:auto` |
-| Dev Inspect 排除 **`[data-app-client-float-host]`** | Dev 打开时 block 浮标 |
-| 自动展开走同一 **`openPanel()`** | auto-open 单独 `openPanel` 不关其它浮层 |
-
-**MPC 引导 Popover**（`MultiSignParticipantMpcGuideAnchored`）：外层 `EgAnchoredTooltip` 同样 `click-toggle=false`；slot 内 `data-eds-trigger-metrics` **须** `@click.stop`，否则点 latency `EgFlotation` 时事件冒泡到外层 trigger → 引导不关且与 Flotation 菜单叠层。Flotation `@open` 须调 `dismissGuide()`；用户关闭后 `guideSuppressed` 阻止同态 auto-open。
-
-#### 层级与 Popup 共存
-
-| 场景 | 行为 |
-|------|------|
-| 默认 | 浮标 host `[data-app-client-float-host]` **z-index 1101**；teleport 邀请面板 **1102**（`.multi-sign-invitation-panel-root`） |
-| `clientPopupActive`（EgPopup / 多签等待室等） | host 挂 `overlayLayerUnderPopup` → **z-index 15**（低于 shell 20）；`watch` **dismissPanel** — 浮标不可点属预期 |
-| Popup 关闭后 | `watch(clientPopupActive)` 已 dismiss；再点浮标须能正常 open |
-
-#### Join 与内容
-
-| 必须 | 禁止 |
-|------|------|
-| `onJoinInvitation`：**先** `find` 缓存 invitation，**再** `joinMultiSignInvitation(id)`（store 会删项） | join 后再 `find` 同 id |
-| 面板内容根：`.multi-sign-invitation-panel-root` + `useScrollChromeScrim` | 在 `#content` 外包未激活的 `motion-flotation`（opacity 0 整页空白） |
-| `EgTooltip` 只做 trigger 胶囊材质；`panel-kind="popup"` + `radius-full` | 把 Flotation 尺寸写进 EgTooltip 壳 |
-
-#### 可见性
-
-- 仅 **Tasks → 待签名（Signing）** 且 `pendingMultiSignInvitationCount > 0` 且非批选模式（`multiSignCollaborationModuleActive` + `!signingBatchSelectModeActive`）。
-- Toast 用 host 内独立 `motion-flotation`，勿与 AnchoredTooltip 面板混用同一套 open 态。
-
-**验收**：待签名列表 → 点浮标开/关面板 → 点「加入」进参与者等待室 → 关闭等待室 → 再点浮标；开 Detail / 签名 Popup 时浮标降级且面板关闭。
-
-### 7.4 数据列表 · 付款钱包列（锁死）
-
-**Mock**：`tasksListFieldBusinessTypeRowData.ts`
-
-| 行 | 钱包名 |
-|----|--------|
-| `rowIndex === 2`（第 3 行） | `Payroll Payout Wallet`（溢出演示） |
-| 其余 preset / 随机行 | 短名称（`Treasury`、`Operations`、`Reserve`…）；随机行 **只**用 prefix，勿拼长后缀 |
-
-**Tag 紧跟文字**：`TasksListFieldGeneralStructure` 用 `titleTextSlot`（`flex: 0 1 auto`）包 `EgListFieldOverflowText`。
-
-| 正确 | 错误 |
-|------|------|
-| 无溢出时 Tag 紧跟文字；溢出时文字省略、Tag 仍可见 | OverflowText 根 `host-flex`（`flex: 1 1 auto`）把 Tag 推到列最右 |
-
-### 7.5 Shell Debug QA 平台（壳外 · DEV only · 锁死）
-
-**挂载**：`AppRoot.vue` 在 `import.meta.env.DEV` 时异步挂载 `src/dev/shell-debug/**`；生产构建不包含。
-
-| 允许 | 禁止 |
-|------|------|
-| `src/dev/shell-debug/**` | 改 `../eds-desktop/packages/**` |
-| `AppRoot.vue` / `main.ts` 壳挂载 | 改 `src/scenes/**` 业务源码（为 QA 加分支） |
-| import 业务 **已 export** 的 store / 函数 / 只读评估 helper | 业务 import `src/dev/**` |
-| 只读 DOM / computedStyle（开发者模式） | 业务内 `if (DEV)` 分支 |
-
-**启动器（壳外）**
-
-- Dev / QA 胶囊在 **`.app-preview` 右侧**（`ShellDebugPlatform.module.css`），`teleport-to="body"`，`boundary-selector="body"`。
-- QA Popover 标题 = 当前 ModuleMenu 聚焦页名；优先 `pageKey` i18n（`useShellPageContext`），勿读 badge 拼接后的 `textContent`。
-- Popover 尺寸：`320` 宽；`min-height: 380` / `max-height: 560`；`height-mode="adaptive"`。
-- 再次点击已打开的 Dev/QA 胶囊须 **关闭** Popover（`button` 上 `@click.stop.prevent` + `active` 时 `close()`）。
-- **禁止** `:on-before-open` 内 `await nextTick()` 改 `align`（首开 remount 导致须点两次）；`align` 默认 `end`，`onMounted` / 点击前 **同步** `resolvePopoverAlign()`。
-
-**QA 能力（场景注入 · 锁死）**
-
-- QA 面板 **仅展示测试项**（`listQaScenariosForPage` 注册的 `apply()` 列表）；点「执行」调用业务 **公开 API** 注入状态 / 打开弹窗。
-- **禁止**在 QA 面板内做只读数据预览、异常行列表、或写入业务 DataList / 批签 filter（验收走 App 内真实 UI）。
-
-**空态与注册**
-
-- 当前 `pageKey` 无注册场景 → 显示「**当前业务无测试**」（`listQaScenariosForPage`：全局 `*` 项 + 页内项；全局项排最前）。
-- **全局通用项**（所有 QA 面板）：`空页面`、`加载中`（`commonScenarioPack.ts` → `tasksDataListShellApiRegistry`）。
-- 场景定义：`src/dev/shell-debug/scenarios/*.ts` → `registerShellDebugScenarios`；按页精确匹配 `pageKey`（如 `Tasks:Signing`）。
-- 待签名页示例：`scenarios/signingScenarioPack.ts`（空页面、签名失败、批签确认、额度告警、多签等待/就绪、分片缺失等）。
-- 列表空态：`tasksDataListShellApiRegistry.setListEmpty`（`tasksDataListShellApi.ts`，页面 mount 注册；非 DEV 分支）。
-
-**扩展**
-
-- Inspect：`inspect/registerInspectBlock.ts`
-- Scenario pack：`scenarios/signingScenarioPack.ts` 等
-- 详案：`src/dev/shell-debug/AGENTS.md`
+| Agent 入口摘要 | `AGENTS.md` |
+| EDS 完整约定 | `../eds-desktop/.cursor/rules/eds-project.mdc` |
+| 顶底毛玻璃 DS 真源 | `../eds-desktop/.cursor/rules/top&botton-mask.mdc` |
+| Popup lifecycle | `src/scenes/tasks/shared/usePopupShellLifecycle.ts` |
+| Scroll scrim | `src/scenes/tasks/shared/useScrollChromeScrim.ts` |
+| 千分位 | `src/utils/formatGroupedDisplay.ts` |
+| i18n 运行时 | `src/i18n/translateUiText.ts` |
+| 批处理 | `src/scenes/tasks/signing/batch/useSigningBatchFlow.ts` |
+| list-field 校验 | `scripts/verify-list-field-crypto.mjs` |
+| Shell Debug | `src/dev/shell-debug/AGENTS.md` |
 
 ---
 
-## 8. 变量白名单与自动化校验（强制）
-
-### 8.1 政策
-
-> 业务代码中的 `var(--*)` **只允许**来自 `@eds/desktop-tokens/json` 白名单，以及 **`token-allowlist.business.json` 中已批准的业务例外**。  
-> 使用设计系统外变量 → **CI / pre-commit 必须失败**。
-
-### 8.2 报错文案（固定）
-
-```
-变量 --xxx 在 @eds/desktop-tokens 中不存在。
-请：(1) 改用 spec 中已有语义 token；或 (2) 向 EDS 维护者申请新增 token；或 (3) 获批后使用硬编码（须注明原因）。
-禁止：私造 --xxx 或从 Showcase/Website 复制变量名。
-参见：eds-desktop/.cursor/rules/eds-project.mdc §1
-```
-
-Agent / Code Review 可简化为：
-
-> **「变量在设计系统里不存在，是否使用硬编码？」** — 默认答案为 **否**；须走维护者确认或改合法 token。
-
-### 8.3 推荐脚本 `scripts/lint-ds-tokens.mjs`
-
-```javascript
-#!/usr/bin/env node
-/**
- * 扫描 src 下 CSS/Vue 中 var(--*)，对照 @eds/desktop-tokens/json 白名单。
- * 用法：node scripts/lint-ds-tokens.mjs
- * 前置：eds-desktop 已 build（存在 packages/tokens/dist/json/tokens.json）
- */
-import { readFileSync, readdirSync, statSync } from 'node:fs';
-import { join, extname } from 'node:path';
-import { createRequire } from 'node:module';
-
-const require = createRequire(import.meta.url);
-const tokens = require('@eds/desktop-tokens/json');
-
-/** 从 tokens.json flatten 所有 --* 变量名 */
-function flattenTokenNames(payload) {
-  const names = new Set();
-  function walk(obj) {
-    if (!obj || typeof obj !== 'object') return;
-    for (const [key, val] of Object.entries(obj)) {
-      if (key.startsWith('--')) names.add(key);
-      if (typeof val === 'string' && val.startsWith('var(--')) {
-        const m = val.match(/var\(\s*(--[a-zA-Z0-9_-]+)/);
-        if (m) names.add(m[1]);
-      }
-      walk(val);
-    }
-  }
-  walk(payload);
-  // scale / typography 扁平键
-  for (const section of ['scaleSemantic', 'typographySemantic', 'typography', 'scale']) {
-    if (payload[section]) {
-      for (const k of Object.keys(payload[section])) {
-        if (k.startsWith('--')) names.add(k);
-      }
-    }
-  }
-  return names;
-}
-
-/** 业务批准例外 — 每条须 PR 说明 + 维护者 approve */
-function loadBusinessAllowlist() {
-  try {
-    const raw = readFileSync('token-allowlist.business.json', 'utf8');
-    return new Set(JSON.parse(raw).allow ?? []);
-  } catch {
-    return new Set([
-      // 示例：'--app-preview-width', '--app-preview-height',
-    ]);
-  }
-}
-
-const ALLOWED = flattenTokenNames(tokens);
-const BUSINESS = loadBusinessAllowlist();
-const VAR_RE = /var\(\s*(--[a-zA-Z0-9_-]+)/g;
-const DEFINE_RE = /^\s*(--[a-zA-Z0-9_-]+)\s*:/gm;
-
-const SRC = join(process.cwd(), 'src');
-const EXT = new Set(['.css', '.vue']);
-let failed = false;
-
-function scanFile(file) {
-  const content = readFileSync(file, 'utf8');
-  for (const m of content.matchAll(VAR_RE)) {
-    const name = m[1];
-    if (!ALLOWED.has(name) && !BUSINESS.has(name)) {
-      console.error(`[lint-ds-tokens] ${file}\n  变量 ${name} 在设计系统里不存在，是否使用硬编码？\n  请改用 spec 已有 token 或向 EDS 维护者确认。\n`);
-      failed = true;
-    }
-  }
-  for (const m of content.matchAll(DEFINE_RE)) {
-    const name = m[1];
-    if (!ALLOWED.has(name) && !BUSINESS.has(name)) {
-      console.error(`[lint-ds-tokens] ${file}\n  禁止私定义 CSS 变量 ${name}（eds-project §1.2）。\n`);
-      failed = true;
-    }
-  }
-}
-
-function walk(dir) {
-  for (const ent of readdirSync(dir)) {
-    const p = join(dir, ent);
-    if (statSync(p).isDirectory()) walk(p);
-    else if (EXT.has(extname(p))) scanFile(p);
-  }
-}
-
-walk(SRC);
-
-if (failed) process.exit(1);
-console.log('✓ lint-ds-tokens passed');
-```
-
-### 8.4 `package.json` 接入
-
-```json
-{
-  "scripts": {
-    "lint:ds-tokens": "node scripts/lint-ds-tokens.mjs",
-    "lint": "pnpm lint:ds-tokens && …"
-  }
-}
-```
-
-### 8.5 `token-allowlist.business.json`（示例）
-
-```json
-{
-  "$comment": "仅业务/宿主变量，非 DS token。新增须 PR + EDS 维护者 approve。",
-  "allow": [
-    "--app-preview-width",
-    "--app-preview-height",
-    "--app-preview-min-width",
-    "--app-preview-min-height"
-  ]
-}
-```
-
-### 8.6 额外 CI 检查（推荐）
-
-```bash
-# 禁止 Website 包
-rg "@eds/website-" package.json src/ && exit 1 || true
-
-# 禁止从 showcase 路径 import
-rg "apps/showcase" src/ && exit 1 || true
-```
-
----
-
-## 9. Code Review 清单
-
-PR 合并前逐项确认：
-
-- [ ] 无 `@eds/website-*` 依赖或 import
-- [ ] 无从 showcase 复制的 CSS / 变量名
-- [ ] 无对 `Eg*` 根节点的 `class` / `style` 覆盖
-- [ ] 业务 CSS 中无裸 `px` / hex / `font-weight: 数字`
-- [ ] 所有 `var(--*)` 通过 `pnpm lint:ds-tokens`
-- [ ] 无业务侧私定义 `--*`（除 business allowlist）
-- [ ] 下拉/浮层使用 `EgFlotation`，非手搓 Tooltip 菜单
-- [ ] 可滚动区域已做嵌套滚动边界（§6 eds-project）
-- [ ] click/focus 态无多余 transition（hover only）
-- [ ] EgPopup 叠层用 `usePopupShellLifecycle` + `suspended`，无 CSS 硬隐藏下层（§7.1）
-- [ ] 内联关闭只设 `popupOpen=false`，不在同 handler `emit('update:open', false)`（§7.1.1）
-- [ ] Popover 触发按钮展开时有点按态（§7.1 Popover 触发按钮点按态）
-- [ ] 数字展示走 `formatGroupedNumber` / `formatGroupedDisplay`（§6.4）；无手写 `toLocaleString`
-- [ ] sync eds-desktop 后已重启 dev server 验证
-- [ ] UI/样式改动已在 `pnpm dev` 下保存并确认 HMR / full-reload 生效（§2.3.2）
-- [ ] `listFieldCryptoSampleAddresses.ts` 仍含业务扩展（`pnpm` 跑过 `verify-list-field-crypto` 或手动确认 `getPinnedAddressForRow` 存在）
-- [ ] Signing 批处理：密码取消保留 pending；批处理按钮可 toggle 退出；进度页任意 activeTask 可重入；网络 Flotation 触发器仅 `data-eds-trigger-metrics` iconSlot；网络行图标宿主 `--avatar-md` + `EgCrypto fit`；整行可点；标题无虚化（§7.2）
-- [ ] MultiSignWaiting：`joinedCount = max(1, required-1)`；pending/offline 无设备标签（§7.3）
-- [ ] 付款钱包：第 3 行长名溢出；短名 Tag 紧跟文字（`titleTextSlot`，§7.4）
-- [ ] **Top & Bottom Mask**（§6.5）：Skid 用 `EgSkid`；自定义壳用 `useScrollChromeScrim`；无毛玻璃手搓 sticky / 不透明顶底背景
-- [ ] **网络名称**（§6.6）：Tag 为链全名；无 `BSC` / `USDT-Ethereum`；批处理分组保留 `Ethereum Mainnet` / `The Open Network` / `Tron`
-
----
-
-## 10. Cursor / Agent 约束（复制到 `.cursor/rules/eds-consumer.mdc`）
-
-```yaml
----
-description: 业务项目 — 严格遵守 EDS Desktop；禁止 Website/Showcase；token 白名单校验
-globs: src/**/*
-alwaysApply: true
----
-
-# EDS Desktop Consumer 约束
-
-1. 只允许 @eds/desktop-tokens、@eds/desktop-components。
-2. 禁止 @eds/website-*、禁止从 eds-desktop/apps/showcase 复制样式。
-3. 写 CSS 前查 packages/tokens/spec 或 @eds/desktop-tokens/json。
-4. var(--*) 不在白名单 → 停止改代码，询问：「变量 xxx 在设计系统里不存在，是否使用硬编码？」默认否。
-5. 禁止私造 --*、禁止用 --scale-* 冒充语义 token、禁止覆盖 Eg* 组件样式。
-6. 浮层统一 EgFlotation Combo；动效 hover only；嵌套滚动见 eds-project §6。
-7. EgPopup 叠层/懒挂载须 usePopupShellLifecycle（§7.1），禁止 visibility 暂挂下层；内联关闭只设 popupOpen=false（§7.1.1）。
-8. 展示态数字须千分位：formatGroupedNumber / src/utils/formatGroupedDisplay.ts（§6.4）。
-9. 禁止 sync 或手动操作覆盖 listFieldCryptoSampleAddresses.ts 业务扩展；见 work.mdc §2.4。
-10. Signing 批处理 / MultiSignWaiting / 付款钱包列约定见 work.mdc §7.2–§7.4；禁止回退复查项。
-11. UI/样式改动须 dev 实时生效：确认 pnpm dev 在跑，保存后 HMR 可见；禁止只 build 不 dev（§2.3.2）。
-12. 权威约定：../eds-desktop/.cursor/rules/eds-project.mdc
-```
-
----
-
-## 11. 常见问题
-
-### Q: 改了 CSS / 组件但页面没变？
-
-见 **§2.3.2**。先确认 `pnpm dev` 在跑；业务 `src/**` 应 HMR；引用库走 alias 源码。勿只跑 `pnpm build`。仍无效 → 硬刷新 → 重启 dev。
-
-### Q: Showcase 里 DevTools 看到 18px，客户端不对？
-
-Showcase 外层是 **Website** `body-medium`（18px）。Desktop spec 中 ToolBar 标题是 `--eds-body-large-strong-*`（如 17px），Bar 标签是 11px 子像素。客户端无 Website 壳，**无效 token 会直接错** — 以 Desktop spec 为准，不以 Showcase computed 为准。
-
-### Q: 能否用组件内部变量如 `--eds-data-list-select-column-width`？
-
-**业务侧不应使用**。此类变量由 `packages/components` 内部在组件根节点设置，未列入 consumer 白名单。
-
-### Q: 缺 token 怎么办？
-
-1. 在 eds-desktop 提需求新增 spec token（首选）  
-2. 维护者书面批准局部硬编码（须注释原因）  
-3. 登记到 `token-allowlist.business.json`（仅业务宿主类变量）
-
-### Q: 硬编码能否作为默认方案？
-
-**不能。** 硬编码是例外流程，不是 `var(--未知变量)` 的替代品。
-
-### Q: sync 后 Tasks 页空白？
-
-**根因**：`listFieldCryptoSampleAddresses.ts` 被 showcase 精简版覆盖，缺少 `getPinnedAddressForRow` 等导出，Vite 加载失败。
-
-**处理**：（1）运行 `node scripts/verify-list-field-crypto.mjs` 确认；（2）从 git 历史恢复业务扩展版；（3）确认 `sync-list-field-currency.mjs` 仍 skip 该文件（§2.4）。**不要**再次整文件从 showcase 复制。
-
-### Q: EgPopup 动效不对 / 点行无反应 / 上下层闪没？
-
-见 **§7.1**。常见根因：懒挂载首帧 `open=true`、CSS 暂挂下层、suspend 误触发 `popup-closed`。改前先读 `usePopupShellLifecycle.ts`，勿再手搓平行 lifecycle。
-
-### Q: 关闭钮与点遮罩动效不一致？
-
-见 **§7.1.1**。根因：关闭 handler 内 **同时** `popupOpen=false` 与 `emit('update:open', false)`，lifecycle 在 EgPopup 出场前 `teardown()`。修复：内联关闭 **只** 设 `popupOpen=false`，父级 `open` 与数据清理留给 `@close` → `onClosed`。
-
-### Q: 金额 / 计数要不要千分位？
-
-见 **§6.4**。展示态用 `formatGroupedNumber` 或 `src/utils/formatGroupedDisplay.ts`；输入态、倒计时、`SIG-*` 编号不格式化。
-
-### Q: 批量签名密码取消后无法重试 Sign？
-
-见 **§7.2**。取消密码不得 `resetPendingBatchState`；`onVerifyCancel` 只关 `verifyOpen`。
-
-### Q: 多签等待全员「已加入」、无「待加入」？
-
-见 **§7.3**。`startMultiSignRoom` 须 `joinedCount = Math.max(1, required - 1)`，勿设为 `required`。
-
-### Q: 批处理网络浮层图标撑满整页？
-
-见 **§7.2**。宿主须 `--avatar-md` 写死宽高 + `overflow: hidden`；`EgCrypto fit` 铺满宿主。勿仅用 `size="md"`（20px）塞进小容器。
-
-### Q: 批处理 Flotation 锚点偏了 / 主轴距离不对？
-
-见 **§7.2**。`#trigger` 内 **禁止**整颗 `EgIconButtonPro` `button`；仅 `iconSlot` 标 `data-eds-trigger-metrics`。
-
-### Q: 付款钱包 Tag 贴到列最右、短名也不紧跟文字？
-
-见 **§7.4**。`EgListFieldOverflowText` 外包 `titleTextSlot`（`flex: 0 1 auto`），勿让 host-flex 占满整列。
-
-### Q: 网络 Tag 写 BSC 还是 BNB Smart Chain？
-
-见 **§6.6**。Tag 用链全名（**BNB Smart Chain**，非 BSC）；禁止 `USDT-Ethereum`。批处理分组保留 **Ethereum Mainnet** / **The Open Network** / **Tron**。
-
----
-
-## 12. 参考文件索引
-
-| 文档 | 路径 |
-|------|------|
-| EDS 完整约定 | `eds-desktop/.cursor/rules/eds-project.mdc` |
-| 颜色 Display P3 | `eds-desktop/.cursor/rules/display-p3-color-usage.mdc` |
-| 圆角 squircle | `eds-desktop/.cursor/rules/corner-smoothing.mdc` |
-| 组件封装契约 | `eds-desktop/packages/components/README.md` |
-| Token 机器清单 | `@eds/desktop-tokens/json` |
-| 同步约定 | `eds-desktop/.cursor/rules/eds-sync-local-consumers.mdc` |
-| list-field crypto 校验 | `work-cregis-desktop/scripts/verify-list-field-crypto.mjs` |
-| EgPopup 叠层 lifecycle | `src/scenes/tasks/shared/usePopupShellLifecycle.ts` |
-| 数字千分位封装 | `src/utils/formatGroupedDisplay.ts` |
-| 网络名称 §6.6 | `tasksListFieldCurrencyRowPresets.ts` · `batchNetworkGroup.ts` · `buildMultiSignInvitationDemoData.ts` |
-| Scroll chrome / Top & Bottom Mask | `.cursor/rules/top&botton-mask.mdc` · `eds-desktop/.cursor/rules/top&botton-mask.mdc` |
-| Scroll chrome composable | `src/scenes/tasks/shared/useScrollChromeScrim.ts` |
-| 批量签名 flow | `src/scenes/tasks/signing/batch/useSigningBatchFlow.ts` |
-| 网络选择面板 | `src/scenes/tasks/signing/batch/SigningBatchNetworkPickerMenu.vue` |
-| 多签等待 model | `src/scenes/tasks/signing/buildMultiSignWaitingPanelModel.ts` |
-| 付款钱包 mock | `src/scenes/tasks/list-field/tasksListFieldBusinessTypeRowData.ts` |
-| 客户端示例 | `work-cregis-desktop/AGENTS.md` |
-| Shell Debug QA（§7.5） | `src/dev/shell-debug/AGENTS.md` · `ShellDebugPlatform.vue` · `scenarios/signingScenarioPack.ts` |
-
----
-
-## 13. 版本
+## 10. 版本
 
 | 字段 | 值 |
 |------|-----|
-| 文档版本 | 1.7 |
-| 对齐 eds-project | 2026-08-05 |
-| EgPopup 叠层动效 §7.1 | 2026-08-08 |
-| 关闭动效一致性 §7.1.1 | 2026-08-09 |
-| 数字千分位 §6.4 | 2026-08-09 |
-| Popover 触发按钮点按态 §7.1 | 2026-08-08 |
-| 批量签名 §7.2 / 多签等待 §7.3 / 付款钱包 §7.4 | 2026-08-09 |
-| 批处理网络 Flotation 定稿 §7.2 | 2026-08-09 |
-| 批处理确认/进度/详情列 §7.2 | 2026-08-10 |
-| Scroll chrome 毛玻璃 §6.5 | 2026-08-10 |
-| Top & Bottom Mask 强推规则 `top&botton-mask.mdc` | 2026-08-10 |
-| 开发改动 dev 实时生效 §2.3.2 | 2026-08-10 |
-| 网络名称 §6.6 | 2026-08-13 |
-| Showcase / AI 提示词片段 §7.1 | 2026-08-09 |
-| list-field sync 排除 | 2026-08-05 |
+| 文档版本 | 2.0 |
+| 合并 `i18n.mdc` + `top&botton-mask.mdc` + 历史分散规则 → 单文件 | 2026-08-18 |
 | 维护 | EDS Desktop 维护者 |
 
----
-
-**本规范为业务项目侧强制约束。违反项须在 PR 中修正或取得维护者书面例外，否则不得合并。**
+**本规范为业务项目强制约束。违反项须在 PR 修正或取得维护者书面例外。**

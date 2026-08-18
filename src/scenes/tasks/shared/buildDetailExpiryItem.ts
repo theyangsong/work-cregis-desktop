@@ -17,7 +17,7 @@ export function buildExpiryDetailItem(
   return {
     ...createDetailApplyItemRow('text', {
       key: 'expiry',
-      title: translate('Expiry'),
+      title: translate('Expiration Time'),
       value: '',
     }),
     titleIcon: 'eds-clocks',

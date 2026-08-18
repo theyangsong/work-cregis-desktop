@@ -69,6 +69,7 @@ import {
   tasksDataListAmountColumnDisplayOrder,
   tasksDataListActionColumnDisplayOrder,
   tasksDataListShowsGeneralStructureColumn,
+  resolveTasksModuleMenuDisplayLabel,
   type TasksDataListCustomizeState,
 } from './tasksDataListPageData';
 import { useAppI18n } from '@/composables/useAppI18n';
@@ -302,7 +303,7 @@ function hideListToast() {
 
 function showListToast(message: string, type: 'result' | 'danger' = 'result') {
   listToastType.value = type;
-  listToastText.value = message;
+  listToastText.value = ui(message);
   syncListToastMotionEnter();
   if (listToastTimer !== undefined) clearTimeout(listToastTimer);
   listToastTimer = window.setTimeout(() => {
@@ -636,9 +637,10 @@ function onBatchPopoverDismiss() {
   }
 }
 
-const displayToolbarTitle = computed(() =>
-  ui(props.toolbarTitle ?? DATA_LIST_FIGMA_TOOLBAR.title),
-);
+const displayToolbarTitle = computed(() => {
+  const title = props.toolbarTitle ?? DATA_LIST_FIGMA_TOOLBAR.title;
+  return ui(resolveTasksModuleMenuDisplayLabel(title, locale.value));
+});
 
 watch(
   () => Boolean(isSigningMenu.value && customize.selectMode),
@@ -707,7 +709,9 @@ useDataListSelectModeEscape({
 const displayPrimaryActionLabel = computed(() => {
   const label = primaryActionLabel.value;
   if (label === DATA_LIST_PRIMARY_ACTION_LABEL) {
-    return locale.value === 'zh-CN' ? ui(label) : DATA_LIST_PRIMARY_ACTION_LABEL_EN;
+    return locale.value === 'zh-CN' || locale.value === 'zh-TW'
+      ? ui(label)
+      : DATA_LIST_PRIMARY_ACTION_LABEL_EN;
   }
   return ui(label);
 });
@@ -727,12 +731,12 @@ const displayStatisticsItems = computed(() =>
 const displayBatchActions = computed(() => {
   const actions = isApprovalMenu.value
     ? [
-        { key: 'reject', label: 'Reject', danger: true, popover: true, popoverTitle: 'Batch Reject' },
-        { key: 'pass', label: 'Pass', popover: true, popoverTitle: 'Batch Approved' },
+        { key: 'reject', label: 'Reject', danger: true, popover: true, popoverTitle: 'Batch Rejection' },
+        { key: 'pass', label: 'Pass', popover: true, popoverTitle: 'Batch Approve' },
       ]
     : isSigningMenu.value
       ? [
-          { key: 'reject', label: 'Reject', danger: true, popover: true, popoverTitle: 'Batch Reject' },
+          { key: 'reject', label: 'Reject', danger: true, popover: true, popoverTitle: 'Batch Rejection' },
           { key: 'pass', label: 'Sign' },
         ]
       : dataListBatchActions;

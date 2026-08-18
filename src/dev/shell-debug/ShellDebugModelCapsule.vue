@@ -6,7 +6,11 @@ import {
   EgTooltip,
   useThemeProvider,
 } from '@eds/desktop-components';
-import { useAppLocale } from '@/composables/useAppLocale';
+import {
+  APP_LOCALE_CYCLE,
+  APP_LOCALE_SHELL_LABELS,
+  useAppLocale,
+} from '@/composables/useAppLocale';
 import styles from './ShellDebugModelCapsule.module.css';
 import { SHELL_DEBUG_POPOVER_CHROME_HEIGHT } from './shellDebugPopover.constants';
 
@@ -23,9 +27,7 @@ const popoverAlign = ref<PopoverAlign>('end');
 const triggerRef = ref<HTMLElement | null>(null);
 const anchoredRef = ref<{ close?: () => void } | null>(null);
 
-const languageValueLabel = computed(() =>
-  locale.value === 'zh-CN' ? '汉语简体' : 'English',
-);
+const languageValueLabel = computed(() => APP_LOCALE_SHELL_LABELS[locale.value]);
 const themeValueLabel = computed(() => (theme.value === 'dark' ? 'Dark' : 'Light'));
 
 function resolvePopoverAlign(): PopoverAlign {
@@ -62,7 +64,9 @@ function onTriggerClick(event: MouseEvent, active: boolean, open: () => void) {
 }
 
 function toggleLanguage() {
-  setLocale(locale.value === 'zh-CN' ? 'en' : 'zh-CN');
+  const index = APP_LOCALE_CYCLE.indexOf(locale.value);
+  const next = APP_LOCALE_CYCLE[(index + 1) % APP_LOCALE_CYCLE.length] ?? 'zh-CN';
+  setLocale(next);
 }
 
 function toggleTheme() {
@@ -103,7 +107,7 @@ onMounted(() => {
           >
             <button
               type="button"
-              :class="[styles.launcherButton, active && styles.launcherButtonOpen]"
+              :class="styles.launcherButton"
               aria-label="Open model preferences"
               :aria-expanded="active"
               @click.stop.prevent="onTriggerClick($event, active, onClick)"

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { toRef } from 'vue';
-import { EgPopup, EgReminder } from '@eds/desktop-components';
+import { EgDialog, EgPopup } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
 import { usePopupShellLifecycle } from '../../shared/usePopupShellLifecycle';
 
@@ -38,27 +38,23 @@ function onCancel() {
   <EgPopup
     v-if="popupMounted"
     v-model:open="popupOpen"
-    uses="reminder"
-    reminder-type="echo"
+    uses="dialog"
+    dialog-type="standard"
+    alert-vertical-align="offset-top"
     @close="onPopupClosed"
   >
-    <EgReminder
-      type="echo"
-      :title="ui('Stop signing')"
-      :show-secondary-text="false"
+    <EgDialog
+      type="standard"
+      :title="ui('Stop Signing')"
+      :secondary-text="
+        ui(
+          'After stopping, transactions that have not completed signing will not continue. Completed signatures are not affected. Stop the current batch signing task?',
+        )
+      "
       :confirm-label="ui('Confirm')"
       :cancel-label="ui('Cancel')"
-      :action-count="2"
       @confirm="onConfirm"
       @cancel="onCancel"
-    >
-      <p>
-        {{
-          ui(
-            'After stopping, transactions that have not completed signing will not continue. Completed signatures are not affected. Stop the current batch signing task?',
-          )
-        }}
-      </p>
-    </EgReminder>
+    />
   </EgPopup>
 </template>

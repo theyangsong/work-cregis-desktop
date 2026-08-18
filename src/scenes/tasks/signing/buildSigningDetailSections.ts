@@ -26,11 +26,11 @@ import type { SigningDetail } from './types';
 
 const DETAIL_ITEM_TITLES = {
   amount: DATA_LIST_FIGMA_COLUMNS.amount.label,
-  expiry: 'Expiry',
-  appliedAt: 'Application Time',
+  expiry: 'Expiration Time',
+  appliedAt: 'Created Time',
   payoutWallet: DATA_LIST_FIGMA_COLUMNS.businessType.label,
-  sender: 'From Address',
-  receiver: DATA_LIST_FIGMA_COLUMNS.combo.secondaryLabel ?? 'To Address',
+  sender: 'Sender',
+  receiver: DATA_LIST_FIGMA_COLUMNS.combo.secondaryLabel ?? 'Receiver',
   strategy: 'Triggered Policy',
   thirdParty: 'Third-party Reference',
   memo: 'Memo',
@@ -132,7 +132,7 @@ export function buildSigningDetailSections(
   return [
     {
       key: 'transaction',
-      title: translate('Transaction'),
+      title: translate('Transaction Information'),
       items: transactionItems,
     },
   ];

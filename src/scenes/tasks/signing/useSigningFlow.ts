@@ -43,7 +43,7 @@ import type {
 export const SIGNING_BATCH_MAX = 100;
 
 export const SIGNING_ALREADY_PROCESSED_MESSAGE =
-  'This item has already been processed. Please refresh the data and try again.';
+  'This data has already been processed. Please refresh the data and try again.';
 
 export const SIGNING_SUCCESS_MESSAGE = 'Operation successful';
 
@@ -236,7 +236,7 @@ export function useSigningFlow(options: {
     if (result !== 'joined') {
       options.showError(
         result === 'shard-missing'
-          ? 'Wallet shard not imported'
+          ? 'Wallet Shard Not Imported'
           : 'Invitation expired',
       );
       return;
@@ -658,7 +658,7 @@ export function useSigningFlow(options: {
       options.showError('Multi-sign items cannot be batch signed.');
     }
     if (rows.length > SIGNING_BATCH_MAX) {
-      options.showError(`You can select up to ${SIGNING_BATCH_MAX} items at a time.`);
+      options.showError('You can select up to 100 items at a time.');
     }
   }
 

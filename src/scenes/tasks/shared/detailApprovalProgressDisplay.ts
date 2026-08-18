@@ -7,12 +7,13 @@ export function formatProgressAtDisplay(raw: string, fallback = ''): string {
 }
 
 export function progressStatusLabelKey(statusLabel: string): string {
-  if (statusLabel === 'Approval Passed') return 'Approval Passed';
-  if (statusLabel === 'Pending Approval') return 'Pending Approval';
-  if (statusLabel === 'Approval Reject') return 'Approval Reject';
-  if (statusLabel === 'Signed') return 'Signed';
-  if (statusLabel === 'Signature Passed') return 'Signature Passed';
-  return statusLabel;
+  const label = statusLabel.trim();
+  if (label === 'Approval Passed') return 'Approval Passed';
+  if (label === 'Pending Approval' || label === 'approving') return 'Pending Approval';
+  if (label === 'Approval Reject') return 'Approval Reject';
+  if (label === 'Signed' || label === 'Signature Passed') return 'Signature Passed';
+  if (label === 'Signature Reject') return 'Signature Reject';
+  return label;
 }
 
 export function resolveProgressStatusTag(statusLabel: string): TagStatus {
@@ -25,7 +26,7 @@ export function resolveProgressStatusTag(statusLabel: string): TagStatus {
   }
   if (
     statusLabel === 'Pending Approval'
-    || statusLabel === 'Approving'
+    || statusLabel === 'approving'
     || statusLabel === 'Waiting for signature'
   ) {
     return 'warning';

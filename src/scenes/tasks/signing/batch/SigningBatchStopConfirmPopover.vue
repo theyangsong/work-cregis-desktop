@@ -67,7 +67,7 @@ function onConfirm() {
         :width="POPOVER_PRESET_WIDTH_BASE"
         height-mode="adaptive"
         top-tool
-        :top-tool-title="ui('Stop signing')"
+        :top-tool-title="ui('Stop Signing')"
         top-tool-closable
         @top-tool-close="closePopover"
       >

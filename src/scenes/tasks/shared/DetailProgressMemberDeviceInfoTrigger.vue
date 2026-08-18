@@ -89,7 +89,7 @@ async function onCopyRow(
               <EgIconButton
                 shape="square"
                 size="xs"
-                label="复制"
+                :label="ui('Copy')"
                 @click="onCopyRow(row.key, deviceInfo[row.valueKey], $event)"
               >
                 <EgIcon

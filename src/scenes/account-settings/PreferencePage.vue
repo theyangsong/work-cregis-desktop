@@ -17,7 +17,7 @@ const themeOptions = computed(() => [
 ] as const);
 
 function onLocaleChange(value: string) {
-  if (value === 'zh-CN' || value === 'en') {
+  if (value === 'zh-CN' || value === 'zh-TW' || value === 'en') {
     setLocale(value);
   }
 }

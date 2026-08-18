@@ -10,6 +10,7 @@ import {
   buildTransferTypeRowValues,
 } from '../list-field/tasksListFieldBusinessTypeRowData';
 import type { AppLocale } from '@/composables/useAppLocale';
+import { translateUiText } from '@/i18n/translateUiText';
 import { buildTasksListFieldBusinessTypeCustomize } from '../list-field/tasksListFieldBusinessTypeDefaults';
 import { buildTasksListFieldCurrencyCustomize } from '../list-field/tasksListFieldCurrencyDefaults';
 import { buildCurrencySideAddressData } from '../list-field/listFieldCurrencyAddressCustomize';
@@ -40,12 +41,16 @@ export function formatApprovalPayoutWalletSignLabel(rowIndex: number): string {
   return buildPayoutWalletsColumnValues(rowIndex).rightLabel ?? 'Single-Sign';
 }
 
-export function formatApprovalExpiryDisplay(rowIndex: number): string | null {
+export function formatApprovalExpiryDisplay(
+  rowIndex: number,
+  locale: AppLocale = 'zh-CN',
+): string | null {
   const transfer = buildTransferTypeRowValues(rowIndex);
   if (!transfer.showCountdown) return null;
   const minutes = String(transfer.countdownMinutes ?? '30').padStart(2, '0');
   const seconds = String(transfer.countdownSeconds ?? '00').padStart(2, '0');
-  return `${minutes}:${seconds} Until Expiry`;
+  const suffix = translateUiText(locale, 'Until Expiry');
+  return `${minutes}:${seconds} ${suffix}`;
 }
 
 function tagCustomizeForAddressSide(

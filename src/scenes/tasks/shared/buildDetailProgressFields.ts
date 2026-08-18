@@ -94,7 +94,8 @@ function buildApacNode(
   frank: ProgressMemberSeed,
 ) {
   return {
-    title: 'Approval (APAC Business Group)',
+    title: 'Approval action',
+    subtitle: 'APAC Business Group',
     statusLabel: 'Approval Passed',
     atDisplay: '2027-12-23 10:23:00',
     members: [
@@ -108,7 +109,8 @@ function buildApacNode(
 
 function buildFinanceNodePending(emily: ProgressMemberSeed) {
   return {
-    title: 'Approval (Finance Department)',
+    title: 'Approval action',
+    subtitle: 'Finance Department',
     statusLabel: 'Pending Approval',
     members: [emily],
   };
@@ -116,7 +118,8 @@ function buildFinanceNodePending(emily: ProgressMemberSeed) {
 
 function buildFinanceNodePassed(emily: ProgressMemberSeed) {
   return {
-    title: 'Approval (Finance Department)',
+    title: 'Approval action',
+    subtitle: 'Finance Department',
     statusLabel: 'Approval Passed',
     atDisplay: '2027-12-23 10:25:00',
     members: [emily],
@@ -125,7 +128,8 @@ function buildFinanceNodePassed(emily: ProgressMemberSeed) {
 
 function buildFinanceNodeRejected(emily: ProgressMemberSeed, frank: ProgressMemberSeed) {
   return {
-    title: 'Approval (Finance Department)',
+    title: 'Approval action',
+    subtitle: 'Finance Department',
     statusLabel: 'Approval Reject',
     atDisplay: '2027-12-23 10:25:00',
     members: [{ ...emily, atDisplay: '2027-12-23 10:25:00', deviceInfo: defaultDeviceInfo }, frank],
@@ -281,7 +285,7 @@ function buildRecordFields(
     );
   }
 
-  if (listStatus.label === 'Pending Approval' || listStatus.label === 'Approving') {
+  if (listStatus.label === 'Pending Approval' || listStatus.label === 'approving') {
     return attachSigningMeta(rowIndex, {
       ...base,
       approvalNodes: [apacNode, buildFinanceNodePending(emily)],

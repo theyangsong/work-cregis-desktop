@@ -101,10 +101,10 @@ export function evaluateBatchEligibility(
 }
 
 export const BATCH_INELIGIBLE_REASON_LABELS: Record<BatchIneligibleReason, string> = {
-  'wallet-shard-missing': 'Wallet shard not imported',
-  'non-whitelist': 'Non-whitelist address',
-  blacklist: 'Blacklist address',
-  'insufficient-balance': 'Insufficient balance',
+  'wallet-shard-missing': 'Wallet Shard Not Imported',
+  'non-whitelist': 'Non-whitelisted Address',
+  blacklist: 'Blacklisted Address',
+  'insufficient-balance': 'Insufficient Balance',
   'insufficient-miner-fee': 'Insufficient miner fee',
 };
 

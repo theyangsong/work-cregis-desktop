@@ -20,6 +20,7 @@ import {
   ref,
   watch,
 } from 'vue';
+import { useAppI18n } from '@/composables/useAppI18n';
 import DetailToolbarSlot from '../shared/DetailToolbarSlot.vue';
 import './signingCustomPopupHost.css';
 import SigningCustomPopupItemRow from './SigningCustomPopupItemRow.vue';
@@ -56,6 +57,8 @@ const emit = defineEmits<{
   retry: [];
   'update:mpcNetworkSelectedIndex': [value: number | null];
 }>();
+
+const { ui } = useAppI18n();
 
 const shellRef = ref<HTMLElement | null>(null);
 useSigningCustomPopupHost(shellRef);
@@ -248,7 +251,7 @@ watch(
         <EgIconButton
           shape="square"
           size="md"
-          label="关闭"
+          :label="ui('Close')"
           motion="asym"
           @click="emit('close')"
         >

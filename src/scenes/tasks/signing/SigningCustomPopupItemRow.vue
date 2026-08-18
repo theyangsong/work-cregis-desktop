@@ -10,6 +10,8 @@ import {
   type DetailItemData,
 } from '@eds/desktop-components';
 import styles from './SigningCustomPopupItemRow.module.css';
+import { useAppI18n } from '@/composables/useAppI18n';
+import DetailValueActionIcon from '../shared/DetailValueActionIcon.vue';
 
 const props = defineProps<{
   item: DetailItemData;
@@ -19,6 +21,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   'value-link-click': [];
 }>();
+
+const { ui } = useAppI18n();
 
 const copiedItemKey = ref<string | null>(null);
 let copiedResetTimer: ReturnType<typeof setTimeout> | undefined;
@@ -171,7 +175,7 @@ function onItemRowCopyClick(item: DetailItemData, itemIndex: number, event?: Mou
           tone="brand"
           @click="emit('value-link-click')"
         >
-          {{ item.valueLinkLabel ?? 'Edit' }}
+          {{ ui(item.valueLinkLabel ?? 'Edit') }}
         </EgLink>
 
         <span
@@ -183,49 +187,34 @@ function onItemRowCopyClick(item: DetailItemData, itemIndex: number, event?: Mou
           ]"
           @click.stop
         >
-          <EgIconButton
-            shape="square"
-            size="xs"
-            label="复制"
+          <DetailValueActionIcon
+            :label="ui('Copy')"
+            :icon="
+              copiedItemKey === itemCopyKey(item, itemIndex)
+                ? 'eds-enable-fill'
+                : 'eds-copy'
+            "
             @click="onCopyItemValue(itemCopyKey(item, itemIndex), item.value, $event)"
-          >
-            <EgIcon
-              :name="
-                copiedItemKey === itemCopyKey(item, itemIndex)
-                  ? 'eds-enable-fill'
-                  : 'eds-copy'
-              "
-              fit
-            />
-          </EgIconButton>
+          />
         </span>
 
-        <EgIconButton
+        <DetailValueActionIcon
           v-if="item.showValueAddressBook"
-          shape="square"
-          size="xs"
-          label="添加到地址簿"
-        >
-          <EgIcon name="eds-associates" fit />
-        </EgIconButton>
+          :label="ui('Add to address book')"
+          icon="eds-associates"
+        />
 
-        <EgIconButton
+        <DetailValueActionIcon
           v-if="item.showValueAmlSearch"
-          shape="square"
-          size="xs"
-          label="AML 查询"
-        >
-          <EgIcon name="eds-aml-search" fit />
-        </EgIconButton>
+          :label="ui('AML Search')"
+          icon="eds-aml-search"
+        />
 
-        <EgIconButton
+        <DetailValueActionIcon
           v-if="item.showValueBrowser"
-          shape="square"
-          size="xs"
-          label="区块浏览器"
-        >
-          <EgIcon name="eds-earth" fit />
-        </EgIconButton>
+          :label="ui('Block explorer')"
+          icon="eds-earth"
+        />
       </div>
     </div>
   </div>

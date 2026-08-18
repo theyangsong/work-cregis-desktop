@@ -16,7 +16,7 @@ import type { ApprovalActionKind, ApprovalDetail } from './types';
 export const APPROVAL_BATCH_MAX = 100;
 
 export const APPROVAL_ALREADY_PROCESSED_MESSAGE =
-  'This item has already been processed. Please refresh the data and try again.';
+  'This data has already been processed. Please refresh the data and try again.';
 
 export const APPROVAL_SUCCESS_MESSAGE = 'Operation successful';
 
@@ -265,7 +265,7 @@ export function useApprovalFlow(options: {
   function onSelectedChange(rows: Array<DataListRow & { _index?: number }>) {
     if (!options.enabled.value) return;
     if (rows.length <= APPROVAL_BATCH_MAX) return;
-    options.showError(`You can select up to ${APPROVAL_BATCH_MAX} items at a time.`);
+    options.showError('You can select up to 100 items at a time.');
   }
 
   const remarkSelectedCount = computed(() =>

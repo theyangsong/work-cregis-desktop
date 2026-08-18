@@ -193,7 +193,7 @@ function buildWithdrawnStep(
   if (detail.initiatorKind === 'waas') {
     return {
       key: 'withdrawn',
-      title: 'Withdraw',
+      title: 'Withdrawal',
       atDisplay,
       completed: true,
       members: [
@@ -211,7 +211,7 @@ function buildWithdrawnStep(
   const initiator = detail.initiatorMember;
   return {
     key: 'withdrawn',
-    title: 'Withdraw',
+    title: 'Withdrawal',
     atDisplay,
     completed: true,
     members: initiator
@@ -260,7 +260,7 @@ function resolveSignatureStep(
   return {
     members: resolveRecordSignatureMembers(detail, signers),
     memberPresentation: 'acted-rows',
-    statusLabel: 'Signed',
+    statusLabel: 'Signature Passed',
     statusTag: 'success',
     completed: true,
   };
@@ -269,13 +269,13 @@ function resolveSignatureStep(
 function findFirstInFlightApprovalIndex(detail: DetailApprovalProgressInput): number {
   return detail.approvalNodes.findIndex((node) => {
     const label = node.statusLabel.trim();
-    return label === 'Pending Approval' || label === 'Approving';
+    return label === 'Pending Approval' || label === 'approving';
   });
 }
 
 function isInFlightApprovalStatus(statusLabel: string): boolean {
   const label = statusLabel.trim();
-  return label === 'Pending Approval' || label === 'Approving';
+  return label === 'Pending Approval' || label === 'approving';
 }
 
 function setApprovalStepPresentation(
@@ -369,7 +369,7 @@ function applyRecordListStatusPresentation(
     return;
   }
 
-  if (listStatusLabel === 'Pending Approval' || listStatusLabel === 'Approving') {
+  if (listStatusLabel === 'Pending Approval' || listStatusLabel === 'approving') {
     for (let index = 0; index < detail.approvalNodes.length; index += 1) {
       const node = detail.approvalNodes[index];
       const step = steps.find((item) => item.key === `approval-${index}`);
@@ -545,7 +545,7 @@ export function buildDetailApprovalProgressSteps(
   const steps: DetailApprovalProgressStep[] = [
     {
       key: 'initiated',
-      title: 'Initiated',
+      title: 'Submitted Request',
       atDisplay: initiatorAt,
       completed: true,
       members: resolveInitiatorStepMembers(detail, initiatorAt),
@@ -562,6 +562,8 @@ export function buildDetailApprovalProgressSteps(
     steps.push({
       key: `approval-${index}`,
       title: node.title,
+      subtitle: node.subtitle,
+      subtitleWrapParens: Boolean(node.subtitle),
       atDisplay: node.atDisplay ?? detail.appliedAtDisplay,
       completed: completed || rejected,
       statusLabel: statusLabel ? progressStatusLabelKey(statusLabel) : undefined,
@@ -579,7 +581,7 @@ export function buildDetailApprovalProgressSteps(
 
   steps.push({
     key: 'signature',
-    title: 'Signature step',
+    title: 'Sign',
     atDisplay: signatureAt,
     completed: signatureResolved.completed,
     statusLabel: signatureResolved.statusLabel

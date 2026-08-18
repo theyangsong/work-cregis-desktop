@@ -36,7 +36,10 @@ const { ui } = useAppI18n();
                   step.markerTone === 'danger' && styles.stepTitleDanger,
                 ]"
               >{{ ui(step.title) }}</span>
-              <span v-if="step.subtitle" :class="styles.stepSubtitle">{{ step.subtitle }}</span>
+              <span v-if="step.subtitle" :class="styles.stepSubtitle">
+                <template v-if="step.subtitleWrapParens">({{ ui(step.subtitle) }})</template>
+                <template v-else>{{ step.subtitle }}</template>
+              </span>
             </div>
             <EgTag
               v-if="step.statusLabel && step.statusTag"

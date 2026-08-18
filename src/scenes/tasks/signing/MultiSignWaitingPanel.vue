@@ -176,7 +176,7 @@ watch([memberListRef, () => props.model.members.length], () => {
               <EgIconButton
                 shape="square"
                 size="md"
-                label="关闭"
+                :label="ui('Close')"
                 motion="asym"
                 :aria-expanded="active"
                 @click.stop="onClick"

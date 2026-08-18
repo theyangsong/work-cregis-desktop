@@ -54,7 +54,6 @@ import SigningBatchIneligibleReasonFilterDecor from './SigningBatchIneligibleRea
 import SigningBatchSignSubPageShell from './SigningBatchSignSubPageShell.vue';
 import { useBatchSignConfirmEscape } from './useBatchSignConfirmEscape';
 import styles from './batchSigning.shared.module.css';
-import type { PopupSlotContentInsetPreset } from './popupSlotContentInset';
 
 type ConfirmPage = 'summary' | 'detail' | 'reasons';
 
@@ -173,7 +172,7 @@ const businessTypeLine = computed(() =>
 const payoutWalletLine = computed(() => formatBreakdownLine(breakdownSummary.value.wallets));
 const minerFeeSectionTitle = computed(() => {
   if (!props.minerFeeProfile) {
-    return ui('Gas fee');
+    return ui('Miner Fee');
   }
   return ui(resolveMinerFeePopoverTitleKey(props.minerFeeProfile));
 });
@@ -188,9 +187,6 @@ const subPageTitle = computed(() => {
 });
 
 const showSystemBarClose = computed(() => isSummaryPage.value);
-const popupContentInsetPreset = computed<PopupSlotContentInsetPreset>(() =>
-  isSummaryPage.value ? 'md' : 'xs',
-);
 
 function readPanelConfirmDisabled(
   disabled: boolean | { value: boolean } | undefined,
@@ -382,7 +378,7 @@ useBatchSignConfirmEscape({
       ref="slotChromeRef"
       :show-system-bar-close="showSystemBarClose"
       :content-fill="!isSummaryPage"
-      :content-inset-preset="popupContentInsetPreset"
+      content-inset-preset="xs"
       :footer-motion-key="footerMotionKey"
       :page-stack-direction="pageStackDirection"
       :show-toolbar="isSummaryPage"
@@ -472,7 +468,7 @@ useBatchSignConfirmEscape({
                   <div :class="styles.detailHeadlineInner">
                     <div :class="styles.detailHeadlineTop">
                       <div :class="styles.detailHeadlineTitleGroup">
-                        <span :class="styles.detailHeadlineEyebrow">{{ ui('Signing total amount') }}</span>
+                        <span :class="styles.detailHeadlineEyebrow">{{ ui('Total Signing Amount') }}</span>
                         <h2 :class="styles.detailHeadlineText">
                           {{ summaryHeadlineParts.primary }}
                           <span
@@ -501,7 +497,7 @@ useBatchSignConfirmEscape({
                           <div :class="styles.detailHeadlineList">
                             <div :class="styles.detailHeadlineRow">
                               <span :class="styles.detailHeadlineRowLabel">
-                                {{ ui('Type of Business') }}:
+                                {{ ui('Operation Type') }}:
                               </span>
                               <span :class="styles.detailHeadlineRowValue">{{ businessTypeLine }}</span>
                             </div>
@@ -513,7 +509,7 @@ useBatchSignConfirmEscape({
                             </div>
                             <div :class="styles.detailHeadlineRow">
                               <span :class="styles.detailHeadlineRowLabel">
-                                {{ ui('Signable transactions') }}:
+                                {{ ui('Signable Transactions') }}:
                               </span>
                               <span :class="styles.detailHeadlineRowValue">
                                 {{ formatGroupedNumber(eligibility.signable.length) }}{{ ui('Signing transaction count unit') }}
@@ -532,7 +528,7 @@ useBatchSignConfirmEscape({
                               :class="styles.detailHeadlineRow"
                             >
                               <span :class="styles.detailHeadlineRowLabel">
-                                {{ ui('Ineligible transactions') }}:
+                                {{ ui('Non-signable Transactions') }}:
                               </span>
                               <span
                                 :class="[
@@ -547,7 +543,7 @@ useBatchSignConfirmEscape({
                                 :class="styles.detailHeadlineRowLink"
                                 @click="goToReasons"
                               >
-                                {{ ui('View reasons') }}
+                                {{ ui('View Reason') }}
                               </button>
                             </div>
                           </div>
@@ -574,11 +570,11 @@ useBatchSignConfirmEscape({
                     v-model="remarkModel"
                     feedback
                     :label="ui('Remark')"
-                    :placeholder="ui('Please enter')"
+                    :placeholder="ui('Please Enter')"
                   >
                     <EgTextarea
                       v-model="remarkModel"
-                      :placeholder="ui('Please enter')"
+                      :placeholder="ui('Please Enter')"
                       width-mode="full"
                       :paste-label="ui('Paste')"
                       :clear-label="ui('Clear')"
@@ -586,7 +582,7 @@ useBatchSignConfirmEscape({
                     <template #feedback>
                       <EgFormSubmission
                         type="notes"
-                        :text="ui('Optional, Max. 256 characters')"
+                        :text="ui('Optional, up to 256 characters.')"
                         :show-link="false"
                       />
                     </template>

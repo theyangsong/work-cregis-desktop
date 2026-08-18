@@ -18,7 +18,7 @@ export function buildDetailInitiationSourceItem(
   translate: (key: string) => string,
 ): DetailItemData {
   const source = resolveInitiationSourceForRow(rowIndex);
-  const title = translate('Initiation source');
+  const title = translate('Initiation Source');
   const typeLabel = translate(INITIATION_SOURCE_TYPE_LABEL_KEYS[source.kind]);
 
   return {

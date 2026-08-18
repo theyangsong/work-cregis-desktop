@@ -29,8 +29,8 @@ const props = withDefaults(
     modelValue: '',
     maxLength: REMARK_POPOVER_MAX_LENGTH,
     label: 'Remark',
-    placeholder: 'Please enter',
-    feedbackText: 'Optional, Max. 256 characters',
+    placeholder: 'Please Enter',
+    feedbackText: 'Optional, up to 256 characters.',
     hideLabel: true,
     hideConfirm: false,
     confirmLabel: 'Confirm',
@@ -108,12 +108,12 @@ defineExpose({
       <EgComboTextareaItem
         v-model="remarkModel"
         feedback
-        :label="label"
-        :placeholder="placeholder"
+        :label="ui(label)"
+        :placeholder="ui(placeholder)"
       >
         <EgTextarea
           v-model="remarkModel"
-          :placeholder="placeholder"
+          :placeholder="ui(placeholder)"
           width-mode="full"
           :paste-label="ui('Paste')"
           :clear-label="ui('Clear')"
@@ -121,7 +121,7 @@ defineExpose({
         <template #feedback>
           <EgFormSubmission
             type="notes"
-            :text="feedbackText"
+            :text="ui(feedbackText)"
             :show-link="false"
           />
         </template>
@@ -136,7 +136,7 @@ defineExpose({
       size="md"
       @click="onConfirm"
     >
-      {{ confirmLabel }}
+      {{ ui(confirmLabel) }}
     </EgButton>
   </div>
 </template>

@@ -15,6 +15,7 @@ import {
   signingFooterLatencyNetworkItems,
 } from './signingFooterLatencyMenu';
 import { formatGroupedLatencyLabel } from '@/utils/formatGroupedDisplay';
+import { useAppI18n } from '@/composables/useAppI18n';
 import './signingFooterLatencyMenu.css';
 import MultiSignParticipantMpcGuideAnchored from './MultiSignParticipantMpcGuideAnchored.vue';
 import styles from './SigningCustomPopupPanel.module.css';
@@ -48,6 +49,8 @@ const props = withDefaults(
   },
 );
 
+const { ui } = useAppI18n();
+
 const showToolbarDivider = computed(
   () => props.scrollOverflows || props.toolbarDividerPinned,
 );
@@ -61,7 +64,10 @@ const selectedLatencyNetwork = computed(
 );
 
 function displayLatencyStatus(label: string): string {
-  return formatGroupedLatencyLabel(label);
+  if (/^\d/.test(label.trim()) || /ms$/i.test(label.trim())) {
+    return formatGroupedLatencyLabel(label);
+  }
+  return ui(label);
 }
 
 const displayLatencyText = computed(() => {
@@ -173,14 +179,14 @@ function selectLatencyNetwork(index: number, close: () => void) {
                     >
                       <template #header>
                         <p :class="styles.latencyMenuTitle">
-                          {{ SIGNING_FOOTER_LATENCY_MENU_TITLE }}
+                          {{ ui(SIGNING_FOOTER_LATENCY_MENU_TITLE) }}
                         </p>
                       </template>
                       <EgFlotationMenuItem
                         v-for="(network, index) in signingFooterLatencyNetworkItems"
                         :key="network.key"
                         box-type="text"
-                        :label="network.label"
+                        :label="ui(network.label)"
                         :focused="selectedLatencyIndex === index"
                         :show-tag="false"
                         @click="selectLatencyNetwork(index, close)"
@@ -243,14 +249,14 @@ function selectLatencyNetwork(index: number, close: () => void) {
                 >
                   <template #header>
                     <p :class="styles.latencyMenuTitle">
-                      {{ SIGNING_FOOTER_LATENCY_MENU_TITLE }}
+                      {{ ui(SIGNING_FOOTER_LATENCY_MENU_TITLE) }}
                     </p>
                   </template>
                   <EgFlotationMenuItem
                     v-for="(network, index) in signingFooterLatencyNetworkItems"
                     :key="network.key"
                     box-type="text"
-                    :label="network.label"
+                    :label="ui(network.label)"
                     :focused="selectedLatencyIndex === index"
                     :show-tag="false"
                     @click="selectLatencyNetwork(index, close)"

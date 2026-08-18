@@ -213,7 +213,7 @@ function buildRandomSenderWalletSecondaryText(rowIndex: number, locale: AppLocal
   return pool[index] ?? pool[0];
 }
 
-/** 发送方列副行 / 详情出款钱包 — 同一 rowIndex 同一文案。 */
+/** 发送方列主行（EgListFieldAddressLine walletAsPrimary）/ 详情出款钱包 — 同一 rowIndex 同一文案。 */
 const SENDER_WALLET_SECONDARY_PAYROLL_OVERFLOW_INDEX = 1;
 
 export function buildSenderWalletDisplayName(

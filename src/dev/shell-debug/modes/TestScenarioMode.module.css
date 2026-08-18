@@ -81,6 +81,8 @@
   flex: 0 0 auto;
   flex-direction: column;
   height: auto;
+  margin-inline: calc(-1 * (var(--spacing-4) - var(--spacing-1)));
+  margin-bottom: calc(-1 * (var(--spacing-4) - var(--spacing-1)));
 }
 
 :global(.eds-popover:has(.shell-debug-qa-popover[data-qa-needs-scroll]) .shell-debug-popover-content) {
@@ -89,6 +91,8 @@
   flex-direction: column;
   height: 100%;
   min-height: 0;
+  margin-inline: calc(-1 * (var(--spacing-4) - var(--spacing-1)));
+  margin-bottom: calc(-1 * (var(--spacing-4) - var(--spacing-1)));
 }
 
 .deformShell {

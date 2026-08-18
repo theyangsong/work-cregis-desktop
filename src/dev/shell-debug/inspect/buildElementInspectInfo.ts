@@ -1,4 +1,6 @@
-import { formatValueWithToken, listDesignTokenNames } from './resolveDesignToken';
+import type { InspectCodeSection } from './buildIconInspect';
+import { formatTokenVar, formatValueWithToken, resolveTokenNameForValue } from './resolveDesignToken';
+import { resolveEdsComponentInspect } from './resolveEdsComponentInspect';
 
 export type InspectPropertyItem = {
   label: string;
@@ -21,10 +23,118 @@ export type ElementInspectInfo = {
   classList: string[];
   edsComponentHints: string[];
   vueComponentName: string | null;
+  edsComponent: ReturnType<typeof resolveEdsComponentInspect>;
+  /** 非 DS 组件时展示的元素本身属性。 */
+  elementAttributes: InspectPropertyItem[];
   rect: { width: number; height: number };
+  code: {
+    layout: InspectPropertyItem[];
+    style: InspectPropertyItem[];
+  };
+  /** Icon 等组件专用：分块代码（布局 / SVG），不走 Tab。 */
+  codeSections?: InspectCodeSection[];
+  /** @deprecated Legacy grouped dump — prefer edsComponent + code */
   groups: InspectPropertyGroup[];
   copyBundle: string;
 };
+
+function roundPx(value: number): string {
+  return `${Math.round(value * 10) / 10}px`;
+}
+
+function buildElementAttributes(
+  element: Element,
+  preview: Element,
+  style: CSSStyleDeclaration,
+  rect: DOMRect,
+): InspectPropertyItem[] {
+  const items: InspectPropertyItem[] = [];
+
+  items.push({
+    label: '尺寸',
+    value: `${roundPx(rect.width)} × ${roundPx(rect.height)}`,
+    token: null,
+    copyLine: `size: ${roundPx(rect.width)} × ${roundPx(rect.height)}`,
+  });
+
+  items.push({
+    label: '标签',
+    value: element.tagName.toLowerCase(),
+    token: null,
+    copyLine: `tag: ${element.tagName.toLowerCase()}`,
+  });
+
+  if (element.id) {
+    items.push({
+      label: 'ID',
+      value: element.id,
+      token: null,
+      copyLine: `#${element.id}`,
+    });
+  }
+
+  const role = element.getAttribute('role');
+  if (role) {
+    items.push({
+      label: 'Role',
+      value: role,
+      token: null,
+      copyLine: `role="${role}"`,
+    });
+  }
+
+  const edsClasses = [...element.classList].filter((name) => name.startsWith('eds-'));
+  if (edsClasses.length > 0) {
+    items.push({
+      label: 'EDS 类名',
+      value: edsClasses.join(' '),
+      token: null,
+      copyLine: edsClasses.map((name) => `.${name}`).join(' '),
+    });
+  }
+
+  const textContent = element.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+  if (textContent && textContent.length <= 80) {
+    items.push({
+      label: '文本',
+      value: textContent,
+      token: null,
+      copyLine: `text: "${textContent}"`,
+    });
+  }
+
+  const { display, token: displayToken } = formatValueWithToken(preview, style.display);
+  if (display && display !== 'inline') {
+    items.push({
+      label: 'Display',
+      value: displayToken ? formatTokenVar(displayToken) : display,
+      token: displayToken,
+      copyLine: `display: ${display};`,
+    });
+  }
+
+  const fontSize = formatValueWithToken(preview, style.fontSize, (name) => name.startsWith('--eds-'));
+  if (fontSize.token) {
+    items.push({
+      label: '字号',
+      value: formatTokenVar(fontSize.token),
+      token: fontSize.token,
+      copyLine: `font-size: ${formatTokenVar(fontSize.token)};`,
+    });
+  }
+
+  const color = formatValueWithToken(preview, style.color, (name) => name.startsWith('--text-'));
+  if (color.token) {
+    items.push({
+      label: '颜色',
+      value: formatTokenVar(color.token),
+      token: color.token,
+      copyLine: `color: ${formatTokenVar(color.token)};`,
+    });
+  }
+
+  return items;
+}
 
 function buildDomPath(element: Element, root: Element): string {
   const segments: string[] = [];
@@ -80,108 +190,167 @@ function readEdsComponentHints(element: Element): string[] {
   return [...hints].sort();
 }
 
-function px(value: string): string {
-  const parsed = Number.parseFloat(value);
-  if (!Number.isFinite(parsed)) return value;
-  return `${Math.round(parsed * 10) / 10}px`;
+function addLiteralCodeItem(
+  items: InspectPropertyItem[],
+  label: string,
+  rawValue: string,
+  cssProp?: string,
+) {
+  const trimmed = rawValue.trim();
+  if (!trimmed || trimmed === 'none' || trimmed === 'auto' || trimmed === 'normal') {
+    return;
+  }
+  const cssName = cssProp ?? label;
+  items.push({
+    label,
+    value: trimmed,
+    token: null,
+    copyLine: `${cssName}: ${trimmed};`,
+  });
 }
 
-function addItem(
+function addTokenCodeItem(
   preview: Element,
   items: InspectPropertyItem[],
   label: string,
   rawValue: string,
+  cssProp?: string,
   filter?: (name: string) => boolean,
 ) {
   const trimmed = rawValue.trim();
   if (!trimmed || trimmed === 'none' || trimmed === 'auto' || trimmed === 'normal') {
     return;
   }
-  const { display, token } = formatValueWithToken(preview, trimmed, filter);
+  const token = resolveTokenNameForValue(preview, trimmed, filter);
+  if (!token) return;
+
+  const cssName = cssProp ?? label;
+  const tokenVar = formatTokenVar(token);
   items.push({
     label,
-    value: display,
+    value: tokenVar,
     token,
-    copyLine: token ? `${label}: ${token}` : `${label}: ${trimmed}`,
+    copyLine: `${cssName}: ${tokenVar};`,
   });
 }
 
-function readBoxSide(
+function addPaddingTokenItem(
   preview: Element,
+  items: InspectPropertyItem[],
   style: CSSStyleDeclaration,
-  prefix: 'padding' | 'margin',
-): InspectPropertyItem[] {
-  const top = style.getPropertyValue(`${prefix}-top`);
-  const right = style.getPropertyValue(`${prefix}-right`);
-  const bottom = style.getPropertyValue(`${prefix}-bottom`);
-  const left = style.getPropertyValue(`${prefix}-left`);
-  const same = top === right && right === bottom && bottom === left;
-
+) {
   const spacingFilter = (name: string) => name.startsWith('--spacing-');
+  const top = resolveTokenNameForValue(preview, style.paddingTop, spacingFilter);
+  const right = resolveTokenNameForValue(preview, style.paddingRight, spacingFilter);
+  const bottom = resolveTokenNameForValue(preview, style.paddingBottom, spacingFilter);
+  const left = resolveTokenNameForValue(preview, style.paddingLeft, spacingFilter);
 
-  if (same) {
-    const items: InspectPropertyItem[] = [];
-    addItem(preview, items, prefix, top, spacingFilter);
-    return items;
+  if (!top || !right || !bottom || !left) return;
+
+  let paddingValue: string;
+  if (top === right && right === bottom && bottom === left) {
+    paddingValue = formatTokenVar(top);
+  } else if (top === bottom && left === right) {
+    paddingValue = `${formatTokenVar(top)} ${formatTokenVar(right)}`;
+  } else {
+    paddingValue = [top, right, bottom, left].map(formatTokenVar).join(' ');
   }
 
-  const items: InspectPropertyItem[] = [];
-  addItem(preview, items, `${prefix}-top`, top, spacingFilter);
-  addItem(preview, items, `${prefix}-right`, right, spacingFilter);
-  addItem(preview, items, `${prefix}-bottom`, bottom, spacingFilter);
-  addItem(preview, items, `${prefix}-left`, left, spacingFilter);
-  return items;
+  items.push({
+    label: 'padding',
+    value: paddingValue,
+    token: top,
+    copyLine: `padding: ${paddingValue};`,
+  });
 }
 
-function collectCssVariableItems(
-  element: Element,
+function buildUsefulCode(
   preview: Element,
-): InspectPropertyItem[] {
-  const entries: InspectPropertyItem[] = [];
-  const seen = new Set<string>();
-  let node: Element | null = element;
+  style: CSSStyleDeclaration,
+): { layout: InspectPropertyItem[]; styleItems: InspectPropertyItem[] } {
+  const layout: InspectPropertyItem[] = [];
+  const styleItems: InspectPropertyItem[] = [];
+  const spacingFilter = (name: string) => name.startsWith('--spacing-');
 
-  while (node && preview.contains(node)) {
-    const style = getComputedStyle(node);
-    for (let index = 0; index < style.length; index += 1) {
-      const name = style[index];
-      if (!name.startsWith('--') || seen.has(name)) continue;
-      const value = style.getPropertyValue(name).trim();
-      if (!value) continue;
-      seen.add(name);
-      entries.push({
-        label: name,
-        value,
-        token: name,
-        copyLine: `${name}: ${value}`,
-      });
-    }
-    if (node === preview) break;
-    node = node.parentElement;
-  }
+  addLiteralCodeItem(layout, 'display', style.display, 'display');
+  addPaddingTokenItem(preview, layout, style);
+  addTokenCodeItem(preview, layout, 'gap', style.gap, 'gap', spacingFilter);
+  addLiteralCodeItem(layout, 'justify-content', style.justifyContent, 'justify-content');
+  addLiteralCodeItem(layout, 'align-items', style.alignItems, 'align-items');
 
-  return entries.sort((left, right) => left.label.localeCompare(right.label));
+  addTokenCodeItem(preview, styleItems, 'border-radius', style.borderRadius, 'border-radius', (name) =>
+    name.startsWith('--radius-'),
+  );
+  addTokenCodeItem(
+    preview,
+    styleItems,
+    'background',
+    style.backgroundColor,
+    'background',
+    (name) => name.startsWith('--material-') || name.startsWith('--box-') || name.startsWith('--event-'),
+  );
+  addTokenCodeItem(preview, styleItems, 'color', style.color, 'color', (name) => name.startsWith('--text-'));
+  addTokenCodeItem(preview, styleItems, 'font-size', style.fontSize, 'font-size', (name) =>
+    name.startsWith('--eds-'),
+  );
+  addTokenCodeItem(preview, styleItems, 'font-weight', style.fontWeight, 'font-weight', (name) =>
+    name.startsWith('--weight-') || name.startsWith('--eds-'),
+  );
+  addTokenCodeItem(preview, styleItems, 'line-height', style.lineHeight, 'line-height', (name) =>
+    name.startsWith('--eds-'),
+  );
+
+  return { layout, styleItems };
 }
 
 function buildLabel(info: {
+  edsComponent: ReturnType<typeof resolveEdsComponentInspect>;
   vueComponentName: string | null;
   edsComponentHints: string[];
   tagName: string;
 }): string {
+  if (info.edsComponent) return info.edsComponent.displayName;
   if (info.vueComponentName) return info.vueComponentName;
   if (info.edsComponentHints[0]) return info.edsComponentHints[0];
   return info.tagName;
 }
 
-function buildCopyBundle(groups: InspectPropertyGroup[], meta: InspectPropertyItem[]): string {
-  const lines = meta.map((item) => item.copyLine);
-  for (const group of groups) {
+function buildCopyBundle(
+  edsComponent: ReturnType<typeof resolveEdsComponentInspect>,
+  elementAttributes: InspectPropertyItem[],
+  code: { layout: InspectPropertyItem[]; style: InspectPropertyItem[] },
+): string {
+  const lines: string[] = [];
+  const propertyItems = edsComponent?.props ?? elementAttributes;
+
+  if (edsComponent) {
+    lines.push(`/* ${edsComponent.displayName} */`);
+    lines.push(edsComponent.usageSnippet);
     lines.push('');
-    lines.push(`/* ${group.label} */`);
-    for (const item of group.items) {
+  }
+
+  if (propertyItems.length > 0) {
+    for (const item of propertyItems) {
+      lines.push(`${item.label}: ${item.value}`);
+    }
+    lines.push('');
+  }
+
+  if (code.layout.length > 0) {
+    lines.push('/* 布局 */');
+    for (const item of code.layout) {
       lines.push(item.copyLine);
     }
   }
+
+  if (code.style.length > 0) {
+    if (code.layout.length > 0) lines.push('');
+    lines.push('/* 样式 */');
+    for (const item of code.style) {
+      lines.push(item.copyLine);
+    }
+  }
+
   return lines.join('\n').trim();
 }
 
@@ -196,104 +365,18 @@ export function buildElementInspectInfo(
   const rect = element.getBoundingClientRect();
   const vueComponentName = resolveVueComponentName(element);
   const edsComponentHints = readEdsComponentHints(element);
+  const edsComponent = resolveEdsComponentInspect(element);
+  const elementAttributes = buildElementAttributes(element, preview, style, rect);
   const tagName = element.tagName.toLowerCase();
   const domPath = buildDomPath(element, preview);
-  const label = buildLabel({ vueComponentName, edsComponentHints, tagName });
+  const label = buildLabel({ edsComponent, vueComponentName, edsComponentHints, tagName });
+  const usefulCode = buildUsefulCode(preview, style);
 
-  const metaItems: InspectPropertyItem[] = [
-    {
-      label: 'Layer',
-      value: label,
-      token: null,
-      copyLine: `layer: ${label}`,
-    },
-    {
-      label: 'DOM',
-      value: domPath,
-      token: null,
-      copyLine: `dom: ${domPath}`,
-    },
-  ];
-  if (vueComponentName) {
-    metaItems.push({
-      label: 'Vue',
-      value: vueComponentName,
-      token: null,
-      copyLine: `component: ${vueComponentName}`,
-    });
-  }
-
-  const layoutItems: InspectPropertyItem[] = [
-    {
-      label: 'width',
-      value: px(`${rect.width}px`),
-      token: null,
-      copyLine: `width: ${px(`${rect.width}px`)}`,
-    },
-    {
-      label: 'height',
-      value: px(`${rect.height}px`),
-      token: null,
-      copyLine: `height: ${px(`${rect.height}px`)}`,
-    },
-  ];
-  addItem(preview, layoutItems, 'display', style.display);
-  addItem(preview, layoutItems, 'gap', style.gap, (name) => name.startsWith('--spacing-'));
-  addItem(preview, layoutItems, 'row-gap', style.rowGap, (name) => name.startsWith('--spacing-'));
-  addItem(preview, layoutItems, 'column-gap', style.columnGap, (name) =>
-    name.startsWith('--spacing-'),
-  );
-  layoutItems.push(...readBoxSide(preview, style, 'padding'));
-  layoutItems.push(...readBoxSide(preview, style, 'margin'));
-
-  const typographyItems: InspectPropertyItem[] = [];
-  addItem(preview, typographyItems, 'font-size', style.fontSize, (name) =>
-    name.startsWith('--eds-'),
-  );
-  addItem(preview, typographyItems, 'font-weight', style.fontWeight, (name) =>
-    name.startsWith('--weight-') || name.startsWith('--eds-'),
-  );
-  addItem(preview, typographyItems, 'line-height', style.lineHeight, (name) =>
-    name.startsWith('--eds-'),
-  );
-  addItem(preview, typographyItems, 'font-family', style.fontFamily);
-  addItem(preview, typographyItems, 'color', style.color, (name) => name.startsWith('--text-'));
-
-  const textContent = element.textContent?.replace(/\s+/g, ' ').trim() ?? '';
-  if (textContent && textContent.length <= 120) {
-    typographyItems.unshift({
-      label: 'text',
-      value: textContent,
-      token: null,
-      copyLine: `text: "${textContent}"`,
-    });
-  }
-
-  const fillItems: InspectPropertyItem[] = [];
-  addItem(preview, fillItems, 'background', style.backgroundColor, (name) =>
-    name.startsWith('--material-') || name.startsWith('--box-') || name.startsWith('--event-'),
-  );
-  addItem(preview, fillItems, 'border-radius', style.borderRadius, (name) =>
-    name.startsWith('--radius-'),
-  );
-  addItem(preview, fillItems, 'border-width', style.borderTopWidth);
-  addItem(preview, fillItems, 'border-color', style.borderTopColor, (name) =>
-    name.startsWith('--text-') || name.startsWith('--material-'),
-  );
-  addItem(preview, fillItems, 'opacity', style.opacity);
-
-  const cssVarItems = collectCssVariableItems(element, preview);
-
-  const groups: InspectPropertyGroup[] = [
-    { id: 'layout', label: 'Layout · Spacing', items: layoutItems },
-    { id: 'typography', label: 'Typography · Text', items: typographyItems },
-    { id: 'fill', label: 'Fill · Stroke', items: fillItems },
-    {
-      id: 'tokens',
-      label: `CSS Variables (${listDesignTokenNames(preview).length} in scope)`,
-      items: cssVarItems.slice(0, 24),
-    },
-  ].filter((group) => group.items.length > 0);
+  const code = {
+    layout: usefulCode.layout,
+    style: usefulCode.styleItems,
+  };
+  const codeSections = edsComponent?.codeSections;
 
   return {
     element,
@@ -303,11 +386,15 @@ export function buildElementInspectInfo(
     classList: [...element.classList],
     edsComponentHints,
     vueComponentName,
+    edsComponent,
+    elementAttributes,
     rect: {
       width: Math.round(rect.width * 10) / 10,
       height: Math.round(rect.height * 10) / 10,
     },
-    groups,
-    copyBundle: buildCopyBundle(groups, metaItems),
+    code,
+    codeSections,
+    groups: [],
+    copyBundle: buildCopyBundle(edsComponent, elementAttributes, code),
   };
 }

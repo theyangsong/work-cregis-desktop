@@ -1,0 +1,1428 @@
+{
+  "stats": {
+    "catalog_entries": 337,
+    "zh_tw_filled": 192,
+    "doc_aligned": 192,
+    "aligned": 192,
+    "en_mismatch": 52,
+    "from_override": 22,
+    "unaligned": 145,
+    "catalog_missing_from_code": 5,
+    "catalog_missing_status": "deferred"
+  },
+  "en_mismatch": [
+    {
+      "section": "Data list toolbar & paginer",
+      "en_key": "Results",
+      "doc_en": "items",
+      "zh_cn": "条",
+      "row": 150
+    },
+    {
+      "section": "Data list toolbar & paginer",
+      "en_key": "Approval action",
+      "doc_en": "Approval",
+      "zh_cn": "审批",
+      "row": 859
+    },
+    {
+      "section": "Data list toolbar & paginer",
+      "en_key": "Operation successful",
+      "doc_en": "Operation succeeded",
+      "zh_cn": "操作成功",
+      "row": 206
+    },
+    {
+      "section": "Data list toolbar & paginer",
+      "en_key": "Application",
+      "doc_en": "Apply",
+      "zh_cn": "申请",
+      "row": 886
+    },
+    {
+      "section": "Data list toolbar & paginer",
+      "en_key": "Application payment",
+      "doc_en": "Initiate send request",
+      "zh_cn": "申请付款",
+      "row": 889
+    },
+    {
+      "section": "Data list toolbar & paginer",
+      "en_key": "Outbound",
+      "doc_en": "Withdrawal",
+      "zh_cn": "出款",
+      "row": 888
+    },
+    {
+      "section": "Data list toolbar & paginer",
+      "en_key": "Signature step",
+      "doc_en": "Sign",
+      "zh_cn": "签名",
+      "row": 827
+    },
+    {
+      "section": "Data list toolbar & paginer",
+      "en_key": "Triggered Policy",
+      "doc_en": "Trigger Policy",
+      "zh_cn": "触发策略",
+      "row": 2434
+    },
+    {
+      "section": "Data list toolbar & paginer",
+      "en_key": "Third-party Reference",
+      "doc_en": "Third Party Business Number",
+      "zh_cn": "三方业务编号",
+      "row": 1397
+    },
+    {
+      "section": "Data list columns",
+      "en_key": "To Address",
+      "doc_en": "Receiver",
+      "zh_cn": "接收方",
+      "row": 374
+    },
+    {
+      "section": "Data list columns",
+      "en_key": "Initiating party",
+      "doc_en": "Initiator",
+      "zh_cn": "发起方",
+      "row": 2421
+    },
+    {
+      "section": "Data list columns",
+      "en_key": "Application Time",
+      "doc_en": "Created Time",
+      "zh_cn": "申请时间",
+      "row": 109
+    },
+    {
+      "section": "Data list columns",
+      "en_key": "Outbound Wallet",
+      "doc_en": "Payout Wallets",
+      "zh_cn": "出款钱包",
+      "row": 1448
+    },
+    {
+      "section": "Data list columns",
+      "en_key": "From Address",
+      "doc_en": "Sender",
+      "zh_cn": "发送方",
+      "row": 373
+    },
+    {
+      "section": "Data list columns",
+      "en_key": "Transaction",
+      "doc_en": "Transaction Information",
+      "zh_cn": "交易信息",
+      "row": 3067
+    },
+    {
+      "section": "Data list columns",
+      "en_key": "Approval Progress",
+      "doc_en": "Status",
+      "zh_cn": "审批进度",
+      "row": 882
+    },
+    {
+      "section": "Data list columns",
+      "en_key": "Passed",
+      "doc_en": "Pass",
+      "zh_cn": "通过",
+      "row": 123
+    },
+    {
+      "section": "Data list columns",
+      "en_key": "Device Type",
+      "doc_en": "Equipment Type",
+      "zh_cn": "设备类型",
+      "row": 1150
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Batch Approved",
+      "doc_en": "Batch Approve",
+      "zh_cn": "批量通过",
+      "row": 938
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Batch Reject",
+      "doc_en": "Batch rejection",
+      "zh_cn": "批量驳回",
+      "row": 939
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Waiting for signature",
+      "doc_en": "Pending Signature",
+      "zh_cn": "待签名",
+      "row": 863
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Signature Passed",
+      "doc_en": "Signed",
+      "zh_cn": "签名通过",
+      "row": 870
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Miner Fee",
+      "doc_en": "Gas Fee",
+      "zh_cn": "矿工费",
+      "row": 117
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Miner fee speed slow",
+      "doc_en": "Slow",
+      "zh_cn": "较慢",
+      "row": 75
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Miner fee speed normal",
+      "doc_en": "Normal",
+      "zh_cn": "正常",
+      "row": 76
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Miner fee speed fast",
+      "doc_en": "Fast",
+      "zh_cn": "快速",
+      "row": 77
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Miner fee tron resources title",
+      "doc_en": "Resources required for this transaction",
+      "zh_cn": "本次交易所需资源",
+      "row": 819
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Miner fee tron energy mode",
+      "doc_en": "Energy Mode",
+      "zh_cn": "能量模式",
+      "row": 424
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Signing in progress",
+      "doc_en": "Signing",
+      "zh_cn": "签名中",
+      "row": 935
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Signing completed",
+      "doc_en": "Signature completed",
+      "zh_cn": "签名已完成",
+      "row": 944
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Collapse",
+      "doc_en": "Shrink",
+      "zh_cn": "收起",
+      "row": 789
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Currency",
+      "doc_en": "Token",
+      "zh_cn": "币种",
+      "row": 113
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Waiting",
+      "doc_en": "Pending",
+      "zh_cn": "等待中",
+      "row": 552
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Ready to sign",
+      "doc_en": "Ready",
+      "zh_cn": "准备就绪",
+      "row": 554
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Approval Passed",
+      "doc_en": "Approved",
+      "zh_cn": "审批通过",
+      "row": 874
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Withdraw",
+      "doc_en": "Withdrawal",
+      "zh_cn": "撤回",
+      "row": 0
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Canceled",
+      "doc_en": "Cancelled",
+      "zh_cn": "已取消",
+      "row": 124
+    },
+    {
+      "section": "List field",
+      "en_key": "Withdrawal",
+      "doc_en": "Payout",
+      "zh_cn": "提币",
+      "row": 2684
+    },
+    {
+      "section": "List field",
+      "en_key": "Danger",
+      "doc_en": "Dangerous",
+      "zh_cn": "危险",
+      "row": 2045
+    },
+    {
+      "section": "List field",
+      "en_key": "Custom",
+      "doc_en": "Customized",
+      "zh_cn": "自定义",
+      "row": 78
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Outbound wallets",
+      "doc_en": "Payout Wallets",
+      "zh_cn": "出款钱包",
+      "row": 1448
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Signing transaction count unit",
+      "doc_en": "Transaction",
+      "zh_cn": "笔",
+      "row": 404
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Invitation expired",
+      "doc_en": "Invitation has expired",
+      "zh_cn": "邀请已过期",
+      "row": 561
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Insufficient miner fee",
+      "doc_en": "Insufficient mining fees",
+      "zh_cn": "矿工费不足",
+      "row": 807
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Increase quota",
+      "doc_en": "Increase the Limit",
+      "zh_cn": "提升额度",
+      "row": 3246
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Warm reminder",
+      "doc_en": "Reminder",
+      "zh_cn": "温馨提示",
+      "row": 130
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Withdrawal quota exceeded",
+      "doc_en": "Exceeded Withdrawal Limit",
+      "zh_cn": "超出提币额度",
+      "row": 1694
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Batch completed",
+      "doc_en": "Ended",
+      "zh_cn": "已结束",
+      "row": 1404
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Signing failed",
+      "doc_en": "Sign failed",
+      "zh_cn": "签名失败",
+      "row": 233
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Signature successful",
+      "doc_en": "Signature succeeded",
+      "zh_cn": "签名成功",
+      "row": 731
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Network anomaly",
+      "doc_en": "Network error",
+      "zh_cn": "网络异常",
+      "row": 252
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Transaction hash",
+      "doc_en": "TxID",
+      "zh_cn": "交易哈希",
+      "row": 748
+    }
+  ],
+  "from_override": [
+    {
+      "en_key": "Batch Processing",
+      "zh_cn": "批处理",
+      "doc_en": "Batch Processing",
+      "zh_tw": "批處理"
+    },
+    {
+      "en_key": "{ num } Selected",
+      "zh_cn": "{ num } 已选中",
+      "doc_en": "{ num } Selected",
+      "zh_tw": "{ num } 已選中"
+    },
+    {
+      "en_key": "Optional, up to 256 characters.",
+      "zh_cn": "选填，最多 256 字符",
+      "doc_en": "Optional, up to 256 characters.",
+      "zh_tw": "選填，256字符以內。"
+    },
+    {
+      "en_key": "Broadcast",
+      "zh_cn": "广播",
+      "doc_en": "Broadcast",
+      "zh_tw": "廣播"
+    },
+    {
+      "en_key": "Expiration Time",
+      "zh_cn": "超时时间",
+      "doc_en": "Expiration Time",
+      "zh_tw": "超時時間"
+    },
+    {
+      "en_key": "Initiation Source",
+      "zh_cn": "发起入口",
+      "doc_en": "Initiation Source",
+      "zh_tw": "發起入口"
+    },
+    {
+      "en_key": "Broadcasting",
+      "zh_cn": "广播中",
+      "doc_en": "Broadcasting",
+      "zh_tw": "廣播中"
+    },
+    {
+      "en_key": "Broadcast Successful",
+      "zh_cn": "广播成功",
+      "doc_en": "Broadcast Successful",
+      "zh_tw": "廣播成功"
+    },
+    {
+      "en_key": "Broadcast Failed",
+      "zh_cn": "广播失败",
+      "doc_en": "Broadcast Failed",
+      "zh_tw": "廣播失敗"
+    },
+    {
+      "en_key": "Withdrawn",
+      "zh_cn": "已撤回",
+      "doc_en": "Withdrawn",
+      "zh_tw": "已撤回"
+    },
+    {
+      "en_key": "Withdraw",
+      "zh_cn": "撤回",
+      "doc_en": "Withdrawal",
+      "zh_tw": "撤回"
+    },
+    {
+      "en_key": "Withdraw Application",
+      "zh_cn": "撤回申请",
+      "doc_en": "Withdraw Application",
+      "zh_tw": "撤回申請"
+    },
+    {
+      "en_key": "Process",
+      "zh_cn": "处理",
+      "doc_en": "Process",
+      "zh_tw": "處理"
+    },
+    {
+      "en_key": "Signable Transactions",
+      "zh_cn": "可签名交易",
+      "doc_en": "Signable Transactions",
+      "zh_tw": "可簽名交易"
+    },
+    {
+      "en_key": "Non-signable Transactions",
+      "zh_cn": "不可签名交易",
+      "doc_en": "Non-signable Transactions",
+      "zh_tw": "不可簽名交易"
+    },
+    {
+      "en_key": "View Reason",
+      "zh_cn": "查看原因",
+      "doc_en": "View Reason",
+      "zh_tw": "查看原因"
+    },
+    {
+      "en_key": "Total Signing Amount",
+      "zh_cn": "签名总金额",
+      "doc_en": "Total Signing Amount",
+      "zh_tw": "簽名總金額"
+    },
+    {
+      "en_key": "Blacklisted Address",
+      "zh_cn": "黑名单地址",
+      "doc_en": "Blacklisted Address",
+      "zh_tw": "黑名單地址"
+    },
+    {
+      "en_key": "Stop Signing",
+      "zh_cn": "停止签名",
+      "doc_en": "Stop Signing",
+      "zh_tw": "停止簽名"
+    },
+    {
+      "en_key": "Insufficient Withdrawal Limit",
+      "zh_cn": "提币额度不足",
+      "doc_en": "Insufficient Withdrawal Limit",
+      "zh_tw": "提幣額度不足"
+    },
+    {
+      "en_key": "Transaction Already Processed",
+      "zh_cn": "交易已被处理",
+      "doc_en": "Transaction Already Processed",
+      "zh_tw": "交易已被處理"
+    },
+    {
+      "en_key": "Broadcast failed",
+      "zh_cn": "广播失败",
+      "doc_en": "Broadcast Failed",
+      "zh_tw": "廣播失敗"
+    }
+  ],
+  "unaligned": [
+    {
+      "section": "Preference & shell",
+      "en_key": "Main content area",
+      "zh_cn": "主内容区",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Nav & module titles",
+      "en_key": "App",
+      "zh_cn": "应用",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Nav & module titles",
+      "en_key": "Account Settings",
+      "zh_cn": "账户设置",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Nav & module titles",
+      "en_key": "User avatar",
+      "zh_cn": "用户头像",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Nav & module titles",
+      "en_key": "UniChain",
+      "zh_cn": "UniChain",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Nav & module titles",
+      "en_key": "MetaMask",
+      "zh_cn": "MetaMask",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Account settings menu",
+      "en_key": "MPC Network",
+      "zh_cn": "MPC 网络",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Account settings menu",
+      "en_key": "About Cregis",
+      "zh_cn": "关于 Cregis",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Payment Engine menu",
+      "en_key": "Bulk Transfer Record",
+      "zh_cn": "批量发送记录",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Payment Engine menu",
+      "en_key": "Refund Record",
+      "zh_cn": "退款记录",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Notifications menu",
+      "en_key": "Team Activities",
+      "zh_cn": "团队动态",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Notifications menu",
+      "en_key": "Announcements",
+      "zh_cn": "公告",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Notifications menu",
+      "en_key": "AML Alerts",
+      "zh_cn": "AML 预警",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "WaaS menu",
+      "en_key": "Sub-Address",
+      "zh_cn": "子地址",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "WaaS menu",
+      "en_key": "API Collection",
+      "zh_cn": "API 归集",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Default menu placeholders",
+      "en_key": "Title",
+      "zh_cn": "标题",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Default menu placeholders",
+      "en_key": "Title 2",
+      "zh_cn": "标题 2",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Default menu placeholders",
+      "en_key": "Label",
+      "zh_cn": "标签",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Data list toolbar & paginer",
+      "en_key": "Item",
+      "zh_cn": "项",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Data list toolbar & paginer",
+      "en_key": "Selected",
+      "zh_cn": "已选择",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Data list toolbar & paginer",
+      "en_key": "Archive",
+      "zh_cn": "归档",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Data list toolbar & paginer",
+      "en_key": "Please enter remark",
+      "zh_cn": "请输入备注",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Data list toolbar & paginer",
+      "en_key": "Please change your transaction password regularly",
+      "zh_cn": "请定期更改你的交易密码",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Data list toolbar & paginer",
+      "en_key": "Please enter your 6-digit transaction password to continue",
+      "zh_cn": "请输入 6 位交易密码以继续",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Data list toolbar & paginer",
+      "en_key": "Clear",
+      "zh_cn": "清空",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Data list toolbar & paginer",
+      "en_key": "Forgot password?",
+      "zh_cn": "忘记密码?",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Data list toolbar & paginer",
+      "en_key": "Invalid transaction password",
+      "zh_cn": "交易密码错误",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Data list toolbar & paginer",
+      "en_key": "This data has already been processed. Please refresh the data and try again.",
+      "zh_cn": "该数据已被处理，请刷新数据后重试。",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Data list toolbar & paginer",
+      "en_key": "You can select up to 100 items at a time.",
+      "zh_cn": "单次最多可勾选 100 条数据",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Data list toolbar & paginer",
+      "en_key": "Approval Details",
+      "zh_cn": "审批详情",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Data list toolbar & paginer",
+      "en_key": "On-chain confirmation",
+      "zh_cn": "链上确认",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Data list toolbar & paginer",
+      "en_key": "Signing threshold",
+      "zh_cn": "签名门限",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Data list toolbar & paginer",
+      "en_key": "Address details",
+      "zh_cn": "地址详情",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Data list toolbar & paginer",
+      "en_key": "View more",
+      "zh_cn": "查看更多",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Data list toolbar & paginer",
+      "en_key": "Expand {count}",
+      "zh_cn": "展开 {count}",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Data list columns",
+      "en_key": "Cold Wallet",
+      "zh_cn": "冷钱包",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Data list columns",
+      "en_key": "Amount:",
+      "zh_cn": "金额:",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Data list columns",
+      "en_key": "Sender:",
+      "zh_cn": "发送方:",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Data list columns",
+      "en_key": "Receiver:",
+      "zh_cn": "接收方:",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Data list columns",
+      "en_key": "Memo",
+      "zh_cn": "Memo",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Data list columns",
+      "en_key": "Operation Type",
+      "zh_cn": "操作类型",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Data list columns",
+      "en_key": "Header",
+      "zh_cn": "表头",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Data list columns",
+      "en_key": "Signing Results",
+      "zh_cn": "签名结果",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Data list columns",
+      "en_key": "Approval (APAC Business Group)",
+      "zh_cn": "审批 (亚太事业群)",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Data list columns",
+      "en_key": "Approval (Finance Department)",
+      "zh_cn": "审批 (财务部门)",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Data list columns",
+      "en_key": "IP",
+      "zh_cn": "IP",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Ready",
+      "zh_cn": "就绪",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Batch Sign",
+      "zh_cn": "批量签名",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Cregis Robot",
+      "zh_cn": "Cregis机器人",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Miner fee fast eth range",
+      "zh_cn": "≤0.00266 ETH ~ 0.0003201 ETH",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Miner fee fast usd range",
+      "zh_cn": "≤$1.52 ~ 1.87",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Miner fee normal eth range",
+      "zh_cn": "≤0.001964 ETH ~ 0.0002198 ETH",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Miner fee normal usd range",
+      "zh_cn": "≤$0.43 ~ $0.49",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Miner fee slow eth range",
+      "zh_cn": "≤0.000808 ETH ~ 0.000812 ETH",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Miner fee slow usd range",
+      "zh_cn": "≤$0.26 ~ $0.31",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Miner fee fast btc range",
+      "zh_cn": "0.000000000877 BTC",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Miner fee fast btc usd range",
+      "zh_cn": "≈ $0.03",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Miner fee normal btc range",
+      "zh_cn": "0.000000000777 BTC",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Miner fee normal btc usd range",
+      "zh_cn": "≈ $0.02",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Miner fee slow btc range",
+      "zh_cn": "0.000000000677 BTC",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Miner fee slow btc usd range",
+      "zh_cn": "≈ $0.01",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Miner fee tron resources line",
+      "zh_cn": "{bandwidth}带宽 + {energy}能量",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Miner fee tron activation note",
+      "zh_cn": "接收方地址未激活，将额外消耗 {trx} TRX激活",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Miner fee tron payment mode",
+      "zh_cn": "支付模式",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Miner fee tron recommended",
+      "zh_cn": "推荐",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Miner fee tron save percent",
+      "zh_cn": "节省50%",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Miner fee tron provider note",
+      "zh_cn": "由 Cregis 提供交易所需资源",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Miner fee tron estimated cost primary",
+      "zh_cn": "预计消耗：{trx} TRX",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Miner fee tron estimated cost usd",
+      "zh_cn": "≈ {usd}",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Miner fee network stub ton xrp",
+      "zh_cn": "TON / XRP 矿工费界面待接入。",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Miner fee network stub evm",
+      "zh_cn": "以太坊矿工费界面",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Normal mode",
+      "zh_cn": "正常模式",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Max Fee",
+      "zh_cn": "Max Fee",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Max Priority Fee",
+      "zh_cn": "Max Priority Fee",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Gas Price",
+      "zh_cn": "Gas Price",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Gas Limit",
+      "zh_cn": "Gas Limit",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Preview",
+      "zh_cn": "预览",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Slow",
+      "zh_cn": "慢",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Medium",
+      "zh_cn": "中",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Fast",
+      "zh_cn": "快",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Signing in progress {done}/{total}",
+      "zh_cn": "签名中 {done}/{total}",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Need {required} members to participate, {joined} joined",
+      "zh_cn": "需{required}名成员参与，已加入{joined}人",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Need {required} members to join, {joined} joined",
+      "zh_cn": "需要 {required} 名成员加入，已加入 {joined} 人",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Members joined, please start signing",
+      "zh_cn": "成员已加入，请开始签名",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Members",
+      "zh_cn": "成员信息",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Network",
+      "zh_cn": "网络状态",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Status tags",
+      "en_key": "Request withdrawn",
+      "zh_cn": "申请已撤回",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "List field",
+      "en_key": "Sub-Address Transfer",
+      "zh_cn": "子地址发送",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "List field",
+      "en_key": "Swap",
+      "zh_cn": "Swap",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "List field",
+      "en_key": "Wallet｜Withdrawal",
+      "zh_cn": "钱包｜提币",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "List field",
+      "en_key": "Sub-Address｜Withdrawal",
+      "zh_cn": "子地址｜提币",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "List field",
+      "en_key": "Wallet｜Transfer",
+      "zh_cn": "钱包｜发送",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "List field",
+      "en_key": "Sub-Address｜Transfer",
+      "zh_cn": "子地址｜发送",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "List field",
+      "en_key": "Swap App｜Transfer",
+      "zh_cn": "Swap应用｜发送",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "List field",
+      "en_key": "Swap App｜Contract Authorization",
+      "zh_cn": "Swap应用｜合约授权",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "List field",
+      "en_key": "Swap App｜Revoke Authorization",
+      "zh_cn": "Swap应用｜撤销授权",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "List field",
+      "en_key": "Swap App",
+      "zh_cn": "Swap应用",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "List field",
+      "en_key": "Until Expiry",
+      "zh_cn": "后到期",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "List field",
+      "en_key": "Expires in xx:xx",
+      "zh_cn": "后超时",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "List field",
+      "en_key": "Me",
+      "zh_cn": "我",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "List field",
+      "en_key": "Tag",
+      "zh_cn": "标签",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Currencies",
+      "zh_cn": "种币",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Select a currency network to process",
+      "zh_cn": "选择币种网络进行批量签名",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Ethereum Mainnet",
+      "zh_cn": "Ethereum Mainnet",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Bitcoin",
+      "zh_cn": "Bitcoin",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "The Open Network",
+      "zh_cn": "The Open Network",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Tron",
+      "zh_cn": "Tron",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "{count} pending signatures",
+      "zh_cn": "{count} 条待签名",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "pending signatures suffix",
+      "zh_cn": " 条待签名",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Signable transaction details",
+      "zh_cn": "可签名交易明细",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Ineligible transaction reasons",
+      "zh_cn": "不可签名原因",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Filter ineligible transaction reasons",
+      "zh_cn": "筛选不可签名原因",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Wallet Shard Not Imported",
+      "zh_cn": "未导入钱包分片",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Pending multi-sign invitations",
+      "zh_cn": "待处理多签邀请",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "{count} multi-sign invitations",
+      "zh_cn": "{count} 笔多签邀请",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "You have {count} multi-sign invitations pending",
+      "zh_cn": "您有 {count} 笔多签邀请待处理",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Multi-sign invitations {count}",
+      "zh_cn": "多签邀请 {count}",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "{name} ({email}) invites you to sign",
+      "zh_cn": "{name}({email})邀请你签名",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "({email}) invites you to sign",
+      "zh_cn": "({email})邀请你签名",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Invitation time",
+      "zh_cn": "邀请时间",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Joined multi-sign room",
+      "zh_cn": "已加入多签房间",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Non-whitelist address",
+      "zh_cn": "非白名单地址",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Team withdrawal quota remaining: ${amount}. Upgrade to increase quota or enjoy unlimited withdrawal.",
+      "zh_cn": "团队提币额度剩余：${amount}，升级或扩容即可提升额度，或享有无限提币额度。",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Selected {count} transactions",
+      "zh_cn": "本次选择 {count} 笔交易",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "After stopping, transactions that have not completed signing will not continue. Completed signatures are not affected. Stop the current batch signing task?",
+      "zh_cn": "停止后，尚未完成签名的交易将不再继续签名，已完成签名的交易不受影响。是否确认停止当前批量签名任务？",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "After exiting, this signing will fail. Are you sure you want to exit?",
+      "zh_cn": "退出后，本次签名将会失败，是否确定退出？",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Team withdrawal quota remaining ${remaining}. A 0.1% over-quota service fee applies to the excess. This transaction will incur ${overageFee} in over-quota service fees. We recommend upgrading your team plan or expanding your withdrawal package to waive over-quota fees and enjoy a higher withdrawal limit.",
+      "zh_cn": "团队提币额度剩余${remaining}，超出部分将收取0.1%超额服务费，本次交易将产生${overageFee}的超额服务费。建议团队升级或扩容提币套餐，免除超额服务费并享受更高的提币额度",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "This transaction requires an over-quota fee. Required ${required}, remaining ${remaining}.",
+      "zh_cn": "提币额度不足，本次交易需要支付超额手续费。需要 ${required}，剩余 ${remaining}。",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "{count} Orders",
+      "zh_cn": "{count} 笔",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Elapsed: {time}",
+      "zh_cn": "已运行：{time}",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Runtime: {time}",
+      "zh_cn": "运行时长：{time}",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "No pending signing items available for batch processing.",
+      "zh_cn": "当前没有可进行批量签名的待签名数据。",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Contract Authorization",
+      "zh_cn": "合约授权",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "CSPN",
+      "zh_cn": "CSPN",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Revoke Authorization",
+      "zh_cn": "撤销授权",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "MPC network error",
+      "zh_cn": "MPC网络异常",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "MPC network error. Switch here and try again.",
+      "zh_cn": "MPC网络异常，请在此切换后重试。",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Switch MPC network",
+      "zh_cn": "切换MPC网络",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Signing failed. Please check the MPC network status and try again.",
+      "zh_cn": "签名失败，请检查MPC网络状况后重试。",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Data error",
+      "zh_cn": "数据异常",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Quick actions",
+      "zh_cn": "快速处理",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Use keyboard shortcuts",
+      "zh_cn": "使用键盘上的快捷键",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "to paginate and handle tasks quickly.",
+      "zh_cn": "翻页，快速处理业务",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Previous item",
+      "zh_cn": "上一项",
+      "reason": "文档无 zh-cn 匹配"
+    },
+    {
+      "section": "Batch signing",
+      "en_key": "Next item",
+      "zh_cn": "下一项",
+      "reason": "文档无 zh-cn 匹配"
+    }
+  ],
+  "catalog_missing_from_code": [
+    {
+      "en_key": "Add to address book",
+      "ref_count": 1,
+      "refs": [
+        "src/scenes/tasks/signing/SigningCustomPopupItemRow.vue"
+      ],
+      "status": "deferred"
+    },
+    {
+      "en_key": "AML Search",
+      "ref_count": 1,
+      "refs": [
+        "src/scenes/tasks/signing/SigningCustomPopupItemRow.vue"
+      ],
+      "status": "deferred"
+    },
+    {
+      "en_key": "Block explorer",
+      "ref_count": 1,
+      "refs": [
+        "src/scenes/tasks/signing/SigningCustomPopupItemRow.vue"
+      ],
+      "status": "deferred"
+    },
+    {
+      "en_key": "Copy",
+      "ref_count": 2,
+      "refs": [
+        "src/scenes/tasks/shared/DetailProgressMemberDeviceInfoTrigger.vue",
+        "src/scenes/tasks/signing/SigningCustomPopupItemRow.vue"
+      ],
+      "status": "deferred"
+    },
+    {
+      "en_key": "Copy address",
+      "ref_count": 1,
+      "refs": [
+        "src/scenes/tasks/list-field/TasksListFieldAddressLine.vue"
+      ],
+      "status": "deferred"
+    }
+  ]
+}

@@ -5,13 +5,13 @@ import {
 
 /** 业务类型副行 i18n 键（经 ui() 翻译为「来源｜动作」）。 */
 export const BUSINESS_TYPE_SECONDARY_LABEL_KEYS = {
-  waasWalletPayout: 'Wallet｜Withdrawal',
-  waasSubPayout: 'Sub-Address｜Withdrawal',
+  waasWalletPayout: 'Wallet｜Payout',
+  waasSubPayout: 'Sub-Address｜Payout',
   memberWalletTransfer: 'Wallet｜Transfer',
   memberSubTransfer: 'Sub-Address｜Transfer',
   swapTransfer: 'Swap App｜Transfer',
-  swapContractAuth: 'Swap App｜Contract Authorization',
-  swapRevokeAuth: 'Swap App｜Revoke Authorization',
+  swapContractAuth: 'Swap App｜Contract Approval',
+  swapRevokeAuth: 'Swap App｜Revoke Approval',
 } as const;
 
 /** 金额列副行：申请时间（与详情 appliedAt 同源）。 */

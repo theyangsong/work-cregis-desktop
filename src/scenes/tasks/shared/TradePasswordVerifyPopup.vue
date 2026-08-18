@@ -67,7 +67,7 @@ function closePopup() {
       :state="verify.state"
       :title="ui('Transaction password')"
       :secondary-text="ui('Please change your transaction password regularly')"
-      :placeholder="ui('Please enter')"
+      :placeholder="ui('Please Enter')"
       :confirm-label="ui('Confirm')"
       :cancel-label="ui('Cancel')"
       :forgot-password-label="ui('Forgot password?')"

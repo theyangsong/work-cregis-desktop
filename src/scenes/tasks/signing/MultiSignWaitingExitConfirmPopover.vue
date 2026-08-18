@@ -77,7 +77,7 @@ function onConfirm() {
               <EgIconButton
                 shape="square"
                 size="sm"
-                label="关闭"
+                :label="ui('Close')"
                 motion="ease"
                 @click="closePopover"
               >

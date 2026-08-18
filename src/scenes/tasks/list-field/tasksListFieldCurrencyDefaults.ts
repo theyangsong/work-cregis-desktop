@@ -19,7 +19,7 @@ export const tasksListFieldCurrencyDefaults: Record<string, unknown> = {
   comboMode: 'single-address',
   ...currencySideAddressDefaults('from', 'ZEC'),
   ...currencySideAddressDefaults('to', 'ZEC'),
-  /** Data List 首列表头第二段为 To Address（接收方），Body 只展示接收方。 */
+  /** Data List 首列表头第二段为 Receiver（接收方），Body 只展示接收方。 */
   fromSideVisible: false,
   toSideVisible: true,
   ...currencyTagCustomizeDefaults(),

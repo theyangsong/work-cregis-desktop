@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import {
   EgListFieldAddressLine,
+  EgListFieldOverflowText,
   EgTag,
   EgTextOverflowTooltip,
   formatMoreTagLabel,
@@ -10,7 +11,8 @@ import {
   type CryptoAddressSideTags,
   type TagSystemType,
 } from '@eds/desktop-components';
-import { resolveListFieldAddressLineModel } from './listFieldAddressLineModel';
+import { resolveListFieldAddressLineModel, truncateAddressMiddle } from './listFieldAddressLineModel';
+import { useAppI18n } from '@/composables/useAppI18n';
 import { buildCurrencySideAddressData } from './listFieldCurrencyAddressCustomize';
 import styles from './TasksListFieldAddressLine.module.css';
 
@@ -23,6 +25,9 @@ const props = withDefaults(
     rowTagLabel?: string;
     rowTagSystemType?: TagSystemType;
     secondaryText?: string;
+    /** 发送方列：主行钱包名 + 副行地址（tooltip 仍展示 from 完整地址）。 */
+    walletAsPrimary?: boolean;
+    walletDisplayName?: string;
     tooltipTrigger?: 'hover' | 'focus';
     alignEnd?: boolean;
   }>(),
@@ -31,21 +36,48 @@ const props = withDefaults(
     rowTagLabel: 'Tag',
     rowTagSystemType: 'gray',
     secondaryText: '',
+    walletAsPrimary: false,
+    walletDisplayName: '',
     tooltipTrigger: 'hover',
     alignEnd: false,
   },
 );
 
+const { ui } = useAppI18n();
+
 const model = computed(() => resolveListFieldAddressLineModel(props.prefix, props.customize));
 const sideData = computed(() => buildCurrencySideAddressData(props.prefix, props.customize));
-/** 多地址 (>2) 走 EgListFieldAddressLine 计数行；单地址别名仍用业务 alias 布局。 */
-const useAliasLayout = computed(
-  () => Boolean(model.value.alias) && sideData.value.count <= 2,
+const useWalletPrimaryLayout = computed(
+  () =>
+    props.walletAsPrimary
+    && String(props.walletDisplayName ?? '').trim().length > 0
+    && sideData.value.count <= 2,
 );
+/** 多地址 (>2) 走 EgListFieldAddressLine；单地址别名 / 钱包主行走业务布局。 */
+const useAliasLayout = computed(
+  () => useWalletPrimaryLayout.value || (Boolean(model.value.alias) && sideData.value.count <= 2),
+);
+const primaryLineText = computed(() => {
+  if (useWalletPrimaryLayout.value) {
+    return String(props.walletDisplayName ?? '').trim();
+  }
+  return model.value.alias;
+});
+const secondaryLineText = computed(() => {
+  if (useWalletPrimaryLayout.value) {
+    return truncateAddressMiddle(model.value.address, 6, 6);
+  }
+  return String(props.secondaryText ?? '').trim();
+});
 const showRowTag = computed(
   () => props.showRowTag && String(props.rowTagLabel ?? '').trim().length > 0,
 );
-const showSecondaryText = computed(() => String(props.secondaryText ?? '').trim().length > 0);
+const displayRowTagLabel = computed(() => ui(String(props.rowTagLabel ?? 'Tag')));
+
+function tagLabel(label: string): string {
+  return ui(label);
+}
+const showSecondaryText = computed(() => secondaryLineText.value.length > 0);
 const showTags = computed(() => hasAddressTags(props.tags?.system, props.tags?.custom));
 const inlineTags = computed(() =>
   splitTagsForDisplay(props.tags?.system, props.tags?.custom).inline,
@@ -55,7 +87,7 @@ const hiddenTagCount = computed(
 );
 const showMoreTag = computed(() => hiddenTagCount.value > 0);
 const moreTagLabel = computed(() => formatMoreTagLabel(hiddenTagCount.value));
-const copyLabel = computed(() => `复制地址 ${model.value.address}`);
+const copyLabel = computed(() => `${ui('Copy address')} ${model.value.address}`.trim());
 const addressTooltipHostClass = computed(() =>
   [styles.addressTooltipHost, props.alignEnd && styles.addressTooltipHostAlignEnd]
     .filter(Boolean)
@@ -66,6 +98,12 @@ const tooltipTriggerBodyClass = computed(() =>
     .filter(Boolean)
     .join(' '),
 );
+const walletMetaRowClass = computed(() =>
+  [styles.metaRow, styles.walletMetaRow, props.alignEnd && styles.walletMetaRowAlignEnd]
+    .filter(Boolean)
+    .join(' '),
+);
+const showWalletMetaRow = computed(() => showSecondaryText.value || showTags.value);
 
 function isCustomTag(tag: (typeof inlineTags.value)[number]): boolean {
   return tag.family === 'custom';
@@ -84,11 +122,98 @@ function isColorfulTag(tag: (typeof inlineTags.value)[number]): boolean {
       :addresses="sideData.addresses"
       :tags="tags"
       :show-row-tag="showRowTag"
-      :row-tag-label="rowTagLabel"
+      :row-tag-label="displayRowTagLabel"
       :row-tag-system-type="rowTagSystemType"
       :secondary-text="secondaryText"
       :tooltip-trigger="tooltipTrigger"
     />
+  </div>
+
+  <div
+    v-else-if="useWalletPrimaryLayout"
+    :class="[styles.aliasHost, alignEnd && styles.aliasHostAlignEnd]"
+  >
+    <div :class="styles.aliasPrimaryRow">
+      <div :class="styles.walletPrimaryText">
+        <EgListFieldOverflowText
+          :text="primaryLineText"
+          :tooltip-trigger="tooltipTrigger"
+          boundary-selector=".eds-data-list"
+        />
+      </div>
+      <EgTag
+        v-if="showRowTag"
+        :class="styles.rowTag"
+        size="sm"
+        :system-type="rowTagSystemType"
+        truncate
+      >
+        {{ displayRowTagLabel }}
+      </EgTag>
+    </div>
+
+    <EgTextOverflowTooltip
+      v-if="showWalletMetaRow"
+      :tooltip-text="model.address"
+      :copy-value="model.address"
+      :trigger="tooltipTrigger"
+      semantic-truncated
+      target-tone="secondary"
+      :typography-class="styles.walletMetaAddress"
+      :measure-class="walletMetaRowClass"
+      :copy-label="copyLabel"
+      show-tooltip-copy
+      :menu-tags="showTags ? tags : undefined"
+      boundary-selector=".eds-data-list"
+      :host-class="addressTooltipHostClass"
+    >
+      <div
+        :class="[
+          walletMetaRowClass,
+          styles.addressHoverMotion,
+          'eds-hover-tooltip-trigger__target',
+          'eds-hover-tooltip-trigger__target--secondary',
+        ]"
+      >
+        <span v-if="showSecondaryText" :class="styles.walletMetaAddress">
+          {{ secondaryLineText }}
+        </span>
+
+        <template v-for="(tag, index) in inlineTags" :key="`wallet-meta-tag-${index}`">
+          <EgTag
+            v-if="isCustomTag(tag)"
+            family="custom"
+            :custom-style="tag.customStyle ?? 'vermilion'"
+            size="sm"
+            truncate
+          >
+            {{ tagLabel(tag.label) }}
+          </EgTag>
+          <EgTag
+            v-else-if="isColorfulTag(tag)"
+            family="colorful"
+            :colorful-style="tag.colorfulStyle ?? 'apricot'"
+            size="sm"
+            truncate
+          >
+            {{ tagLabel(tag.label) }}
+          </EgTag>
+          <EgTag
+            v-else
+            family="system"
+            :system-type="tag.systemType ?? 'solid-red'"
+            size="sm"
+            truncate
+          >
+            {{ tagLabel(tag.label) }}
+          </EgTag>
+        </template>
+
+        <EgTag v-if="showMoreTag" family="system" system-type="gray" size="sm" truncate>
+          {{ moreTagLabel }}
+        </EgTag>
+      </div>
+    </EgTextOverflowTooltip>
   </div>
 
   <div v-else :class="[styles.aliasHost, alignEnd && styles.aliasHostAlignEnd]">
@@ -104,7 +229,11 @@ function isColorfulTag(tag: (typeof inlineTags.value)[number]): boolean {
       show-tooltip-copy
       defer-hover-target
       :menu-alias="model.alias"
-      :menu-secondary-text="showSecondaryText ? secondaryText : undefined"
+      :menu-secondary-text="
+        showSecondaryText
+          ? secondaryLineText
+          : undefined
+      "
       :menu-tags="showTags ? tags : undefined"
       boundary-selector=".eds-data-list"
       :host-class="addressTooltipHostClass"
@@ -119,7 +248,7 @@ function isColorfulTag(tag: (typeof inlineTags.value)[number]): boolean {
               'eds-hover-tooltip-trigger__target--primary',
             ]"
           >
-            {{ model.alias }}
+            {{ primaryLineText }}
           </span>
           <EgTag
             v-if="showRowTag"
@@ -128,12 +257,12 @@ function isColorfulTag(tag: (typeof inlineTags.value)[number]): boolean {
             :system-type="rowTagSystemType"
             truncate
           >
-            {{ rowTagLabel }}
+            {{ displayRowTagLabel }}
           </EgTag>
         </div>
 
         <span v-if="showSecondaryText" :class="styles.metaSecondaryText">
-          {{ secondaryText }}
+          {{ secondaryLineText }}
         </span>
 
         <div v-if="showTags" :class="styles.metaRow">
@@ -145,7 +274,7 @@ function isColorfulTag(tag: (typeof inlineTags.value)[number]): boolean {
               size="sm"
               truncate
             >
-              {{ tag.label }}
+              {{ tagLabel(tag.label) }}
             </EgTag>
             <EgTag
               v-else-if="isColorfulTag(tag)"
@@ -154,7 +283,7 @@ function isColorfulTag(tag: (typeof inlineTags.value)[number]): boolean {
               size="sm"
               truncate
             >
-              {{ tag.label }}
+              {{ tagLabel(tag.label) }}
             </EgTag>
             <EgTag
               v-else
@@ -163,7 +292,7 @@ function isColorfulTag(tag: (typeof inlineTags.value)[number]): boolean {
               size="sm"
               truncate
             >
-              {{ tag.label }}
+              {{ tagLabel(tag.label) }}
             </EgTag>
           </template>
           <EgTag v-if="showMoreTag" family="system" system-type="gray" size="sm" truncate>

@@ -56,9 +56,9 @@ const { ui } = useAppI18n();
 const createdTimeSortOrder = ref<TasksDataListSortOrder | ''>('');
 
 const FAIL_REASON_LABELS: Record<BatchSigningFailReason, string> = {
-  'already-processed': 'Transaction already processed',
-  'quota-insufficient': 'Insufficient withdrawal quota',
-  'balance-insufficient': 'Insufficient balance',
+  'already-processed': 'Transaction Already Processed',
+  'quota-insufficient': 'Insufficient Withdrawal Limit',
+  'balance-insufficient': 'Insufficient Balance',
   'miner-fee-insufficient': 'Insufficient miner fee',
   'sign-failed': 'Signing failed',
   'broadcast-failed': 'Broadcast failed',
@@ -70,7 +70,7 @@ const ROW_STATUS_LABELS: Record<BatchSigningTaskRow['status'], string> = {
   pending: 'Pending Signature',
   signing: 'Signing in progress',
   broadcasting: 'Broadcasting',
-  success: 'Broadcast Success',
+  success: 'Broadcast Successful',
   failed: 'Failed',
 };
 
@@ -244,7 +244,7 @@ function rowIndexFromData(data: DataListItem) {
 
       <EgDataListColumn
         prop="createdTime"
-        :label="ui('Application Time')"
+        :label="ui('Created Time')"
         :min-width="PROGRESS_CREATED_TIME_COLUMN_MIN_WIDTH"
         :display-order="3"
         align="left"
@@ -256,10 +256,10 @@ function rowIndexFromData(data: DataListItem) {
               :content-class="dataListStyles.headerText"
               context="header"
             >
-              {{ ui('Application Time') }}
+              {{ ui('Created Time') }}
             </EgDataListCellOverflow>
             <DataListHeaderSortTrigger
-              :label="ui('Application Time')"
+              :label="ui('Created Time')"
               :active-order="createdTimeSortOrder"
               @sort-change="onCreatedTimeSort"
             />

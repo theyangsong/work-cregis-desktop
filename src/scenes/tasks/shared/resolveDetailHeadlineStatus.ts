@@ -10,7 +10,7 @@ export type DetailHeadlineStatus = {
 const IN_FLIGHT_PROGRESS_LABELS = new Set([
   'Pending Approval',
   'Pending Signature',
-  'Approving',
+  'approving',
   'Waiting for signature',
   'Pending',
 ]);

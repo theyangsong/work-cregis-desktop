@@ -41,8 +41,8 @@ const props = withDefaults(
     selectedCount: 1,
     showMinerFee: false,
     boundarySelector: '.eds-data-list',
-    placeholderKey: 'Please enter',
-    feedbackKey: 'Optional, Max. 256 characters',
+    placeholderKey: 'Please Enter',
+    feedbackKey: 'Optional, up to 256 characters.',
     requireMinerFee: false,
     confirmTone: 'decor',
     minerFeeConfirmTone: 'decor',
@@ -86,7 +86,7 @@ const remarkModel = computed({
 
 const minerFeeTopToolTitle = computed(() => {
   if (!resolvedMinerFeeProfile.value) {
-    return ui('Gas fee');
+    return ui('Miner Fee');
   }
   return ui(resolveMinerFeePopoverTitleKey(resolvedMinerFeeProfile.value));
 });
@@ -167,7 +167,7 @@ function onMinerFeePopoverDismiss() {
           v-model="remarkModel"
           :label="ui('Remark')"
           :placeholder="ui(placeholderKey)"
-          :feedback-text="ui(feedbackKey)"
+          :feedback-text="feedbackKey"
           :confirm-label="ui('Confirm')"
           :confirm-tone="confirmTone"
           hide-label

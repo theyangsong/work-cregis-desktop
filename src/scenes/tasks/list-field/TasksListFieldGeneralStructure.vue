@@ -472,7 +472,7 @@ const countdownTime = computed(() => formatCountdownTotal(countdownRemainingSeco
         </div>
         <span v-if="showCountdown" :class="styles.countdown">
           <span :class="styles.countdownTime">{{ countdownTime }}</span>
-          <span :class="styles.countdownSuffix"> Until Expiry</span>
+          <span :class="styles.countdownSuffix"> {{ ui(countdownSuffixKey) }}</span>
         </span>
       </div>
     </template>

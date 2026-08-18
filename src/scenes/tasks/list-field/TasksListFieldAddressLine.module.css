@@ -180,10 +180,61 @@
   overflow: hidden;
 }
 
+.walletPrimaryText {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.walletPrimaryText :global(span) {
+  display: block;
+  max-width: 100%;
+  min-width: 0;
+}
+
 .aliasPrimaryRow :global(.eds-anchored-tooltip) {
   flex: 1 1 auto;
   min-width: 0;
   max-width: 100%;
+}
+
+.walletMetaRow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.walletMetaRowAlignEnd {
+  justify-content: flex-end;
+  margin-left: auto;
+}
+
+.walletMetaRow .walletMetaAddress {
+  flex: 0 1 auto;
+}
+
+/** 发送方副行地址：12px（--eds-footnote-size / --size-sm）。 */
+.walletMetaAddress {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--eds-footnote-size);
+  line-height: var(--eds-footnote-line-height);
+  font-weight: var(--eds-footnote-weight);
+  color: var(--text-base-secondary);
+}
+
+.addressTooltipHost :global(.eds-hover-tooltip-trigger__target--secondary) .walletMetaAddress {
+  font-size: var(--eds-footnote-size);
+  line-height: var(--eds-footnote-line-height);
+  font-weight: var(--eds-footnote-weight);
 }
 
 .rowTag {

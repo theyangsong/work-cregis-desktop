@@ -36,7 +36,7 @@ import type {
 export type SigningBatchViewMode = 'list' | 'progress';
 
 export const SIGNING_BATCH_ALREADY_PROCESSED_MESSAGE =
-  'This item has already been processed. Please refresh the data and try again.';
+  'This data has already been processed. Please refresh the data and try again.';
 
 type BatchRow = Record<string, unknown> & { _index: number };
 
@@ -229,7 +229,7 @@ export function useSigningBatchFlow(options: {
   function onSelectedChange(rows: Array<Record<string, unknown> & { _index: number }>) {
     if (!options.enabled.value || !options.selectMode.value) return;
     if (rows.length > SIGNING_BATCH_SELECT_MAX) {
-      options.showError(`You can select up to ${SIGNING_BATCH_SELECT_MAX} items at a time.`);
+      options.showError('You can select up to 100 items at a time.');
     }
   }
 

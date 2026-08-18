@@ -123,7 +123,7 @@ onMounted(() => {
         >
           <button
             type="button"
-            :class="[styles.launcherButton, active && styles.launcherButtonOpen]"
+            :class="styles.launcherButton"
             :aria-label="triggerAriaLabel"
             :aria-expanded="active"
             @click.stop.prevent="onTriggerClick($event, active, onClick)"

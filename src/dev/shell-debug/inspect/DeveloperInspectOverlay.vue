@@ -7,57 +7,64 @@ import {
   inspectPinnedInfo,
   inspectPinnedRect,
 } from './developerInspectSession';
-import InspectHoverPopover from './InspectHoverPopover.vue';
+import InspectLayoutChrome from './InspectLayoutChrome.vue';
+import {
+  DEV_INSPECT_HOVER_ACCENT,
+  DEV_INSPECT_PINNED_ACCENT,
+} from './devInspectTheme';
 import styles from '../ShellDebugPlatform.module.css';
 
-const hoverOverlayStyle = computed(() => {
-  const rect = inspectHoverRect.value;
-  if (!rect) return undefined;
-  return {
-    top: `${rect.top}px`,
-    left: `${rect.left}px`,
-    width: `${rect.width}px`,
-    height: `${rect.height}px`,
-  };
+const PREVIEW_SELECTOR = '.app-preview';
+
+const previewRoot = computed(() => {
+  const pinned = inspectPinnedInfo.value;
+  if (pinned) {
+    return pinned.element.closest(PREVIEW_SELECTOR);
+  }
+  const hover = inspectHoverInfo.value;
+  if (hover) {
+    return hover.element.closest(PREVIEW_SELECTOR);
+  }
+  return document.querySelector(PREVIEW_SELECTOR);
 });
 
-const pinnedOverlayStyle = computed(() => {
-  const rect = inspectPinnedRect.value;
-  if (!rect) return undefined;
-  return {
-    top: `${rect.top}px`,
-    left: `${rect.left}px`,
-    width: `${rect.width}px`,
-    height: `${rect.height}px`,
-  };
-});
-
-const showHoverPopover = computed(
+const showPinnedChrome = computed(
   () =>
     developerInspectActive.value
-    && inspectHoverInfo.value
-    && inspectHoverRect.value,
+    && inspectPinnedInfo.value
+    && inspectPinnedRect.value
+    && previewRoot.value,
 );
+
+const showHoverChrome = computed(() => {
+  if (!developerInspectActive.value || !inspectHoverInfo.value || !inspectHoverRect.value || !previewRoot.value) {
+    return false;
+  }
+  const pinned = inspectPinnedInfo.value;
+  if (!pinned) return true;
+  return inspectHoverInfo.value.element !== pinned.element;
+});
 </script>
 
 <template>
   <Teleport to="body">
     <div v-if="developerInspectActive" data-dev-inspect-overlay :class="styles.inspectOverlayRoot">
-      <div
-        v-if="hoverOverlayStyle"
-        :class="styles.inspectHoverBox"
-        :style="hoverOverlayStyle"
-      />
-      <div
-        v-if="pinnedOverlayStyle"
-        :class="styles.inspectPinnedBox"
-        :style="pinnedOverlayStyle"
+      <InspectLayoutChrome
+        v-if="showPinnedChrome && inspectPinnedInfo && inspectPinnedRect && previewRoot"
+        :preview="previewRoot"
+        :component-label="inspectPinnedInfo.label"
+        :pinned-element="inspectPinnedInfo.element"
+        :pinned-rect="inspectPinnedRect"
+        :accent="DEV_INSPECT_PINNED_ACCENT"
       />
 
-      <InspectHoverPopover
-        v-if="showHoverPopover && inspectHoverInfo && inspectHoverRect"
-        :info="inspectHoverInfo"
-        :anchor-rect="inspectHoverRect"
+      <InspectLayoutChrome
+        v-if="showHoverChrome && inspectHoverInfo && inspectHoverRect && previewRoot"
+        :preview="previewRoot"
+        :component-label="inspectHoverInfo.label"
+        :pinned-element="inspectHoverInfo.element"
+        :pinned-rect="inspectHoverRect"
+        :accent="DEV_INSPECT_HOVER_ACCENT"
       />
     </div>
   </Teleport>

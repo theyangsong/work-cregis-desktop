@@ -26,7 +26,7 @@ const rowTagLabel = computed(() => ui(String(props.customize.rightLabel ?? 'Mult
 const rowTagSystemType = computed(
   () => String(props.customize.rowTagSystemType ?? 'gray') as TagSystemType,
 );
-const secondaryText = computed(() => ui(String(props.customize.addressSecondaryText ?? '').trim()));
+const walletDisplayName = computed(() => String(props.customize.addressSecondaryText ?? '').trim());
 const addressTooltipTrigger = computed(
   () => String(props.customize.addressTooltipTrigger ?? 'hover') as 'hover' | 'focus',
 );
@@ -52,7 +52,8 @@ const cellMinWidthStyle = computed(() => {
       :show-row-tag="showRowTag"
       :row-tag-label="rowTagLabel"
       :row-tag-system-type="rowTagSystemType"
-      :secondary-text="secondaryText"
+      wallet-as-primary
+      :wallet-display-name="walletDisplayName"
       :align-end="alignEnd"
       :tooltip-trigger="addressTooltipTrigger"
     />

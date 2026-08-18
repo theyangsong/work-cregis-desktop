@@ -11,10 +11,6 @@
   composes: launcherButton from './ShellDebugLauncherAnchored.module.css';
 }
 
-.launcherButtonOpen {
-  composes: launcherButtonOpen from './ShellDebugLauncherAnchored.module.css';
-}
-
 .launcherIcon {
   composes: launcherIcon from './ShellDebugLauncherAnchored.module.css';
 }

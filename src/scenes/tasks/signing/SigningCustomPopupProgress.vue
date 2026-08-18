@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { EgIcon, EgMotionProcessing } from '@eds/desktop-components';
+import { useAppI18n } from '@/composables/useAppI18n';
 import type { SigningCustomPopupProgressStep } from './signingCustomPopupProgress.types';
 import styles from './SigningCustomPopupProgress.module.css';
 
 const props = defineProps<{
   steps: SigningCustomPopupProgressStep[];
 }>();
+
+const { ui } = useAppI18n();
 
 type ConnectorVisualState = 'done' | 'animating' | 'pending' | 'failed';
 
@@ -32,7 +35,7 @@ function connectorClass(
 </script>
 
 <template>
-  <section :class="styles.progress" aria-label="Progress">
+  <section :class="styles.progress" :aria-label="ui('Approval Progress')">
     <div :class="styles.stepTrack">
       <template v-for="(step, index) in props.steps" :key="step.key">
         <div

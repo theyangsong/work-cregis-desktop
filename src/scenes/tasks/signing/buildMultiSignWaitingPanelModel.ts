@@ -137,12 +137,12 @@ export function buildMultiSignWaitingPanelModel(
       buildInitiatorSidebarField(detail),
       {
         key: 'sender',
-        labelKey: 'From Address',
+        labelKey: 'Sender',
         value: resolveAddressSideFullLabel(sender, detail.senderSummary),
       },
       {
         key: 'receiver',
-        labelKey: 'To Address',
+        labelKey: 'Receiver',
         value: resolveAddressSideFullLabel(receiver, detail.receiverSummary),
       },
       {

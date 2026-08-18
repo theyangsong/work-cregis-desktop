@@ -64,7 +64,7 @@ function onProcess(group: BatchCurrencyGroup) {
     <div class="networkPickerRows">
       <header class="networkPickerHeader">
         <div class="networkPickerHeaderContent">
-          <p :class="styles.batchSectionTitle">{{ ui('Batch Process') }}</p>
+          <p :class="styles.batchSectionTitle">{{ ui('Batch Processing') }}</p>
         </div>
       </header>
 

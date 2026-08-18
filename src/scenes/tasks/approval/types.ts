@@ -75,6 +75,7 @@ export type ApprovalDetail = {
   initiatorAtDisplay: string;
   approvalNodes: {
     title: string;
+    subtitle?: string;
     statusLabel: string;
     atDisplay?: string;
     members: ApprovalProgressMember[];

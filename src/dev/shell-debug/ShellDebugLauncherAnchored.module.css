@@ -3,6 +3,11 @@
   max-width: 100%;
 }
 
+.triggerMetricsDevActive {
+  position: relative;
+  z-index: 1;
+}
+
 .launcherShell {
   display: inline-flex;
   max-width: 100%;
@@ -42,50 +47,55 @@
   cursor: default;
   font: inherit;
   color: var(--text-base-secondary);
-  composes: motion-ease is-hover is-focus from global;
+  composes: motion-ease is-hover from global;
+}
+
+.launcherButton:focus,
+.launcherButton:focus-visible {
+  outline: none;
 }
 
 .launcherButton:hover {
   background-color: var(--event-hover);
 }
 
-.launcherButton:hover:not(.launcherButtonOpen):not(:focus-visible) .launcherIcon {
+.launcherButton:hover:not(.launcherButtonDevActive) .launcherIcon {
   color: var(--event-hover-base);
 }
 
-.launcherButton:hover:not(.launcherButtonOpen):not(:focus-visible) .launcherIcon :global(.eds-i-s) {
+.launcherButton:hover:not(.launcherButtonDevActive) .launcherIcon :global(.eds-i-s) {
   stroke: var(--event-hover-base);
 }
 
-.launcherButton:hover:not(.launcherButtonOpen):not(:focus-visible) .launcherLabel {
+.launcherButton:hover:not(.launcherButtonDevActive) .launcherLabel {
   color: var(--event-hover-base);
 }
 
-.launcherButtonOpen,
-.launcherButtonOpen:hover,
-.launcherButton:focus-visible,
-.launcherButton:focus-visible:hover {
-  background-color: var(--event-hover);
+.launcherButtonDevActive,
+.launcherButtonDevActive:hover,
+.launcherButtonDevActive:focus,
+.launcherButtonDevActive:focus-visible {
+  background-color: var(--material-brand-quaternary);
 }
 
-.launcherButtonOpen .launcherIcon,
-.launcherButtonOpen:hover .launcherIcon,
-.launcherButton:focus-visible .launcherIcon,
-.launcherButton:focus-visible:hover .launcherIcon {
+.launcherButtonDevActive .launcherIcon,
+.launcherButtonDevActive:hover .launcherIcon,
+.launcherButtonDevActive:focus .launcherIcon,
+.launcherButtonDevActive:focus-visible .launcherIcon {
   color: var(--stroke-base-secondary);
 }
 
-.launcherButtonOpen .launcherIcon :global(.eds-i-s),
-.launcherButtonOpen:hover .launcherIcon :global(.eds-i-s),
-.launcherButton:focus-visible .launcherIcon :global(.eds-i-s),
-.launcherButton:focus-visible:hover .launcherIcon :global(.eds-i-s) {
+.launcherButtonDevActive .launcherIcon :global(.eds-i-s),
+.launcherButtonDevActive:hover .launcherIcon :global(.eds-i-s),
+.launcherButtonDevActive:focus .launcherIcon :global(.eds-i-s),
+.launcherButtonDevActive:focus-visible .launcherIcon :global(.eds-i-s) {
   stroke: var(--stroke-base-secondary);
 }
 
-.launcherButtonOpen .launcherLabel,
-.launcherButtonOpen:hover .launcherLabel,
-.launcherButton:focus-visible .launcherLabel,
-.launcherButton:focus-visible:hover .launcherLabel {
+.launcherButtonDevActive .launcherLabel,
+.launcherButtonDevActive:hover .launcherLabel,
+.launcherButtonDevActive:focus .launcherLabel,
+.launcherButtonDevActive:focus-visible .launcherLabel {
   color: var(--text-base-secondary);
 }
 
@@ -126,9 +136,24 @@
   box-sizing: border-box;
   min-height: 0;
   overflow: hidden;
-  /* DS contentSlot 默认 --spacing-4；壳外 QA 面板收窄为左右/底 --spacing-1 */
-  margin-inline: calc(-1 * (var(--spacing-4) - var(--spacing-1)));
-  margin-bottom: calc(-1 * (var(--spacing-4) - var(--spacing-1)));
+}
+
+:global(.shell-debug-dev-inspect-popover) {
+  margin-inline: 0;
+  margin-bottom: 0;
+  box-sizing: border-box;
+}
+
+:global(.shell-debug-dev-inspect-hint) {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* placement=top 且无 topTool 时 DS contentSlot 顶 padding 为 0；reminder 补回 spacing-3。 */
+:global(.eds-popover:has(.shell-debug-dev-inspect-hint) [class*='contentSlot']) {
+  padding: var(--spacing-3) var(--spacing-4) var(--spacing-4);
 }
 
 .panelMeta {

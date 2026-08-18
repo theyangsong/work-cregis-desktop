@@ -199,6 +199,10 @@ function onDetailClose() {
       show-toolbar
       show-toolbar-nav
       toolbar-divider-pinned
+      :value-copy-label="ui('Copy')"
+      :value-address-book-label="ui('Add to address book')"
+      :value-aml-search-label="ui('AML Search')"
+      :value-browser-label="ui('Block explorer')"
       :toolbar-current="currentIndex"
       :toolbar-total="totalCount"
       :toolbar-prev-disabled="prevDisabled"

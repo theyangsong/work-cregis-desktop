@@ -7,6 +7,7 @@
 
 /* AnchoredPopover 默认 z-index:1000，低于 launcherColumn(10000)，会露出下层胶囊。 */
 :global(body [class*='floating']:has(.shell-debug-popover-content)),
+:global(body [class*='floating']:has(.shell-debug-dev-inspect-hint)),
 :global(body [class*='floating']:has(.shell-debug-model-popover-content)) {
   z-index: 10001;
 }
@@ -28,24 +29,28 @@
 .pickOverlay {
   position: fixed;
   z-index: 9999;
-  border: 2px solid var(--material-brand-primary);
-  background: color-mix(in srgb, var(--material-brand-primary) 12%, transparent);
+  border: 2px solid #6f4dff;
+  background: color-mix(in srgb, #6f4dff 12%, transparent);
   pointer-events: none;
 }
 
 .inspectOverlayRoot {
   position: fixed;
   inset: 0;
-  z-index: 9998;
+  z-index: 10002;
   pointer-events: none;
+}
+
+:global([data-dev-inspect-hover-popover]) {
+  pointer-events: auto;
 }
 
 .inspectHoverBox {
   position: fixed;
   z-index: 9998;
   box-sizing: border-box;
-  border: 1px solid var(--material-brand-primary);
-  background: color-mix(in srgb, var(--material-brand-primary) 10%, transparent);
+  border: 1px solid #6f4dff;
+  background: color-mix(in srgb, #6f4dff 10%, transparent);
   pointer-events: none;
 }
 
@@ -53,8 +58,8 @@
   position: fixed;
   z-index: 9997;
   box-sizing: border-box;
-  border: 2px solid color-mix(in srgb, var(--status-warning) 80%, var(--material-brand-primary));
-  background: color-mix(in srgb, var(--status-warning) 8%, transparent);
+  border: 2px solid #ff308d;
+  background: color-mix(in srgb, #ff308d 8%, transparent);
   pointer-events: none;
 }
 

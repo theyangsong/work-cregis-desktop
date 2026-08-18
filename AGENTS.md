@@ -12,7 +12,7 @@
 5. **组件样式** dev/build 走 eds-desktop **源码**（见 `vite.config.ts` alias），不要 `@import '@eds/desktop-components/style.css'`（dist 快照会过期）。
 6. **`pnpm sync` / 说「同步 eds-desktop」** 只更新 Desktop packages，与 showcase / Website 无关。
 7. **禁止复制**：所有业务页面（含后续新增）不得向用户提供复制能力；`installPageCopyGuard()` 拦截 `copy`/`cut`；`.app-preview` 与 teleport 到 `body` 的 `eds-tooltip-v-*` / `.eds-flotation-menu` 全局 `user-select: none`（`global.css`）。不得新增复制按钮、clipboard API、DS 复制 Menu。
-8. **开发改动须 dev 实时生效**：UI/样式/交互改 `src/**` 或引用库时，须在 `pnpm dev` 下保存即 HMR/full-reload 可见；禁止只 `pnpm build` 不 dev。详见 `.cursor/rules/work.mdc` §2.3.2。
+8. **开发改动须 dev 实时生效**：UI/样式/交互改 `src/**` 或引用库时，须在 `pnpm dev` 下保存即 HMR/full-reload 可见；禁止只 `pnpm build` 不 dev。详见 `.cursor/rules/work.mdc` §2.3。
 
 ## 对齐引用库（硬约束）
 
@@ -64,17 +64,17 @@
 | 挂载位置 | Popup host（如 `AppPopupOverlayHost`）放在 **客户端 shell**，与 `EgContainer` 同级 |
 | 禁止 | 挂在列表页、ModuleMenu 内容区等业务 subtree 内（遮罩会被限制在主内容区） |
 | reminder / verify | `EgPopup` 须 `v-if="open"` 或 shell host 在关闭时卸载，避免空遮罩 |
-| detail 关闭 | `EgDetail @close` → **仅** `popupOpen=false`；`emit('update:open', false)` 与数据清理在 EgPopup `@close` / `onClosed`（`.motion-layout` 出场后）。关闭钮与点遮罩须同链（`work.mdc` §7.1.1） |
+| detail 关闭 | `EgDetail @close` → **仅** `popupOpen=false`；`emit('update:open', false)` 与数据清理在 EgPopup `@close` / `onClosed`（`.motion-layout` 出场后）。关闭钮与点遮罩须同链（`work.mdc` §7.1） |
 
 权威说明：`../eds-desktop/.cursor/rules/eds-project.mdc` §7 EgPopup。
 
 ## 数字千分位（硬约束）
 
-展示态数字须千分位分组；用 `formatGroupedNumber`（`@eds/desktop-components`）或 `src/utils/formatGroupedDisplay.ts`（金额、复合文案、阈值、矿工费）。**不**格式化：输入态、倒计时 `MM:SS`、ID 编号（如 `SIG-*`）。详案：`.cursor/rules/work.mdc` §6.4。
+展示态数字须千分位分组；用 `formatGroupedNumber`（`@eds/desktop-components`）或 `src/utils/formatGroupedDisplay.ts`（金额、复合文案、阈值、矿工费）。**不**格式化：输入态、倒计时 `MM:SS`、ID 编号（如 `SIG-*`）。详案：`.cursor/rules/work.mdc` §6.2。
 
 ## 网络名称（硬约束）
 
-链 Tag / 展示文案只写 **链全名**；币种只出现在金额列。禁止 `BSC`、`USDT-Ethereum`、`BTC-Bitcoin` 等缩写或拼接。批处理分组保留 **Ethereum Mainnet**、**The Open Network**、**Tron**、**Bitcoin**。详案：`.cursor/rules/work.mdc` §6.6。
+链 Tag / 展示文案只写 **链全名**；币种只出现在金额列。禁止 `BSC`、`USDT-Ethereum`、`BTC-Bitcoin` 等缩写或拼接。批处理分组保留 **Ethereum Mainnet**、**The Open Network**、**Tron**、**Bitcoin**。详案：`.cursor/rules/work.mdc` §6.4。
 
 ## EgDetail · Apply_Item（硬约束）
 
@@ -84,22 +84,29 @@
 - **映射参考**：`src/scenes/tasks/approval/buildApprovalDetailSections.ts`
 - **详案**：`../eds-desktop/packages/components/docs/detail-apply-item.md` · 约定 `eds-project.mdc` §7
 
-## Top & Bottom Mask — 滚动顶底毛玻璃（硬约束 · 强推）
-
-固定高度面板内内容溢出滚动时，顶/底栏毛玻璃 **禁止手搓**。
+## Top & Bottom Mask — 滚动顶底毛玻璃（硬约束）
 
 | 场景 | 必须 |
 |------|------|
-| Layout Skid 滑层 | `<EgLayout #skid>` + `<EgSkid>` slot；禁止外包 fixed 顶栏 |
+| Layout Skid 滑层 | `<EgLayout #skid>` + `<EgSkid>` slot |
 | Popup / Flotation 自定义列表壳 | `useScrollChromeScrim` + `var(--effect-mask)` + `var(--eds-blur-bg)` |
-| 改 mask 不透明度 | 回 **eds-desktop** 改 `effect-mask` token，再同步 |
+| 改 mask 不透明度 | eds-desktop 改 `effect-mask` token，再同步 |
 
-- **详案**：`.cursor/rules/top&botton-mask.mdc`（`alwaysApply: true`）
-- **DS 真源**：`../eds-desktop/.cursor/rules/top&botton-mask.mdc`
-- **示例**：`SigningBatchNetworkPickerMenu.vue`、`SigningBatchPopupSlotChrome.vue`
-- **验收**：eds-desktop `/components/skid` 长文本溢出滚动
+详案：`.cursor/rules/work.mdc` §6.3。DS 真源：`../eds-desktop/.cursor/rules/top&botton-mask.mdc`。
 
-**注意**：顶部未滚动时顶栏为实色；下滚后才出现毛玻璃——与 DS 一致，不是缺陷。
+**注意**：顶部未滚动时顶栏为实色；下滚后才 scrim——与 DS 一致。
+
+## UI 文案 i18n（硬约束）
+
+详案：`.cursor/rules/work.mdc` §5。
+
+1. **以 `uiTextZhCN.ts` 简体中文为基准**；英文 / 繁体仅来自产品 Excel + `collaborationLocaleOverrides.ts`，禁止自行翻译。
+2. **表外 key**（不在 `I18N_DOC_ALIGNED_KEYS`）→ **en / zh-TW / zh-CN 均显示 catalog 简体中文**。
+3. **所有 UI 文案**须 `useAppI18n().ui()` / `translateUiText()`。
+4. **字段值不翻译**：Detail/List **value**、人名、地址、金额、编号等 **禁止** `ui()`。
+5. **英文大小写**：标签 Title Case；段落 Sentence case；`I18N_DOC_EN_LABELS` 专业词原样。
+
+同步：`python3 scripts/sync-i18n-from-excel.py`（不改 `uiTextZhCN.ts`）。
 
 ## 为何 Showcase 看起来对、这里却错？
 
@@ -109,6 +116,5 @@ Showcase 外层是 **Website token 壳**，部分未在 Desktop spec 定义的�
 ## 更多细节
 
 - `README.md` — 集成与脚本
-- `.cursor/rules/work.mdc` — 业务集成规范（Popup 动效 §7.1.1、数字 §6.4、**网络名称 §6.6**、**Top & Bottom Mask §6.5**）
-- `.cursor/rules/top&botton-mask.mdc` — **滚动顶底毛玻璃强推**（`alwaysApply`）
+- `.cursor/rules/work.mdc` — **唯一业务规范**（`alwaysApply`；含 i18n §5、顶底毛玻璃 §6.3、Popup §7.1、批处理 §7.2 等）
 - `.cursor/rules/eds-project.mdc` — 完整 EDS 约定（在 eds-desktop 仓库）

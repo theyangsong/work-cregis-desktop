@@ -1,5 +1,6 @@
 /** Tasks Data List 页面数据 — 对齐 eds-desktop Showcase DataListPagePreview。 */
 
+import type { AppLocale } from '@/composables/useAppLocale';
 import { buildStatusRowValues } from './list-field/tasksListFieldStatusRowData';
 
 /** 接收方列 min-width（含 cell 左右 padding）。 */
@@ -32,9 +33,9 @@ export const RECORDS_AMOUNT_DATA_LIST_COLUMN_MIN_WIDTH = '220px';
 /** 尾列操作列 min-width（含 cell 左右 padding）。 */
 export const ACTION_DATA_LIST_COLUMN_MIN_WIDTH = '120px';
 
-/** ListFieldAction 主按钮 i18n key（英文展示 Approval；侧栏菜单项 Approval 仍为待审批）。 */
-export const DATA_LIST_PRIMARY_ACTION_LABEL = 'Approval action';
-export const DATA_LIST_PRIMARY_ACTION_LABEL_EN = 'Approval';
+/** ListFieldAction 主按钮 i18n key（待审批 / 待签名操作列统一为「处理」）。 */
+export const DATA_LIST_PRIMARY_ACTION_LABEL = 'Process';
+export const DATA_LIST_PRIMARY_ACTION_LABEL_EN = 'Process';
 
 export const DATA_LIST_APPROVAL_ROW_COUNT = 68;
 export const DATA_LIST_SIGNING_ROW_COUNT = 128;
@@ -57,7 +58,7 @@ export const DATA_LIST_FIGMA_TOOLBAR = {
 export const DATA_LIST_FIGMA_PAGINER = {
   dataVolumeCount: '68',
   dataVolumeTotal: 'Total',
-  dataVolumeResults: 'Results',
+  dataVolumeResults: 'Items',
   showStatistics: false,
   statisticsCount: 2,
   statText: 'Item',
@@ -67,7 +68,7 @@ export const DATA_LIST_FIGMA_PAGINER = {
 export const DATA_LIST_FIGMA_COLUMNS = {
   combo: {
     label: 'Token',
-    secondaryLabel: 'To Address',
+    secondaryLabel: 'Receiver',
     minWidth: '168px',
   },
   sortable: {
@@ -83,7 +84,7 @@ export const DATA_LIST_FIGMA_COLUMNS = {
   },
   amount: {
     label: 'Amount',
-    secondaryLabel: 'Application Time',
+    secondaryLabel: 'Created Time',
     minWidth: '200px',
     align: 'left' as const,
   },
@@ -153,6 +154,24 @@ export const TASKS_MODULE_MENU_ITEMS_WITH_DATA_LIST = [
 
 export type TasksDataListMenuItemLabel = (typeof TASKS_MODULE_MENU_ITEMS_WITH_DATA_LIST)[number];
 
+/** 模块菜单展示 key：路由仍用 `Approval`，中文展示对齐 `Pending Approval` → 待审批。 */
+export const TASKS_MODULE_MENU_DISPLAY_LABEL: Partial<
+  Record<TasksDataListMenuItemLabel, string>
+> = {
+  Approval: 'Pending Approval',
+};
+
+export function resolveTasksModuleMenuDisplayLabel(
+  menuItem: string | undefined,
+  locale: AppLocale = 'en',
+): string {
+  if (!menuItem) return menuItem ?? '';
+  if (locale === 'en') return menuItem;
+  return (
+    TASKS_MODULE_MENU_DISPLAY_LABEL[menuItem as TasksDataListMenuItemLabel] ?? menuItem
+  );
+}
+
 export const DEFAULT_TASKS_DATA_LIST_MENU_ITEM: TasksDataListMenuItemLabel = 'Approval';
 
 export function tasksDataListDefaultRowCount(menuItem: string | undefined): number {
@@ -176,7 +195,7 @@ export function tasksDataListShowsActionColumn(menuItem: string | undefined): bo
 }
 
 /** 我发起的 · 待审批行操作列主按钮文案。 */
-export const SENT_REQUEST_WITHDRAW_ACTION_LABEL = 'Withdraw request';
+export const SENT_REQUEST_WITHDRAW_ACTION_LABEL = 'Withdraw Application';
 
 /** 我发起的 · 「待审批」「待签名」行展示撤回申请。 */
 const SENT_REQUEST_WITHDRAWABLE_STATUS_LABELS = new Set([
@@ -395,7 +414,7 @@ export function tasksDataListAmountColumnAlign(
 export function tasksDataListStatusColumnLabel(menuItem: string | undefined): string {
   if (menuItem === 'Signed') return 'Signing Results';
   if (menuItem === 'All Records' || menuItem === 'Sent Request') return 'Approval Progress';
-  return 'Approval Results';
+  return 'Approval results';
 }
 
 /** 记录类模块第二列 min-width（Initiator | Created Time）。 */
@@ -415,9 +434,8 @@ export function tasksDataListAmountColumnMinWidth(menuItem: string | undefined):
   return AMOUNT_DATA_LIST_COLUMN_MIN_WIDTH;
 }
 
-/** Action 列主按钮文案：随 Tasks 侧栏菜单项切换。 */
-export function tasksDataListPrimaryActionLabel(menuItem: string | undefined): string {
-  if (menuItem === 'Signing') return 'Sign';
+/** Action 列主按钮文案：待审批 / 待签名统一为「处理」。 */
+export function tasksDataListPrimaryActionLabel(_menuItem: string | undefined): string {
   return DATA_LIST_PRIMARY_ACTION_LABEL;
 }
 
@@ -428,7 +446,7 @@ function defaultDataListColumnLabelForSource(dataSource: DataListColumnDataSourc
     case 'amount':
       return DATA_LIST_FIGMA_COLUMNS.amount.label;
     case 'receiver':
-      return 'To Address';
+      return 'Receiver';
     case 'currency':
       return DATA_LIST_FIGMA_COLUMNS.combo.label;
     case 'business-type':
@@ -570,9 +588,9 @@ export function migrateDataListColumnSettings(state: Record<string, unknown>): b
 
   const secondaryLabel1 = String(state.columnSecondaryLabel1 ?? '');
   const secondaryLabel2 = String(state.columnSecondaryLabel2 ?? '');
-  if (secondaryLabel1 === 'Application Time' && secondaryLabel2 === 'Type of Business') {
+  if (secondaryLabel1 === 'Created Time' && secondaryLabel2 === 'Type of Business') {
     state.columnSecondaryLabel1 = 'Operation Type';
-    state.columnSecondaryLabel2 = 'Application Time';
+    state.columnSecondaryLabel2 = 'Created Time';
     state.columnSecondarySortable1 = false;
     state.columnSecondarySortable2 = true;
     return true;
@@ -645,7 +663,7 @@ export const tasksDataListCustomizeDefaults = {
   stat1Number: '0',
   stat2Text: 'Item',
   stat2Number: '0',
-  ...iconButtonProItemDefaults('batch', { label: 'Batch', icon: 'eds-batch' }),
+  ...iconButtonProItemDefaults('batch', { label: 'Batch Processing', icon: 'eds-batch' }),
   ...iconButtonProItemDefaults('filter', { label: 'Filter', icon: 'eds-filter' }),
   ...iconButtonProItemDefaults('refresh', { label: 'Refresh', icon: 'eds-arrow-refresh' }),
   ...iconButtonProItemDefaults('export', { label: 'Export', icon: 'eds-arrow-download' }),

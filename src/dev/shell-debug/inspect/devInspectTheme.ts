@@ -1,0 +1,2 @@
+export const DEV_INSPECT_HOVER_ACCENT = '#6F4DFF';
+export const DEV_INSPECT_PINNED_ACCENT = '#FF308D';

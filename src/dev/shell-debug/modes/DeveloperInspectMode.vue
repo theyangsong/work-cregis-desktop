@@ -21,8 +21,10 @@ function stopInspect() {
     <p :class="$style.status">
       {{
         developerInspectActive
-          ? 'Hover to preview · click to pin. App navigation is blocked while Dev is open.'
-          : 'Highlight off — app navigation still blocked until you close Dev.'
+          ? pinnedInfo
+            ? '已选中 · 悬停其他元素可测间距 · 点击空白关闭'
+            : '悬停查看布局 · 点击元素选中 · 点击空白关闭'
+          : '高亮已暂停 · 关闭 Dev 前仍拦截业务导航'
       }}
     </p>
 

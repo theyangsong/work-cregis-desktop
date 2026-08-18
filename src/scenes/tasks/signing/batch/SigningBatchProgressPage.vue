@@ -38,7 +38,7 @@ const statusLabelKey = computed(() => {
   if (props.task.status === 'running') return 'Signing in progress';
   if (props.task.status === 'ended') return 'Batch completed';
   if (props.task.status === 'stopped') return 'Stopped';
-  return 'Abnormally stopped';
+  return 'Abnormally Stopped';
 });
 
 const elapsedTime = computed(() =>

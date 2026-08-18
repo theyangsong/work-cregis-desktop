@@ -37,7 +37,7 @@ export function buildDetailTransactionStatusItem(
   return {
     ...createDetailApplyItemRow('status', {
       key: 'transaction-status',
-      title: translate('Transaction status'),
+      title: translate('Transaction Status'),
       tag: translate(detail.transactionStatusLabel),
     }),
     tagFamily: 'status',

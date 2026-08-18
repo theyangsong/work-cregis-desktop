@@ -35,8 +35,8 @@ const props = withDefaults(
     confirmTone?: ButtonTone;
   }>(),
   {
-    placeholderKey: 'Please enter',
-    feedbackKey: 'Optional, Max. 256 characters',
+    placeholderKey: 'Please Enter',
+    feedbackKey: 'Optional, up to 256 characters.',
     requireMinerFee: false,
     hideInlineConfirm: false,
     resetRemarkOnMount: true,
@@ -235,7 +235,7 @@ defineExpose({
     :hide-confirm="hideInlineConfirm"
     :label="ui('Remark')"
     :placeholder="ui(placeholderKey)"
-    :feedback-text="ui(feedbackKey)"
+    :feedback-text="feedbackKey"
     :confirm-label="ui('Confirm')"
     :confirm-tone="confirmTone"
     hide-label
