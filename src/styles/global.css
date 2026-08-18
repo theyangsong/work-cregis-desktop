@@ -330,19 +330,12 @@ body > [id^='eds-tooltip-v-'] > div:first-child:has(> :not([class*='floatingInne
 /*
  * Nav Bar / Module Menu 线稿 icon：生产构建须显式锁定 token 描边宽，
  * 避免 SVG stroke-width 随缩放变细（GitHub Pages 与本地 dev 一致）。
+ * 使用 stroke-xl（2px），比 SVG 源文件 1.4px / --stroke-lg 更粗，对齐设计稿观感。
  * 注意：global.css 是普通样式表，不可使用 CSS Modules 的 :global()。
  */
-.app-shell-container
-  .eds-nav-bar
-  :is(
-    [class*='moduleIconGlyph'],
-    [class*='moduleRowIcon'],
-    [class*='bottomIconGlyph']
-  ):not([class*='moduleIconGlyphAppEntry'])
-  .eds-i-s,
-.app-shell-container .eds-module-menu [class*='itemIcon'] .eds-i-s,
-.app-shell-container .eds-module-menu [class*='itemTrailing'] .eds-i-s {
+.app-shell-container .eds-nav-bar .eds-icon .eds-i-s,
+.app-shell-container .eds-module-menu .eds-icon .eds-i-s {
   stroke: currentColor;
-  stroke-width: var(--stroke-lg);
+  stroke-width: var(--stroke-xl);
   vector-effect: non-scaling-stroke;
 }

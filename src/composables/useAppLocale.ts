@@ -3,9 +3,9 @@ import { onMounted, ref, type Ref } from 'vue';
 export type AppLocale = 'zh-CN' | 'zh-TW' | 'en';
 
 /** 账户设置 Preference 持久化；Shell Debug 切换不写 storage。 */
-const LOCALE_USER_PREF_KEY = 'cregis-locale-user-pref';
-/** @deprecated Shell Debug 曾误写入此 key；仅迁移 zh 偏好，忽略 en。 */
-const LEGACY_LOCALE_STORAGE_KEY = 'cregis-locale-pref';
+const LOCALE_USER_PREF_KEY = 'cregis-locale-user-pref-v2';
+/** @deprecated Shell Debug / 旧版 Preference 写入；启动时清除，默认简体。 */
+const DEPRECATED_LOCALE_KEYS = ['cregis-locale-pref', 'cregis-locale-user-pref'] as const;
 
 export const APP_LOCALE_OPTIONS = [
   { value: 'zh-CN', label: '简体中文' },
@@ -35,14 +35,8 @@ function readStoredLocale(): AppLocale {
   const userPref = localStorage.getItem(LOCALE_USER_PREF_KEY);
   if (userPref === 'zh-CN' || userPref === 'zh-TW' || userPref === 'en') return userPref;
 
-  const legacy = localStorage.getItem(LEGACY_LOCALE_STORAGE_KEY);
-  if (legacy === 'zh-CN' || legacy === 'zh-TW') {
-    localStorage.setItem(LOCALE_USER_PREF_KEY, legacy);
-    localStorage.removeItem(LEGACY_LOCALE_STORAGE_KEY);
-    return legacy;
-  }
-  if (legacy === 'en') {
-    localStorage.removeItem(LEGACY_LOCALE_STORAGE_KEY);
+  for (const key of DEPRECATED_LOCALE_KEYS) {
+    localStorage.removeItem(key);
   }
 
   return 'zh-CN';
@@ -57,7 +51,9 @@ export function applyAppLocale(
   target.lang = next;
   if (options?.persist) {
     localStorage.setItem(LOCALE_USER_PREF_KEY, next);
-    localStorage.removeItem(LEGACY_LOCALE_STORAGE_KEY);
+    for (const key of DEPRECATED_LOCALE_KEYS) {
+      localStorage.removeItem(key);
+    }
   }
 }
 
