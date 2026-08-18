@@ -39,6 +39,7 @@ import {
   tasksDataListDefaultRowCount,
   dataListColumnSettingDefaults,
   migrateDataListColumnSettings,
+  syncSentRequestDataListColumnSettings,
   DATA_LIST_PRIMARY_ACTION_LABEL,
   DATA_LIST_PRIMARY_ACTION_LABEL_EN,
   tasksDataListPrimaryActionLabel,
@@ -125,10 +126,15 @@ const customize = reactive({
   dataVolume: String(tasksDataListDefaultRowCount(props.toolbarTitle)),
 }) as TasksDataListCustomizeState;
 
+const dataListRemountKey = ref(0);
+
 /** HMR / 旧会话：补齐列配置并重排为发起方｜业务类型 → 金额｜申请时间 → 接收方 → 发送方。 */
 onMounted(() => {
   migrateDataListColumnSettings(customize);
   Object.assign(customize, dataListColumnSettingDefaults());
+  if (props.toolbarTitle === 'Sent Request') {
+    syncSentRequestDataListColumnSettings(customize);
+  }
   for (const [key, value] of Object.entries(tasksDataListCustomizeDefaults)) {
     if (customize[key as keyof TasksDataListCustomizeState] === undefined) {
       (customize as Record<string, unknown>)[key] = value;
@@ -143,6 +149,10 @@ watch(
     customize.showBatch = tasksDataListShowsBatch(title);
     activeSort.value = null;
     migrateDataListColumnSettings(customize);
+    if (title === 'Sent Request') {
+      syncSentRequestDataListColumnSettings(customize);
+      dataListRemountKey.value += 1;
+    }
   },
   { immediate: true },
 );
@@ -222,6 +232,7 @@ const amountColumnMinWidth = computed(() =>
 
 const isApprovalMenu = computed(() => props.toolbarTitle === 'Approval');
 const isSigningMenu = computed(() => props.toolbarTitle === 'Signing');
+const isSentRequestMenu = computed(() => props.toolbarTitle === 'Sent Request');
 const isRecordMenu = computed(() => {
   const title = props.toolbarTitle;
   return (
@@ -248,7 +259,6 @@ function requestOpenDataListSelectMode() {
 }
 
 /** 批处理成功退出时 remount，避免勾选列退出动画与 Refresh 叠加。 */
-const dataListRemountKey = ref(0);
 
 const listToastText = ref('');
 const listToastType = ref<'result' | 'danger'>('result');
@@ -888,7 +898,7 @@ const displayBatchActions = computed(() => {
         />
         <EgDataList
           ref="dataListRef"
-          :key="dataListRemountKey"
+          :key="`tasks-datalist-${dataListRemountKey}`"
           v-model:select-mode="customize.selectMode"
           :data-list="displayDataList"
           :header-height="DATA_LIST_FIGMA_HEADER_HEIGHT"
@@ -1051,9 +1061,41 @@ const displayBatchActions = computed(() => {
             </template>
           </EgDataListColumn>
 
+          <!-- Sent Request 第 2 列：业务类型（金额 → 业务类型 → 接收方 → 发送方 → 审批进度）。 -->
+          <EgDataListColumn
+            v-if="showCreatedTimeColumn"
+            prop="operationType"
+            :label="ui('Operation Type')"
+            :min-width="createdTimeColumnMinWidth"
+            align="left"
+            :sortable="false"
+            :display-order="createdTimeColumnDisplayOrder"
+          >
+            <template #header>
+              <div :class="pageStyles.comboHeaderSegment">
+                <div :class="pageStyles.comboHeaderSegmentTextWrap">
+                  <EgDataListCellOverflow
+                    :content-class="pageStyles.comboHeaderSegmentText"
+                    context="header"
+                  >
+                    {{ ui('Operation Type') }}
+                  </EgDataListCellOverflow>
+                </div>
+              </div>
+            </template>
+            <template #default="{ data }">
+              <TasksDataListColumnCell
+                data-source="operation-type"
+                :column-min-width="createdTimeColumnMinWidth"
+                :menu-item="toolbarTitle"
+                :row-index="Number(data.id)"
+              />
+            </template>
+          </EgDataListColumn>
+
           <EgDataListColumn
             prop="receiver"
-            :label="ui(previewColumnSettings[2].label)"
+            :label="isSentRequestMenu ? ui('Receiver') : ui(previewColumnSettings[2].label)"
             :min-width="receiverColumnMinWidth"
             :width="receiverColumnWidth"
             :align="receiverColumnAlign"
@@ -1062,7 +1104,7 @@ const displayBatchActions = computed(() => {
           >
             <template #default="{ data }">
               <TasksDataListColumnCell
-                :data-source="previewColumnSettings[2].dataSource"
+                data-source="receiver"
                 :column-min-width="receiverColumnMinWidth"
                 :column-align="receiverColumnAlign"
                 :menu-item="toolbarTitle"
@@ -1073,7 +1115,7 @@ const displayBatchActions = computed(() => {
 
           <EgDataListColumn
             prop="businessType"
-            :label="ui(previewColumnSettings[3].label)"
+            :label="isSentRequestMenu ? ui('Sender') : ui(previewColumnSettings[3].label)"
             :min-width="businessTypeColumnMinWidth"
             :width="businessTypeColumnWidth"
             :align="businessTypeColumnAlign"
@@ -1113,41 +1155,9 @@ const displayBatchActions = computed(() => {
             </template>
             <template #default="{ data }">
               <TasksDataListColumnCell
-                :data-source="previewColumnSettings[3].dataSource"
+                :data-source="isSentRequestMenu ? 'business-type' : previewColumnSettings[3].dataSource"
                 :column-min-width="businessTypeColumnMinWidth"
                 :column-align="businessTypeColumnAlign"
-                :menu-item="toolbarTitle"
-                :row-index="Number(data.id)"
-              />
-            </template>
-          </EgDataListColumn>
-
-          <!-- Sent Request：业务类型列须在接收方/发送方之后（与 display-order 一致，避免窄屏错列）。 -->
-          <EgDataListColumn
-            v-if="showCreatedTimeColumn"
-            prop="operationType"
-            :label="ui('Operation Type')"
-            :min-width="createdTimeColumnMinWidth"
-            align="left"
-            :sortable="false"
-            :display-order="createdTimeColumnDisplayOrder"
-          >
-            <template #header>
-              <div :class="pageStyles.comboHeaderSegment">
-                <div :class="pageStyles.comboHeaderSegmentTextWrap">
-                  <EgDataListCellOverflow
-                    :content-class="pageStyles.comboHeaderSegmentText"
-                    context="header"
-                  >
-                    {{ ui('Operation Type') }}
-                  </EgDataListCellOverflow>
-                </div>
-              </div>
-            </template>
-            <template #default="{ data }">
-              <TasksDataListColumnCell
-                data-source="general-structure"
-                :column-min-width="createdTimeColumnMinWidth"
                 :menu-item="toolbarTitle"
                 :row-index="Number(data.id)"
               />

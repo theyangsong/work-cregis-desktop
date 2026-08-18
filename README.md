@@ -21,7 +21,7 @@ pnpm install
 pnpm dev
 ```
 
-打开 http://localhost:5178/
+打开 http://localhost:4173/
 
 首次 `dev` / `build` 会自动构建 `eds-desktop` 的 tokens 与 components。
 

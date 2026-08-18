@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import TasksListFieldAmount from './TasksListFieldAmount.vue';
 import TasksListFieldGeneralStructure from './TasksListFieldGeneralStructure.vue';
+import TasksListFieldOperationType from './TasksListFieldOperationType.vue';
 import TasksListFieldReceiver from './TasksListFieldReceiver.vue';
 import TasksListFieldSender from './TasksListFieldSender.vue';
 import TasksListFieldStatus from './TasksListFieldStatus.vue';
@@ -9,6 +10,7 @@ import TasksListFieldTime from './TasksListFieldTime.vue';
 import { buildTasksListFieldAmountCustomize } from './tasksListFieldAmountDefaults';
 import { buildTasksListFieldBusinessTypeCustomize } from './tasksListFieldBusinessTypeDefaults';
 import { buildTasksListFieldGeneralStructureCustomize } from './tasksListFieldGeneralStructureDefaults';
+import { buildTasksListFieldOperationTypeCustomize } from './tasksListFieldOperationTypeDefaults';
 import { buildTasksListFieldReceiverCustomize } from './tasksListFieldReceiverDefaults';
 import { buildTasksListFieldStatusCustomize } from './tasksListFieldStatusDefaults';
 import { buildTasksListFieldTimeCustomize } from './tasksListFieldTimeDefaults';
@@ -21,6 +23,7 @@ const props = withDefaults(
       | 'placeholder'
       | 'currency'
       | 'general-structure'
+      | 'operation-type'
       | 'business-type'
       | 'status'
       | 'amount'
@@ -59,6 +62,13 @@ const listFieldCustomize = computed(() => {
       props.rowIndex,
       props.menuItem,
       locale.value,
+    );
+  }
+  if (resolvedDataSource.value === 'operation-type') {
+    return buildTasksListFieldOperationTypeCustomize(
+      props.columnMinWidth,
+      props.rowIndex,
+      props.menuItem,
     );
   }
   if (resolvedDataSource.value === 'business-type') {
@@ -103,6 +113,12 @@ const listFieldCustomize = computed(() => {
   </div>
   <div v-else-if="resolvedDataSource === 'general-structure' && listFieldCustomize" :class="styles.listFieldCell">
     <TasksListFieldGeneralStructure :customize="listFieldCustomize" />
+  </div>
+  <div
+    v-else-if="resolvedDataSource === 'operation-type' && listFieldCustomize"
+    :class="styles.listFieldCell"
+  >
+    <TasksListFieldOperationType :customize="listFieldCustomize" />
   </div>
   <div
     v-else-if="resolvedDataSource === 'business-type' && listFieldCustomize"

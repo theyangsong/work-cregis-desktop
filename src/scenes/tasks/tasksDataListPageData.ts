@@ -108,6 +108,7 @@ export type DataListColumnDataSource =
   | 'placeholder'
   | 'currency'
   | 'general-structure'
+  | 'operation-type'
   | 'business-type'
   | 'status'
   | 'amount'
@@ -246,9 +247,9 @@ export const SENT_REQUEST_STATUS_DATA_LIST_COLUMN_MIN_WIDTH = '150px';
 
 /** Sent Request 响应式列优先级（display-order 越大越先隐藏；Action 须最大以钉住尾列）。 */
 export const SENT_REQUEST_AMOUNT_DATA_LIST_COLUMN_DISPLAY_ORDER = 1;
-export const SENT_REQUEST_RECEIVER_DATA_LIST_COLUMN_DISPLAY_ORDER = 2;
-export const SENT_REQUEST_SENDER_DATA_LIST_COLUMN_DISPLAY_ORDER = 3;
-export const SENT_REQUEST_CREATED_TIME_DATA_LIST_COLUMN_DISPLAY_ORDER = 7;
+export const SENT_REQUEST_CREATED_TIME_DATA_LIST_COLUMN_DISPLAY_ORDER = 2;
+export const SENT_REQUEST_RECEIVER_DATA_LIST_COLUMN_DISPLAY_ORDER = 3;
+export const SENT_REQUEST_SENDER_DATA_LIST_COLUMN_DISPLAY_ORDER = 4;
 export const SENT_REQUEST_STATUS_DATA_LIST_COLUMN_DISPLAY_ORDER = 8;
 export const SENT_REQUEST_ACTION_DATA_LIST_COLUMN_DISPLAY_ORDER = 10;
 
@@ -364,7 +365,7 @@ export function tasksDataListActionColumnDisplayOrder(
   return undefined;
 }
 
-/** Sent Request 第二列：操作类型（独立列，非 Initiator | Operation Type 组合）。 */
+/** Sent Request 第二列：业务类型（独立列，位于金额之后、接收方之前）。 */
 export function tasksDataListShowsCreatedTimeColumn(menuItem: string | undefined): boolean {
   return menuItem === 'Sent Request';
 }
@@ -571,6 +572,40 @@ function swapDataListColumnSettings(
   }
 }
 
+/** 我发起的：强制 preview 列 2–4 为金额 / 接收方 / 发送方（业务类型、审批进度为独立列）。 */
+export function syncSentRequestDataListColumnSettings(state: Record<string, unknown>): void {
+  for (let index = 2; index <= 4; index += 1) {
+    const expectedSource = defaultDataListColumnDataSource(index);
+    state[`columnDataSource${index}`] = expectedSource;
+    state[`columnLabel${index}`] = defaultDataListColumnLabelForSource(expectedSource);
+    state[`columnMinWidth${index}`] = defaultDataListColumnMinWidthForSource(expectedSource);
+    state[`columnAlign${index}`] = defaultDataListColumnAlign(index);
+  }
+}
+
+/** 我发起的：HMR / 旧会话若把 preview 列误设为 status 或 Operation Type 表头，恢复接收方/发送方。 */
+export function repairSentRequestPreviewColumnSettings(state: Record<string, unknown>): boolean {
+  let repaired = false;
+
+  for (let index = 2; index <= 4; index += 1) {
+    const dataSourceRaw = String(state[`columnDataSource${index}`] ?? '');
+    const labelRaw = String(state[`columnLabel${index}`] ?? '');
+    const corrupted =
+      dataSourceRaw === 'status'
+      || dataSourceRaw === 'operation-type'
+      || labelRaw === 'Operation Type';
+    if (!corrupted) continue;
+
+    const expectedSource = defaultDataListColumnDataSource(index);
+    state[`columnDataSource${index}`] = expectedSource;
+    state[`columnLabel${index}`] = defaultDataListColumnLabelForSource(expectedSource);
+    state[`columnMinWidth${index}`] = defaultDataListColumnMinWidthForSource(expectedSource);
+    repaired = true;
+  }
+
+  return repaired;
+}
+
 export function migrateDataListColumnSettings(state: Record<string, unknown>): boolean {
   const firstSource = String(state.columnDataSource1 ?? '');
   const col3Source = String(state.columnDataSource3 ?? '');
@@ -583,6 +618,10 @@ export function migrateDataListColumnSettings(state: Record<string, unknown>): b
 
   if (col3Source === 'business-type' && col4Source === 'receiver') {
     swapDataListColumnSettings(state, 3, 4);
+    return true;
+  }
+
+  if (repairSentRequestPreviewColumnSettings(state)) {
     return true;
   }
 
@@ -688,15 +727,19 @@ export function readDataListColumnSettings(
         ? 'currency'
         : dataSourceRaw === 'general-structure'
           ? 'general-structure'
-          : dataSourceRaw === 'business-type'
-            ? 'business-type'
-            : dataSourceRaw === 'amount'
-              ? 'amount'
-              : dataSourceRaw === 'receiver'
-                ? 'receiver'
-                : dataSourceRaw === 'action'
-                ? 'action'
-                : 'placeholder';
+          : dataSourceRaw === 'operation-type'
+            ? 'operation-type'
+            : dataSourceRaw === 'business-type'
+              ? 'business-type'
+              : dataSourceRaw === 'status'
+                ? 'status'
+                : dataSourceRaw === 'amount'
+                  ? 'amount'
+                  : dataSourceRaw === 'receiver'
+                    ? 'receiver'
+                    : dataSourceRaw === 'action'
+                      ? 'action'
+                      : 'placeholder';
     const labelRaw = String(
       state[`columnLabel${index}`] ?? defaultDataListColumnLabelForSource(dataSource),
     ).trim();

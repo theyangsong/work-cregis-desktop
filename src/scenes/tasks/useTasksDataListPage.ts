@@ -63,15 +63,19 @@ export function useTasksDataListPage(
           ? 'currency'
           : source === 'general-structure'
             ? 'general-structure'
-            : source === 'business-type'
-              ? 'business-type'
-              : source === 'amount'
-                ? 'amount'
-                : source === 'receiver'
-                  ? 'receiver'
-                  : source === 'action'
-                  ? 'action'
-                  : 'placeholder';
+            : source === 'operation-type'
+              ? 'operation-type'
+              : source === 'business-type'
+                ? 'business-type'
+                : source === 'status'
+                  ? 'status'
+                  : source === 'amount'
+                    ? 'amount'
+                    : source === 'receiver'
+                      ? 'receiver'
+                      : source === 'action'
+                        ? 'action'
+                        : 'placeholder';
       customize.value[`columnMinWidth${index}`] = resolveDataListColumnMinWidthFromDataSource(
         dataSource,
         index,

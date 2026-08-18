@@ -136,7 +136,7 @@ export default defineConfig({
   },
   server: {
     host: true,
-    port: 5178,
+    port: 4173,
     strictPort: true,
     fs: {
       allow: [resolve(__dirname), EDS_ROOT],
@@ -150,5 +150,10 @@ export default defineConfig({
         '!**/packages/tokens/spec/**',
       ],
     },
+  },
+  preview: {
+    host: true,
+    port: 4173,
+    strictPort: true,
   },
 });

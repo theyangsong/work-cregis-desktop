@@ -1,0 +1,45 @@
+.host {
+  display: flex;
+  align-items: flex-start;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.combo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-05);
+  align-items: flex-start;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.secondaryRow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--spacing-1);
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+}
+
+.secondaryRowAction {
+  flex: 0 1 auto;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.secondaryRowCountdown {
+  flex: 0 0 auto;
+}
+
+.secondaryRow > :global(.eds-divider) {
+  align-self: center;
+  flex-shrink: 0;
+  height: var(--scale-2-5);
+  min-height: var(--scale-2-5);
+  max-height: var(--scale-2-5);
+}

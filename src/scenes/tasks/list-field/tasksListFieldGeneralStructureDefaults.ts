@@ -48,26 +48,25 @@ export function buildTasksListFieldGeneralStructureCustomize(
   if (minWidth) {
     customize.minWidth = minWidth;
   }
-  if (menuItem === 'Sent Request') {
-    customize.operationTypeOnly = true;
-  }
   if (rowIndex != null && Number.isFinite(rowIndex)) {
     Object.assign(customize, buildGeneralStructureRowValues(rowIndex));
     customize.avatarColorSeed = `initiator-${rowIndex}`;
 
-    const transferType = buildTransferTypeRowValues(rowIndex);
-    customize.secondaryValue = buildBusinessTypeSecondaryLabel(rowIndex);
-    customize.showCountdown = false;
-    if (
-      transferType.showCountdown
-      && shouldShowListBusinessTypeCountdown(rowIndex, menuItem)
-    ) {
-      customize.showCountdown = true;
-      customize.countdownHours = transferType.countdownHours;
-      customize.countdownMinutes = transferType.countdownMinutes;
-      customize.countdownSeconds = transferType.countdownSeconds;
-      customize.countdownAlign = transferType.countdownAlign ?? 'left';
-      customize.countdownSuffixKey = 'Expires in xx:xx';
+    if (menuItem !== 'Sent Request') {
+      const transferType = buildTransferTypeRowValues(rowIndex);
+      customize.secondaryValue = buildBusinessTypeSecondaryLabel(rowIndex);
+      customize.showCountdown = false;
+      if (
+        transferType.showCountdown
+        && shouldShowListBusinessTypeCountdown(rowIndex, menuItem)
+      ) {
+        customize.showCountdown = true;
+        customize.countdownHours = transferType.countdownHours;
+        customize.countdownMinutes = transferType.countdownMinutes;
+        customize.countdownSeconds = transferType.countdownSeconds;
+        customize.countdownAlign = transferType.countdownAlign ?? 'left';
+        customize.countdownSuffixKey = 'Expires in xx:xx';
+      }
     }
   }
   return customize;
