@@ -20,7 +20,7 @@ const BOUNDARY_MARGIN = 8;
 
 type PopoverAlign = 'center' | 'end';
 
-const { locale, setLocale } = useAppLocale();
+const { locale, setLocalePreview } = useAppLocale();
 const { theme, setTheme } = useThemeProvider();
 
 const popoverAlign = ref<PopoverAlign>('end');
@@ -66,7 +66,7 @@ function onTriggerClick(event: MouseEvent, active: boolean, open: () => void) {
 function toggleLanguage() {
   const index = APP_LOCALE_CYCLE.indexOf(locale.value);
   const next = APP_LOCALE_CYCLE[(index + 1) % APP_LOCALE_CYCLE.length] ?? 'zh-CN';
-  setLocale(next);
+  setLocalePreview(next);
 }
 
 function toggleTheme() {
