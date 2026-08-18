@@ -1,29 +1,25 @@
-# DS Icon — 业务侧说明
+# DS Icon 描边 — 业务侧说明
 
 **日期：** 2026-08-18  
-**DS：** `link:` 同步最新 `eds-desktop` 源码（EgIcon 已回退稳定 stroke 管线）
+**DS 真源：** `../eds-desktop/packages/components/docs/icon-stroke-scaling.md`
 
-## 结论
+## 当前方案（Chrome <153）
 
-- **`data-icon`** 与描边无关，保留在 `EgIcon` 外层 `span`。
-- DS 已回退 **ResizeObserver / attribute 实验**；常规线稿走 `var(--stroke-lg, 1.4px)` + `non-scaling-stroke`。
-- 业务侧 **不要** duplicate 全局 `.eds-i-s` 描边规则；**不要**在 `.eds-i-s` 上写 `stroke:`（会重置 `stroke-width`）。
+EgIcon 用 **CSS calc** 补偿 viewBox 缩放，**不用** `vector-effect: non-scaling-stroke`（Chrome 回归，预计 **153** 稳定版修复）。
 
-## 业务侧检查清单
+```css
+/* Icon.module.css */
+stroke-width: calc(var(--eds-icon-stroke-screen) * 32 / var(--eds-icon-display-px));
+```
 
-1. `pnpm install` + 重启 dev（必要时 `rm -rf node_modules/.vite`）
-2. 删除任何 `global.css` 里针对 `.eds-i-s` 的 stroke 补丁（若仍存在）
-3. 改色：在 **EgIcon 父级** 设 `color`，勿直接 `stroke:` path
-4. 定稿非 1.4px 的例外（如 Detail 行首 1.1px）：只覆写 `stroke-width` + `vector-effect: non-scaling-stroke`
+| 场景 | 业务做法 |
+|------|----------|
+| 常规线稿 icon | 勿覆写；默认屏上 **1.4px**（`--stroke-lg`） |
+| Detail 行首等更细 icon | 容器设 `--eds-icon-stroke-screen: var(--stroke-md)`（**1.1px**） |
+| 改色 | 父级 `color`，勿写 `.eds-i-s { stroke: ... }` |
 
-## EgIcon 稳定行为
+## 业务侧
 
-| 场景 | 做法 |
-|------|------|
-| 常规 EgIcon | 无需业务 CSS；DS `.tokenKind .eds-i-s` |
-| 行首小 icon 1.1px | `.itemTitleIcon :global(.eds-i-s) { stroke-width: var(--stroke-md); vector-effect: non-scaling-stroke; }` |
-| 成功态改色 | `.parent { color: var(--status-success); }`，fill 图标另设 `.eds-i-f` fill |
-
-## 开发者模式
-
-`closest('[data-icon]')?.dataset.icon` → `eds-add` 等
+1. `pnpm install` / 重启 dev（`4173`）+ 硬刷新
+2. **禁止**在 `.eds-i-s` 写 `stroke` / `stroke-width` / `vector-effect`
+3. 153 发布后按 DS 文档「Chrome 153 后验证清单」再评估是否切回 `non-scaling-stroke`

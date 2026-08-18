@@ -31,12 +31,7 @@
   width: var(--icon-md);
   height: var(--icon-md);
   color: var(--stroke-base-secondary);
-}
-
-/* 对齐 EgDetail.itemTitleIcon：屏上 1.1px */
-.itemTitleIcon :global(.eds-i-s) {
-  stroke-width: var(--stroke-md);
-  vector-effect: non-scaling-stroke;
+  --eds-icon-stroke-screen: var(--stroke-md);
 }
 
 .itemTitleText {

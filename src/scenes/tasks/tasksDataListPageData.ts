@@ -415,7 +415,7 @@ export function tasksDataListAmountColumnAlign(
 export function tasksDataListStatusColumnLabel(menuItem: string | undefined): string {
   if (menuItem === 'Signed') return 'Signing Results';
   if (menuItem === 'All Records' || menuItem === 'Sent Request') return 'Approval Progress';
-  return 'Approval results';
+  return 'Approval Results';
 }
 
 /** 记录类模块第二列 min-width（Initiator | Created Time）。 */
