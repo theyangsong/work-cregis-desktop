@@ -47,7 +47,10 @@ const cregisTasksModuleMenuGroups: ModuleMenuPresetGroup[] = [
   {
     items: [
       { label: 'All Records', icon: 'eds-list-square' },
-      { label: 'Sent Request', icon: 'eds-list-square' },
+      {
+        label: 'Sent Request',
+        avatar: { name: 'Name', colorIndex: 10, size: 'xs' },
+      },
     ],
   },
 ];
