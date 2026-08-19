@@ -25,6 +25,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: work-cregis-desktop
+          fetch-depth: 0
 
       - name: Log work-cregis-desktop revision
         working-directory: work-cregis-desktop
@@ -87,7 +88,12 @@ jobs:
       - name: Write deploy manifest
         run: |
           BUNDLE=$(ls dist/assets/index-*.js 2>/dev/null | head -1 | xargs basename 2>/dev/null || echo '')
-          printf '%s\n' "{\"sha\":\"$(git rev-parse HEAD)\",\"builtAt\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"bundle\":\"${BUNDLE}\"}" > dist/deploy-manifest.json
+          ARCHIVE=$(git tag --points-at HEAD 2>/dev/null | head -1 || true)
+          if [ -n "$ARCHIVE" ]; then
+            printf '%s\n' "{\"sha\":\"$(git rev-parse HEAD)\",\"archiveName\":\"${ARCHIVE}\",\"builtAt\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"bundle\":\"${BUNDLE}\"}" > dist/deploy-manifest.json
+          else
+            printf '%s\n' "{\"sha\":\"$(git rev-parse HEAD)\",\"builtAt\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"bundle\":\"${BUNDLE}\"}" > dist/deploy-manifest.json
+          fi
 
       - name: Add SPA fallback for GitHub Pages
         run: cp dist/index.html dist/404.html
