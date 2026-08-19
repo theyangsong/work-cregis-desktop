@@ -26,11 +26,17 @@ jobs:
         with:
           path: work-cregis-desktop
 
+      - name: Log work-cregis-desktop revision
+        working-directory: work-cregis-desktop
+        run: |
+          echo "work-cregis-desktop SHA: $(git rev-parse HEAD)"
+          git log -1 --oneline
+
       - name: Checkout eds-desktop
         uses: actions/checkout@v4
         with:
           repository: theyangsong/evergreen-design-system-desktop
-          ref: main
+          ref: e979b38
           path: eds-desktop
 
       - name: Log eds-desktop revision
@@ -77,6 +83,10 @@ jobs:
 
       - name: Build
         run: pnpm build:pages
+
+      - name: Write deploy manifest
+        run: |
+          printf '%s\n' "{\"sha\":\"$(git rev-parse HEAD)\",\"builtAt\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > dist/deploy-manifest.json
 
       - name: Add SPA fallback for GitHub Pages
         run: cp dist/index.html dist/404.html

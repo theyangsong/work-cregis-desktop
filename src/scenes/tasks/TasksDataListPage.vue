@@ -128,12 +128,18 @@ const customize = reactive({
 
 const dataListRemountKey = ref(0);
 
-/** HMR / 旧会话：补齐列配置并重排为发起方｜业务类型 → 金额｜申请时间 → 接收方 → 发送方。 */
+function applySentRequestDataListColumnRepair() {
+  syncSentRequestDataListColumnSettings(customize);
+  dataListRemountKey.value += 1;
+}
+
+/** HMR / 旧会话：补齐列配置；我发起的勿用通用 defaults 覆盖 preview 列（避免 status 污染第 2 列）。 */
 onMounted(() => {
   migrateDataListColumnSettings(customize);
-  Object.assign(customize, dataListColumnSettingDefaults());
   if (props.toolbarTitle === 'Sent Request') {
-    syncSentRequestDataListColumnSettings(customize);
+    applySentRequestDataListColumnRepair();
+  } else {
+    Object.assign(customize, dataListColumnSettingDefaults());
   }
   for (const [key, value] of Object.entries(tasksDataListCustomizeDefaults)) {
     if (customize[key as keyof TasksDataListCustomizeState] === undefined) {
@@ -150,8 +156,7 @@ watch(
     activeSort.value = null;
     migrateDataListColumnSettings(customize);
     if (title === 'Sent Request') {
-      syncSentRequestDataListColumnSettings(customize);
-      dataListRemountKey.value += 1;
+      applySentRequestDataListColumnRepair();
     }
   },
   { immediate: true },
@@ -513,6 +518,20 @@ const {
       !signingBatchFlow.shouldFilterRow(Number(row.id));
   }),
 );
+
+const listRegionRef = ref<HTMLElement | null>(null);
+
+/** 数据翻页后列表回顶（与 DataList loading 刷新一致，避免沿用上一页 scrollTop）。 */
+function scrollDataListToTop() {
+  const region = listRegionRef.value;
+  if (!region) return;
+  const scrollEl = region.querySelector('[class*="tableContentScroll"]') as HTMLElement | null;
+  if (scrollEl) scrollEl.scrollTop = 0;
+}
+
+watch(currentPage, () => {
+  void nextTick(scrollDataListToTop);
+});
 
 const receiverColumnAlign = computed(
   (): 'left' | 'center' | 'right' => previewColumnSettings.value[2].align,
@@ -890,7 +909,7 @@ const displayBatchActions = computed(() => {
         </EgToolBar>
       </template>
 
-      <div :class="pageStyles.listRegion">
+      <div ref="listRegionRef" :class="pageStyles.listRegion">
         <div
           v-if="listInteractionBlockActive"
           :class="pageStyles.listInteractionBlocker"
