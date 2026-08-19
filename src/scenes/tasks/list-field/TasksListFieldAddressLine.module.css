@@ -217,7 +217,7 @@
   flex: 0 1 auto;
 }
 
-/** 发送方副行地址：12px（--eds-footnote-size / --size-sm）。 */
+/** 发送方副行地址：12px（--eds-footnote-size / --size-sm）；颜色由 __target--secondary 继承。 */
 .walletMetaAddress {
   flex: 0 1 auto;
   min-width: 0;
@@ -228,7 +228,6 @@
   font-size: var(--eds-footnote-size);
   line-height: var(--eds-footnote-line-height);
   font-weight: var(--eds-footnote-weight);
-  color: var(--text-base-secondary);
 }
 
 .addressTooltipHost :global(.eds-hover-tooltip-trigger__target--secondary) .walletMetaAddress {
