@@ -975,6 +975,154 @@ const displayBatchActions = computed(() => {
               @cancel="close"
             />
           </template>
+          <!-- 我发起的：独立列树，不读 previewColumnSettings，避免 status 污染第 2 列。 -->
+          <template v-if="isSentRequestMenu">
+            <EgDataListColumn
+              prop="amount"
+              :label="ui('Amount')"
+              :min-width="amountColumnMinWidth"
+              :flex-grow="true"
+              align="left"
+              :sortable="false"
+              :display-order="1"
+            >
+              <template #header>
+                <div :class="pageStyles.comboHeader">
+                  <div :class="pageStyles.comboHeaderSegment">
+                    <div :class="pageStyles.comboHeaderSegmentTextWrap">
+                      <EgDataListCellOverflow
+                        :content-class="pageStyles.comboHeaderSegmentText"
+                        context="header"
+                      >
+                        {{ ui('Amount') }}
+                      </EgDataListCellOverflow>
+                    </div>
+                    <DataListHeaderSortTrigger
+                      label="Amount"
+                      :active-order="amountSortOrder"
+                      @sort-change="onAmountSort"
+                    />
+                  </div>
+                  <EgDivider type="navigator" direction="vertical" />
+                  <div :class="pageStyles.comboHeaderSegment">
+                    <div :class="pageStyles.comboHeaderSegmentTextWrap">
+                      <EgDataListCellOverflow
+                        :content-class="pageStyles.comboHeaderSegmentText"
+                        context="header"
+                      >
+                        {{ ui('Created Time') }}
+                      </EgDataListCellOverflow>
+                    </div>
+                    <DataListHeaderSortTrigger
+                      label="Created Time"
+                      :active-order="createdTimeSortOrder"
+                      @sort-change="onCreatedTimeSort"
+                    />
+                  </div>
+                </div>
+              </template>
+              <template #default="{ data }">
+                <TasksDataListColumnCell
+                  data-source="amount"
+                  :column-min-width="amountColumnMinWidth"
+                  column-align="left"
+                  :menu-item="menuItem"
+                  :row-index="Number(data.id)"
+                />
+              </template>
+            </EgDataListColumn>
+
+            <EgDataListColumn
+              prop="operationType"
+              :label="ui('Operation Type')"
+              :min-width="createdTimeColumnMinWidth"
+              align="left"
+              :sortable="false"
+              :display-order="2"
+            >
+              <template #header>
+                <div :class="pageStyles.comboHeaderSegment">
+                  <div :class="pageStyles.comboHeaderSegmentTextWrap">
+                    <EgDataListCellOverflow
+                      :content-class="pageStyles.comboHeaderSegmentText"
+                      context="header"
+                    >
+                      {{ ui('Operation Type') }}
+                    </EgDataListCellOverflow>
+                  </div>
+                </div>
+              </template>
+              <template #default="{ data }">
+                <TasksDataListColumnCell
+                  data-source="operation-type"
+                  :column-min-width="createdTimeColumnMinWidth"
+                  :menu-item="menuItem"
+                  :row-index="Number(data.id)"
+                />
+              </template>
+            </EgDataListColumn>
+
+            <EgDataListColumn
+              prop="receiver"
+              :label="ui('Receiver')"
+              :min-width="receiverColumnMinWidth"
+              :width="receiverColumnWidth"
+              :align="receiverColumnAlign"
+              :sortable="false"
+              :display-order="3"
+            >
+              <template #default="{ data }">
+                <TasksDataListColumnCell
+                  data-source="receiver"
+                  :column-min-width="receiverColumnMinWidth"
+                  :column-align="receiverColumnAlign"
+                  :menu-item="menuItem"
+                  :row-index="Number(data.id)"
+                />
+              </template>
+            </EgDataListColumn>
+
+            <EgDataListColumn
+              prop="sender"
+              :label="ui('Sender')"
+              :min-width="businessTypeColumnMinWidth"
+              align="left"
+              :sortable="false"
+              :display-order="4"
+            >
+              <template #default="{ data }">
+                <TasksDataListColumnCell
+                  data-source="business-type"
+                  :column-min-width="businessTypeColumnMinWidth"
+                  column-align="left"
+                  :menu-item="menuItem"
+                  :row-index="Number(data.id)"
+                />
+              </template>
+            </EgDataListColumn>
+
+            <EgDataListColumn
+              prop="status"
+              :label="ui('Approval Progress')"
+              :min-width="statusColumnMinWidth"
+              :width="statusColumnWidth"
+              :display-order="8"
+              align="right"
+              :sortable="false"
+            >
+              <template #default="{ data }">
+                <TasksDataListColumnCell
+                  data-source="status"
+                  :column-min-width="statusColumnMinWidth"
+                  column-align="right"
+                  :menu-item="menuItem"
+                  :row-index="Number(data.id)"
+                />
+              </template>
+            </EgDataListColumn>
+          </template>
+
+          <template v-else>
           <EgDataListColumn
             v-if="showGeneralStructureColumn"
             prop="submitter"
@@ -1079,7 +1227,7 @@ const displayBatchActions = computed(() => {
             </template>
             <template #default="{ data }">
               <TasksDataListColumnCell
-                :data-source="isSentRequestMenu ? 'amount' : previewColumnSettings[1].dataSource"
+                :data-source="previewColumnSettings[1].dataSource"
                 :column-min-width="amountColumnMinWidth"
                 :column-align="amountColumnContentAlignEnd ? 'right' : 'left'"
                 :menu-item="menuItem"
@@ -1088,41 +1236,9 @@ const displayBatchActions = computed(() => {
             </template>
           </EgDataListColumn>
 
-          <!-- Sent Request 第 2 列：业务类型（金额 → 业务类型 → 接收方 → 发送方 → 审批进度）。 -->
-          <EgDataListColumn
-            v-if="showCreatedTimeColumn"
-            prop="operationType"
-            :label="ui('Operation Type')"
-            :min-width="createdTimeColumnMinWidth"
-            align="left"
-            :sortable="false"
-            :display-order="createdTimeColumnDisplayOrder"
-          >
-            <template #header>
-              <div :class="pageStyles.comboHeaderSegment">
-                <div :class="pageStyles.comboHeaderSegmentTextWrap">
-                  <EgDataListCellOverflow
-                    :content-class="pageStyles.comboHeaderSegmentText"
-                    context="header"
-                  >
-                    {{ ui('Operation Type') }}
-                  </EgDataListCellOverflow>
-                </div>
-              </div>
-            </template>
-            <template #default="{ data }">
-              <TasksDataListColumnCell
-                data-source="operation-type"
-                :column-min-width="createdTimeColumnMinWidth"
-                :menu-item="menuItem"
-                :row-index="Number(data.id)"
-              />
-            </template>
-          </EgDataListColumn>
-
           <EgDataListColumn
             prop="receiver"
-            :label="isSentRequestMenu ? ui('Receiver') : ui(previewColumnSettings[2].label)"
+            :label="ui(previewColumnSettings[2].label)"
             :min-width="receiverColumnMinWidth"
             :width="receiverColumnWidth"
             :align="receiverColumnAlign"
@@ -1142,7 +1258,7 @@ const displayBatchActions = computed(() => {
 
           <EgDataListColumn
             prop="businessType"
-            :label="isSentRequestMenu ? ui('Sender') : ui(previewColumnSettings[3].label)"
+            :label="ui(previewColumnSettings[3].label)"
             :min-width="businessTypeColumnMinWidth"
             :width="businessTypeColumnWidth"
             :align="businessTypeColumnAlign"
@@ -1182,7 +1298,7 @@ const displayBatchActions = computed(() => {
             </template>
             <template #default="{ data }">
               <TasksDataListColumnCell
-                :data-source="isSentRequestMenu ? 'business-type' : previewColumnSettings[3].dataSource"
+                :data-source="previewColumnSettings[3].dataSource"
                 :column-min-width="businessTypeColumnMinWidth"
                 :column-align="businessTypeColumnAlign"
                 :menu-item="menuItem"
@@ -1223,6 +1339,7 @@ const displayBatchActions = computed(() => {
             :display-order="actionColumnDisplayOrder"
             is-action
           />
+          </template>
         </EgDataList>
       </div>
 
