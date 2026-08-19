@@ -16,6 +16,7 @@ import { buildDetailApprovalProgressSteps } from '../shared/buildDetailApprovalP
 import DetailApprovalProgressAppend from '../shared/DetailApprovalProgressAppend.vue';
 import { resolveDetailHeadlineStatus } from '../shared/resolveDetailHeadlineStatus';
 import { usePopupShellLifecycle } from '../shared/usePopupShellLifecycle';
+import { useDetailToolbarPageMotion } from '../shared/useDetailToolbarPageMotion';
 import { buildSigningDetailSections } from './buildSigningDetailSections';
 import {
   resolveMinerFeeProfileFromDetail,
@@ -81,6 +82,27 @@ const { popupMounted, popupOpen, onPopupClosed } = usePopupShellLifecycle({
 const guideActive = computed(
   () => popupOpen.value && shouldShowGuide.value && Boolean(props.detail),
 );
+
+const detailId = computed(() => props.detail?.id);
+const {
+  detailToolbarPageKey,
+  toolbarNavPulse,
+  toolbarNavDirection,
+  pulseToolbarNav,
+} = useDetailToolbarPageMotion({
+  detailId,
+  currentIndex: computed(() => props.currentIndex),
+});
+
+function onToolbarPrev() {
+  pulseToolbarNav('prev');
+  emit('prev');
+}
+
+function onToolbarNext() {
+  pulseToolbarNav('next');
+  emit('next');
+}
 
 const headline = computed(() =>
   formatGroupedAmountText(props.detail?.amountHeadline ?? ''),
@@ -187,7 +209,9 @@ function onDetailClose() {
     <div ref="detailHostRef" :class="detailChromeStyles.detailHost">
     <EgDetail
       v-if="detail"
-      :toolbar-page-key="detail.id"
+      :toolbar-page-key="detailToolbarPageKey"
+      :toolbar-nav-pulse="toolbarNavPulse"
+      :toolbar-nav-direction="toolbarNavDirection"
       :headline="headline"
       :show-eyebrow="false"
       :show-status-tag="showStatusTag"
@@ -209,8 +233,8 @@ function onDetailClose() {
       :toolbar-next-disabled="nextDisabled"
       toolbar-tone="decor"
       @close="onDetailClose"
-      @toolbar-prev="emit('prev')"
-      @toolbar-next="emit('next')"
+      @toolbar-prev="onToolbarPrev"
+      @toolbar-next="onToolbarNext"
       @item-value-link-click="onItemValueLinkClick"
     >
       <template #toolbar>
@@ -220,8 +244,8 @@ function onDetailClose() {
           :toolbar-prev-disabled="prevDisabled"
           :toolbar-next-disabled="nextDisabled"
           :guide-active="guideActive"
-          @toolbar-prev="emit('prev')"
-          @toolbar-next="emit('next')"
+          @toolbar-prev="onToolbarPrev"
+          @toolbar-next="onToolbarNext"
           @guide-dismiss="markGuideSeen"
         >
           <template v-if="!readOnly" #actions>

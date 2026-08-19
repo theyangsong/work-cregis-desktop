@@ -40,6 +40,7 @@ import {
   dataListColumnSettingDefaults,
   migrateDataListColumnSettings,
   syncSentRequestDataListColumnSettings,
+  resolveTasksDataListMenuItem,
   DATA_LIST_PRIMARY_ACTION_LABEL,
   DATA_LIST_PRIMARY_ACTION_LABEL_EN,
   tasksDataListPrimaryActionLabel,
@@ -119,6 +120,13 @@ const props = defineProps<{
 }>();
 
 const { ui, locale } = useAppI18n();
+
+/** 模块菜单英文 key（兼容 ToolBar / 菜单展示文案反向解析）。 */
+const menuItem = computed(() => {
+  const resolved = resolveTasksDataListMenuItem(props.toolbarTitle, locale.value);
+  return resolved ?? props.toolbarTitle;
+});
+
 const activeSort = ref<TasksDataListActiveSort | null>(null);
 
 const customize = reactive({
@@ -136,7 +144,7 @@ function applySentRequestDataListColumnRepair() {
 /** HMR / 旧会话：补齐列配置；我发起的勿用通用 defaults 覆盖 preview 列（避免 status 污染第 2 列）。 */
 onMounted(() => {
   migrateDataListColumnSettings(customize);
-  if (props.toolbarTitle === 'Sent Request') {
+  if (menuItem.value === 'Sent Request') {
     applySentRequestDataListColumnRepair();
   } else {
     Object.assign(customize, dataListColumnSettingDefaults());
@@ -149,13 +157,13 @@ onMounted(() => {
 });
 
 watch(
-  () => props.toolbarTitle,
-  (title) => {
-    customize.showExport = tasksDataListShowsExport(title);
-    customize.showBatch = tasksDataListShowsBatch(title);
+  menuItem,
+  (item) => {
+    customize.showExport = tasksDataListShowsExport(item);
+    customize.showBatch = tasksDataListShowsBatch(item);
     activeSort.value = null;
     migrateDataListColumnSettings(customize);
-    if (title === 'Sent Request') {
+    if (item === 'Sent Request') {
       applySentRequestDataListColumnRepair();
     }
   },
@@ -163,83 +171,83 @@ watch(
 );
 const customizeRef = computed(() => customize);
 
-const showBatchButton = computed(() => tasksDataListShowsBatch(props.toolbarTitle));
+const showBatchButton = computed(() => tasksDataListShowsBatch(menuItem.value));
 const showToolBarSectionForMenu = computed(() => showBatchButton.value);
 const { active: listInteractionBlockActive } = useListRegionInteractionBlock();
 
-const primaryActionLabel = computed(() => tasksDataListPrimaryActionLabel(props.toolbarTitle));
-const showActionColumn = computed(() => tasksDataListShowsActionColumn(props.toolbarTitle));
+const primaryActionLabel = computed(() => tasksDataListPrimaryActionLabel(menuItem.value));
+const showActionColumn = computed(() => tasksDataListShowsActionColumn(menuItem.value));
 /** 批处理（selectMode）时隐藏 Action 列；尾列由 Amount 承接。 */
 const actionColumnHidden = computed(() => Boolean(customize.selectMode));
 const showGeneralStructureColumn = computed(() =>
-  tasksDataListShowsGeneralStructureColumn(props.toolbarTitle),
+  tasksDataListShowsGeneralStructureColumn(menuItem.value),
 );
-const showStatusColumn = computed(() => tasksDataListShowsStatusColumn(props.toolbarTitle));
-const showCreatedTimeColumn = computed(() => tasksDataListShowsCreatedTimeColumn(props.toolbarTitle));
+const showStatusColumn = computed(() => tasksDataListShowsStatusColumn(menuItem.value));
+const showCreatedTimeColumn = computed(() => tasksDataListShowsCreatedTimeColumn(menuItem.value));
 /** 表头 / 单元格内容右对齐（已办 / 记录类菜单）；批处理 selectMode 保持与常态相同左对齐与列宽。 */
 const amountColumnContentAlignEnd = computed(
-  () => tasksDataListAmountColumnAlign(props.toolbarTitle) === 'right',
+  () => tasksDataListAmountColumnAlign(menuItem.value) === 'right',
 );
-const amountColumnAlign = computed(() => tasksDataListAmountColumnAlign(props.toolbarTitle));
-const statusColumnLabel = computed(() => tasksDataListStatusColumnLabel(props.toolbarTitle));
+const amountColumnAlign = computed(() => tasksDataListAmountColumnAlign(menuItem.value));
+const statusColumnLabel = computed(() => tasksDataListStatusColumnLabel(menuItem.value));
 const receiverColumnWidth = computed(() =>
-  tasksDataListReceiverColumnWidth(props.toolbarTitle),
+  tasksDataListReceiverColumnWidth(menuItem.value),
 );
 const createdTimeColumnMinWidth = computed(() =>
-  tasksDataListCreatedTimeColumnMinWidth(props.toolbarTitle),
+  tasksDataListCreatedTimeColumnMinWidth(menuItem.value),
 );
 const createdTimeColumnDisplayOrder = computed(() =>
-  tasksDataListCreatedTimeColumnDisplayOrder(props.toolbarTitle),
+  tasksDataListCreatedTimeColumnDisplayOrder(menuItem.value),
 );
 const statusColumnMinWidth = computed(() =>
-  tasksDataListStatusColumnMinWidth(props.toolbarTitle),
+  tasksDataListStatusColumnMinWidth(menuItem.value),
 );
 const statusColumnWidth = computed(() =>
-  tasksDataListStatusColumnWidth(props.toolbarTitle),
+  tasksDataListStatusColumnWidth(menuItem.value),
 );
 const statusColumnDisplayOrder = computed(() =>
-  tasksDataListStatusColumnDisplayOrder(props.toolbarTitle),
+  tasksDataListStatusColumnDisplayOrder(menuItem.value),
 );
 const businessTypeColumnDisplayOrder = computed(() =>
-  tasksDataListBusinessTypeColumnDisplayOrder(props.toolbarTitle, showStatusColumn.value),
+  tasksDataListBusinessTypeColumnDisplayOrder(menuItem.value, showStatusColumn.value),
 );
 const receiverColumnDisplayOrder = computed(() =>
-  tasksDataListReceiverColumnDisplayOrder(props.toolbarTitle),
+  tasksDataListReceiverColumnDisplayOrder(menuItem.value),
 );
 const amountColumnDisplayOrder = computed(() =>
-  tasksDataListAmountColumnDisplayOrder(props.toolbarTitle),
+  tasksDataListAmountColumnDisplayOrder(menuItem.value),
 );
 const actionColumnDisplayOrder = computed(() =>
-  tasksDataListActionColumnDisplayOrder(props.toolbarTitle),
+  tasksDataListActionColumnDisplayOrder(menuItem.value),
 );
 const businessTypeColumnWidth = computed(() =>
-  tasksDataListBusinessTypeColumnWidth(props.toolbarTitle),
+  tasksDataListBusinessTypeColumnWidth(menuItem.value),
 );
 const businessTypeColumnShowsComboHeader = computed(() =>
-  tasksDataListBusinessTypeColumnShowsComboHeader(props.toolbarTitle),
+  tasksDataListBusinessTypeColumnShowsComboHeader(menuItem.value),
 );
 const businessTypeColumnSecondaryLabel = computed(() =>
-  tasksDataListBusinessTypeColumnSecondaryLabel(props.toolbarTitle),
+  tasksDataListBusinessTypeColumnSecondaryLabel(menuItem.value),
 );
 const businessTypeColumnSecondarySortable = computed(() =>
-  tasksDataListBusinessTypeColumnSecondarySortable(props.toolbarTitle),
+  tasksDataListBusinessTypeColumnSecondarySortable(menuItem.value),
 );
 /** Sent Request 第 1–3 列（金额 / 操作类型 / 发送方）无固定 width，均分剩余空间。 */
 const amountColumnFlexGrow = computed(() =>
-  tasksDataListAmountColumnFlexGrow(props.toolbarTitle),
+  tasksDataListAmountColumnFlexGrow(menuItem.value),
 );
 const generalStructureColumnMinWidth = computed(() =>
-  tasksDataListGeneralStructureColumnMinWidth(props.toolbarTitle),
+  tasksDataListGeneralStructureColumnMinWidth(menuItem.value),
 );
 const amountColumnMinWidth = computed(() =>
-  tasksDataListAmountColumnMinWidth(props.toolbarTitle),
+  tasksDataListAmountColumnMinWidth(menuItem.value),
 );
 
-const isApprovalMenu = computed(() => props.toolbarTitle === 'Approval');
-const isSigningMenu = computed(() => props.toolbarTitle === 'Signing');
-const isSentRequestMenu = computed(() => props.toolbarTitle === 'Sent Request');
+const isApprovalMenu = computed(() => menuItem.value === 'Approval');
+const isSigningMenu = computed(() => menuItem.value === 'Signing');
+const isSentRequestMenu = computed(() => menuItem.value === 'Sent Request');
 const isRecordMenu = computed(() => {
-  const title = props.toolbarTitle;
+  const title = menuItem.value;
   return (
     title === 'Approved'
     || title === 'Signed'
@@ -344,7 +352,7 @@ function showListSuccess(messageKey = 'Success') {
 
 const allRowIndexes = computed(() => {
   const count = Number.parseInt(
-    String(customize.dataVolume ?? tasksDataListDefaultRowCount(props.toolbarTitle)),
+    String(customize.dataVolume ?? tasksDataListDefaultRowCount(menuItem.value)),
     10,
   );
   return Array.from({ length: Math.max(0, count) }, (_, index) => index);
@@ -403,7 +411,7 @@ const signingFlow = useSigningFlow({
 });
 
 const recordDetailFlow = useRecordDetailFlow({
-  menuItem: computed(() => props.toolbarTitle),
+  menuItem,
   allRowIndexes,
   onWithdrawRequest: () => {
     listToastText.value = ui('Request withdrawn');
@@ -544,13 +552,13 @@ const businessTypeColumnAlign = computed((): 'left' | 'center' | 'right' =>
 
 const businessTypeColumnMinWidth = computed(() =>
   tasksDataListBusinessTypeColumnMinWidth(
-    props.toolbarTitle,
+    menuItem.value,
     previewColumnSettings.value[3].minWidth,
   ),
 );
 const receiverColumnMinWidth = computed(() =>
   tasksDataListReceiverColumnMinWidth(
-    props.toolbarTitle,
+    menuItem.value,
     previewColumnSettings.value[2].minWidth,
   ),
 );
@@ -667,7 +675,7 @@ function onBatchPopoverDismiss() {
 }
 
 const displayToolbarTitle = computed(() => {
-  const title = props.toolbarTitle ?? DATA_LIST_FIGMA_TOOLBAR.title;
+  const title = menuItem.value ?? DATA_LIST_FIGMA_TOOLBAR.title;
   return ui(resolveTasksModuleMenuDisplayLabel(title, locale.value));
 });
 
@@ -917,7 +925,7 @@ const displayBatchActions = computed(() => {
         />
         <EgDataList
           ref="dataListRef"
-          :key="`tasks-datalist-${dataListRemountKey}`"
+          :key="`tasks-datalist-${menuItem}-${dataListRemountKey}`"
           v-model:select-mode="customize.selectMode"
           :data-list="displayDataList"
           :header-height="DATA_LIST_FIGMA_HEADER_HEIGHT"
@@ -1071,10 +1079,10 @@ const displayBatchActions = computed(() => {
             </template>
             <template #default="{ data }">
               <TasksDataListColumnCell
-                :data-source="previewColumnSettings[1].dataSource"
+                :data-source="isSentRequestMenu ? 'amount' : previewColumnSettings[1].dataSource"
                 :column-min-width="amountColumnMinWidth"
                 :column-align="amountColumnContentAlignEnd ? 'right' : 'left'"
-                :menu-item="toolbarTitle"
+                :menu-item="menuItem"
                 :row-index="Number(data.id)"
               />
             </template>
@@ -1106,7 +1114,7 @@ const displayBatchActions = computed(() => {
               <TasksDataListColumnCell
                 data-source="operation-type"
                 :column-min-width="createdTimeColumnMinWidth"
-                :menu-item="toolbarTitle"
+                :menu-item="menuItem"
                 :row-index="Number(data.id)"
               />
             </template>
@@ -1126,7 +1134,7 @@ const displayBatchActions = computed(() => {
                 data-source="receiver"
                 :column-min-width="receiverColumnMinWidth"
                 :column-align="receiverColumnAlign"
-                :menu-item="toolbarTitle"
+                :menu-item="menuItem"
                 :row-index="Number(data.id)"
               />
             </template>
@@ -1177,7 +1185,7 @@ const displayBatchActions = computed(() => {
                 :data-source="isSentRequestMenu ? 'business-type' : previewColumnSettings[3].dataSource"
                 :column-min-width="businessTypeColumnMinWidth"
                 :column-align="businessTypeColumnAlign"
-                :menu-item="toolbarTitle"
+                :menu-item="menuItem"
                 :row-index="Number(data.id)"
               />
             </template>
@@ -1198,7 +1206,7 @@ const displayBatchActions = computed(() => {
                 data-source="status"
                 :column-min-width="statusColumnMinWidth"
                 column-align="right"
-                :menu-item="toolbarTitle"
+                :menu-item="menuItem"
                 :row-index="Number(data.id)"
               />
             </template>

@@ -1,14 +1,10 @@
 import { computed, onBeforeUnmount, onMounted, ref, type Ref } from 'vue';
 import { isChineseLocale, type AppLocale } from '@/composables/useAppLocale';
 import { useAppI18n } from '@/composables/useAppI18n';
-import { I18N_DOC_EN_LABELS } from '@/i18n/i18nDocEnLabels';
-import { resolveEnglishUiText } from '@/i18n/translateUiText';
-import { UI_TEXT_ZH_CN } from '@/i18n/uiTextZhCN';
-import { UI_TEXT_ZH_TW } from '@/i18n/uiTextZhTW';
 import {
   isTasksDataListMenuItem,
-  resolveTasksModuleMenuDisplayLabel,
-  TASKS_MODULE_MENU_ITEMS_WITH_DATA_LIST,
+  normalizeTasksMenuLabel,
+  resolveTasksDataListMenuItem,
   type TasksDataListMenuItemLabel,
 } from '@/scenes/tasks/tasksDataListPageData';
 
@@ -22,10 +18,11 @@ function readAppLocale(): AppLocale {
 
 /** 模块菜单文案去掉末尾计数角标（如「待签名99+99+」→「待签名」）。 */
 export function normalizeModuleMenuLabel(raw: string): string {
-  return raw
-    .replace(/(?:\s*\d+\+?\s*)+$/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
+  return normalizeTasksMenuLabel(raw);
+}
+
+function resolveTasksMenuItemLabel(raw: string): TasksDataListMenuItemLabel | null {
+  return resolveTasksDataListMenuItem(raw, readAppLocale());
 }
 
 function readFocusedModuleMenuItem(preview: Element): Element | null {
@@ -49,54 +46,6 @@ function readFocusedModuleMenuLabel(preview: Element): string | null {
 
   const text = focused.textContent?.replace(/\s+/g, ' ').trim();
   return text ? normalizeModuleMenuLabel(text) : null;
-}
-
-function resolveTasksMenuItemLabel(raw: string): TasksDataListMenuItemLabel | null {
-  const normalized = normalizeModuleMenuLabel(raw);
-  if (!normalized) {
-    return null;
-  }
-
-  if (isTasksDataListMenuItem(normalized)) {
-    return normalized;
-  }
-
-  const locale = readAppLocale();
-  const english = resolveEnglishUiText(locale, normalized);
-  if (isTasksDataListMenuItem(english)) {
-    return english;
-  }
-
-  /** 「待签名」等文案在 catalog 中对应多个英文 key，反向 map 会歧义；按 Tasks 菜单项逐一匹配。 */
-  for (const item of TASKS_MODULE_MENU_ITEMS_WITH_DATA_LIST) {
-    const displayKey = resolveTasksModuleMenuDisplayLabel(item, locale);
-    const catalogZh = UI_TEXT_ZH_CN[displayKey] ?? UI_TEXT_ZH_CN[item];
-    if (typeof catalogZh === 'string' && normalizeModuleMenuLabel(catalogZh) === normalized) {
-      return item;
-    }
-
-    if (locale === 'zh-TW') {
-      const catalogTw = UI_TEXT_ZH_TW[displayKey] ?? UI_TEXT_ZH_TW[item];
-      if (typeof catalogTw === 'string' && normalizeModuleMenuLabel(catalogTw) === normalized) {
-        return item;
-      }
-    }
-
-    if (locale === 'en') {
-      if (
-        normalizeModuleMenuLabel(displayKey) === normalized
-        || normalizeModuleMenuLabel(item) === normalized
-      ) {
-        return item;
-      }
-      const docEn = I18N_DOC_EN_LABELS[displayKey] ?? I18N_DOC_EN_LABELS[item];
-      if (typeof docEn === 'string' && normalizeModuleMenuLabel(docEn) === normalized) {
-        return item;
-      }
-    }
-  }
-
-  return null;
 }
 
 function readDataListToolbarTitle(preview: Element): string | null {

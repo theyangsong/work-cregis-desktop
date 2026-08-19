@@ -1,6 +1,10 @@
 /** Tasks Data List 页面数据 — 对齐 eds-desktop Showcase DataListPagePreview。 */
 
 import type { AppLocale } from '@/composables/useAppLocale';
+import { I18N_DOC_EN_LABELS } from '@/i18n/i18nDocEnLabels';
+import { resolveEnglishUiText } from '@/i18n/translateUiText';
+import { UI_TEXT_ZH_CN } from '@/i18n/uiTextZhCN';
+import { UI_TEXT_ZH_TW } from '@/i18n/uiTextZhTW';
 import { buildStatusRowValues } from './list-field/tasksListFieldStatusRowData';
 
 /** 接收方列 min-width（含 cell 左右 padding）。 */
@@ -183,6 +187,67 @@ export function tasksDataListDefaultRowCount(menuItem: string | undefined): numb
 
 export function isTasksDataListMenuItem(label: string): label is TasksDataListMenuItemLabel {
   return (TASKS_MODULE_MENU_ITEMS_WITH_DATA_LIST as readonly string[]).includes(label);
+}
+
+/** 模块菜单文案去掉末尾计数角标（如「待签名99+」→「待签名」）。 */
+export function normalizeTasksMenuLabel(raw: string): string {
+  return raw
+    .replace(/(?:\s*\d+\+?\s*)+$/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * 将模块菜单 / ToolBar 展示文案还原为英文菜单 key（如「我发起的」→ Sent Request）。
+ * 供 DataList 列配置与 Shell Debug 页键解析共用。
+ */
+export function resolveTasksDataListMenuItem(
+  raw: string | undefined,
+  locale: AppLocale = 'en',
+): TasksDataListMenuItemLabel | null {
+  if (!raw) return null;
+
+  const normalized = normalizeTasksMenuLabel(raw);
+  if (!normalized) return null;
+
+  if (isTasksDataListMenuItem(normalized)) {
+    return normalized;
+  }
+
+  const english = resolveEnglishUiText(locale, normalized);
+  if (isTasksDataListMenuItem(english)) {
+    return english;
+  }
+
+  for (const item of TASKS_MODULE_MENU_ITEMS_WITH_DATA_LIST) {
+    const displayKey = resolveTasksModuleMenuDisplayLabel(item, locale);
+    const catalogZh = UI_TEXT_ZH_CN[displayKey] ?? UI_TEXT_ZH_CN[item];
+    if (typeof catalogZh === 'string' && normalizeTasksMenuLabel(catalogZh) === normalized) {
+      return item;
+    }
+
+    if (locale === 'zh-TW') {
+      const catalogTw = UI_TEXT_ZH_TW[displayKey] ?? UI_TEXT_ZH_TW[item];
+      if (typeof catalogTw === 'string' && normalizeTasksMenuLabel(catalogTw) === normalized) {
+        return item;
+      }
+    }
+
+    if (locale === 'en') {
+      if (
+        normalizeTasksMenuLabel(displayKey) === normalized
+        || normalizeTasksMenuLabel(item) === normalized
+      ) {
+        return item;
+      }
+      const docEn = I18N_DOC_EN_LABELS[displayKey] ?? I18N_DOC_EN_LABELS[item];
+      if (typeof docEn === 'string' && normalizeTasksMenuLabel(docEn) === normalized) {
+        return item;
+      }
+    }
+  }
+
+  return null;
 }
 
 /** 仅 All Records 展示 ToolBar Export。 */

@@ -36,7 +36,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: theyangsong/evergreen-design-system-desktop
-          ref: e979b38416caaa45562c9cd8e86cea0e7289c382
+          ref: 5a393717e731450573235d726dcda129e67f0a63
           path: eds-desktop
 
       - name: Log eds-desktop revision
@@ -86,7 +86,8 @@ jobs:
 
       - name: Write deploy manifest
         run: |
-          printf '%s\n' "{\"sha\":\"$(git rev-parse HEAD)\",\"builtAt\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > dist/deploy-manifest.json
+          BUNDLE=$(ls dist/assets/index-*.js 2>/dev/null | head -1 | xargs basename 2>/dev/null || echo '')
+          printf '%s\n' "{\"sha\":\"$(git rev-parse HEAD)\",\"builtAt\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"bundle\":\"${BUNDLE}\"}" > dist/deploy-manifest.json
 
       - name: Add SPA fallback for GitHub Pages
         run: cp dist/index.html dist/404.html
