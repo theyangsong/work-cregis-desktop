@@ -2,7 +2,6 @@
 import { computed } from 'vue';
 import TasksListFieldAmount from './TasksListFieldAmount.vue';
 import TasksListFieldGeneralStructure from './TasksListFieldGeneralStructure.vue';
-import TasksListFieldOperationType from './TasksListFieldOperationType.vue';
 import TasksListFieldReceiver from './TasksListFieldReceiver.vue';
 import TasksListFieldSender from './TasksListFieldSender.vue';
 import TasksListFieldStatus from './TasksListFieldStatus.vue';
@@ -118,7 +117,7 @@ const listFieldCustomize = computed(() => {
     v-else-if="resolvedDataSource === 'operation-type' && listFieldCustomize"
     :class="styles.listFieldCell"
   >
-    <TasksListFieldOperationType :customize="listFieldCustomize" />
+    <TasksListFieldGeneralStructure :customize="listFieldCustomize" />
   </div>
   <div
     v-else-if="resolvedDataSource === 'business-type' && listFieldCustomize"

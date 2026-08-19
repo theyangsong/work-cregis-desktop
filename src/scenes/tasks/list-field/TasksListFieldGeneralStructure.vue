@@ -203,6 +203,7 @@ const countdownTime = computed(() => formatCountdownTotal(countdownRemainingSeco
         v-if="showBusinessTypeSecondary || showCountdownOnSecondary"
         class="hash-like-combo"
         :class="styles.hashLikeCombo"
+        :style="hashLikeMinWidthStyle"
       >
         <EgListFieldOverflowText
           :text="businessTypeSecondaryParts!.source"

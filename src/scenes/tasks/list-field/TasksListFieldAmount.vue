@@ -53,7 +53,12 @@ const showCountdown = computed(
 const amountWidthConfigured = computed(() => parsePreviewMinWidth(props.customize) != null);
 const alignEnd = computed(() => Boolean(props.customize.alignEnd));
 const { ui } = useAppI18n();
-const secondaryValue = computed(() => ui(secondaryValueRaw.value));
+/** 申请时间是字段 value，禁止走 ui()；其余副行才是 i18n key。 */
+const secondaryValue = computed(() => {
+  const raw = secondaryValueRaw.value;
+  if (/^\d{4}-\d{2}-\d{2}/.test(raw)) return raw;
+  return ui(raw);
+});
 const tooltipTrigger = computed(
   () => String(props.customize.tooltipTrigger ?? 'hover') as 'hover' | 'focus',
 );

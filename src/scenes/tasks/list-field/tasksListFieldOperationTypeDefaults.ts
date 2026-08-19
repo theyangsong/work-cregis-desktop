@@ -24,8 +24,19 @@ export function buildTasksListFieldOperationTypeCustomize(
   rowIndex?: number,
   menuItem?: string,
 ): Record<string, unknown> {
+  const compositeKey = rowIndex == null || !Number.isFinite(rowIndex)
+    ? 'Wallet｜Transfer'
+    : buildBusinessTypeSecondaryLabel(rowIndex);
+
   const customize: Record<string, unknown> = {
-    compositeKey: 'Wallet｜Transfer',
+    operationTypeOnly: true,
+    lineLayout: 'double',
+    value: '',
+    secondaryValue: compositeKey,
+    compositeKey,
+    initiatorIconKind: 'none',
+    showLeftTag: false,
+    showRightTag: false,
     tooltipTrigger: 'hover',
     minWidth: columnMinWidthForOperationTypeCustomize(columnMinWidth),
     showCountdown: false,
@@ -39,8 +50,6 @@ export function buildTasksListFieldOperationTypeCustomize(
   if (rowIndex == null || !Number.isFinite(rowIndex)) {
     return customize;
   }
-
-  customize.compositeKey = buildBusinessTypeSecondaryLabel(rowIndex);
 
   const transferType = buildTransferTypeRowValues(rowIndex);
   if (

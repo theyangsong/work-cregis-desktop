@@ -975,10 +975,10 @@ const displayBatchActions = computed(() => {
               @cancel="close"
             />
           </template>
-          <!-- 我发起的：独立列树，不读 previewColumnSettings，避免 status 污染第 2 列。 -->
-          <template v-if="isSentRequestMenu">
-            <EgDataListColumn
-              prop="amount"
+          <!-- 我发起的：列必须是 EgDataList 直接子节点，禁止 template 包裹（生产构建会丢掉列 default 槽）。 -->
+          <EgDataListColumn
+            v-if="isSentRequestMenu"
+            prop="amount"
               :label="ui('Amount')"
               :min-width="amountColumnMinWidth"
               :flex-grow="true"
@@ -1033,9 +1033,11 @@ const displayBatchActions = computed(() => {
             </EgDataListColumn>
 
             <EgDataListColumn
+              v-if="isSentRequestMenu"
               prop="operationType"
               :label="ui('Operation Type')"
               :min-width="createdTimeColumnMinWidth"
+              :flex-grow="true"
               align="left"
               :sortable="false"
               :display-order="2"
@@ -1063,6 +1065,7 @@ const displayBatchActions = computed(() => {
             </EgDataListColumn>
 
             <EgDataListColumn
+              v-if="isSentRequestMenu"
               prop="receiver"
               :label="ui('Receiver')"
               :min-width="receiverColumnMinWidth"
@@ -1083,9 +1086,11 @@ const displayBatchActions = computed(() => {
             </EgDataListColumn>
 
             <EgDataListColumn
+              v-if="isSentRequestMenu"
               prop="sender"
               :label="ui('Sender')"
               :min-width="businessTypeColumnMinWidth"
+              :flex-grow="true"
               align="left"
               :sortable="false"
               :display-order="4"
@@ -1102,6 +1107,7 @@ const displayBatchActions = computed(() => {
             </EgDataListColumn>
 
             <EgDataListColumn
+              v-if="isSentRequestMenu"
               prop="status"
               :label="ui('Approval Progress')"
               :min-width="statusColumnMinWidth"
@@ -1120,9 +1126,7 @@ const displayBatchActions = computed(() => {
                 />
               </template>
             </EgDataListColumn>
-          </template>
 
-          <template v-else>
           <EgDataListColumn
             v-if="showGeneralStructureColumn"
             prop="submitter"
@@ -1176,6 +1180,7 @@ const displayBatchActions = computed(() => {
           </EgDataListColumn>
 
           <EgDataListColumn
+            v-if="!isSentRequestMenu"
             prop="amount"
             :label="ui(previewColumnSettings[1].label)"
             :min-width="amountColumnMinWidth"
@@ -1237,6 +1242,7 @@ const displayBatchActions = computed(() => {
           </EgDataListColumn>
 
           <EgDataListColumn
+            v-if="!isSentRequestMenu"
             prop="receiver"
             :label="ui(previewColumnSettings[2].label)"
             :min-width="receiverColumnMinWidth"
@@ -1257,6 +1263,7 @@ const displayBatchActions = computed(() => {
           </EgDataListColumn>
 
           <EgDataListColumn
+            v-if="!isSentRequestMenu"
             prop="businessType"
             :label="ui(previewColumnSettings[3].label)"
             :min-width="businessTypeColumnMinWidth"
@@ -1308,7 +1315,7 @@ const displayBatchActions = computed(() => {
           </EgDataListColumn>
 
           <EgDataListColumn
-            v-if="showStatusColumn"
+            v-if="!isSentRequestMenu && showStatusColumn"
             prop="status"
             :label="displayStatusColumnLabel"
             :min-width="statusColumnMinWidth"
@@ -1339,7 +1346,6 @@ const displayBatchActions = computed(() => {
             :display-order="actionColumnDisplayOrder"
             is-action
           />
-          </template>
         </EgDataList>
       </div>
 
