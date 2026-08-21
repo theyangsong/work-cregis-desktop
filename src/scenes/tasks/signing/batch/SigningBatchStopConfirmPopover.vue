@@ -75,7 +75,7 @@ function onConfirm() {
           <p :class="sharedStyles.message">
             {{
               ui(
-                'After stopping, transactions that have not completed signing will not continue. Completed signatures are not affected. Stop the current batch signing task?',
+                'After stopping, transactions that have not yet been signed will no longer be signed, while transactions that have already been signed will not be affected. Are you sure you want to stop the current batch signing task?',
               )
             }}
           </p>

@@ -59,15 +59,13 @@
 }
 
 .aliasLine {
+  composes: typography-body-medium from global;
   flex: 1 1 auto;
   min-width: 0;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: var(--eds-body-medium-size);
-  line-height: var(--eds-body-medium-line-height);
-  font-weight: var(--eds-body-medium-weight);
   color: var(--text-base-primary);
   vertical-align: top;
 }
@@ -217,23 +215,26 @@
   flex: 0 1 auto;
 }
 
-/** 发送方副行地址：12px（--eds-footnote-size / --size-sm）；颜色由 __target--secondary 继承。 */
+/** 发送方副行地址：Footnote 角色；颜色由 __target--secondary 继承。 */
 .walletMetaAddress {
+  composes: typography-footnote from global;
   flex: 0 1 auto;
   min-width: 0;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: var(--eds-footnote-size);
-  line-height: var(--eds-footnote-line-height);
-  font-weight: var(--eds-footnote-weight);
 }
 
-.addressTooltipHost :global(.eds-hover-tooltip-trigger__target--secondary) .walletMetaAddress {
-  font-size: var(--eds-footnote-size);
-  line-height: var(--eds-footnote-line-height);
-  font-weight: var(--eds-footnote-weight);
+.metaSecondaryText {
+  composes: typography-footnote from global;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-base-secondary);
 }
 
 .rowTag {
@@ -252,17 +253,4 @@
   gap: var(--spacing-1);
   min-width: 0;
   max-width: 100%;
-}
-
-.metaSecondaryText {
-  flex: 0 1 auto;
-  min-width: 0;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: var(--eds-footnote-size);
-  line-height: var(--eds-footnote-line-height);
-  font-weight: var(--eds-footnote-weight);
-  color: var(--text-base-secondary);
 }

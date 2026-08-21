@@ -242,6 +242,8 @@ export const I18N_DOC_ALIGNED_KEYS = new Set<string>([
   'Switch MPC Network',
   'Tag',
   'There are no pending transactions available for batch signing.',
+  'If you exit, this signing will fail. Are you sure you want to exit?',
+  'After stopping, transactions that have not yet been signed will no longer be signed, while transactions that have already been signed will not be affected. Are you sure you want to stop the current batch signing task?',
   'Wallet Shard Not Imported',
   'Wallet｜Payout',
   'Wallet｜Transfer',

@@ -1,0 +1,40 @@
+/** Vue prop / computed 布局·样式字段 — 只进「布局」「样式」代码块，不进「属性」面板。 */
+const INSPECT_LAYOUT_STYLE_PROP_KEYS = new Set([
+  'align',
+  'alignItems',
+  'alignSelf',
+  'background',
+  'backgroundColor',
+  'borderRadius',
+  'columnHeight',
+  'display',
+  'flexGrow',
+  'fontSize',
+  'fontWeight',
+  'gap',
+  'headerBg',
+  'headerHeight',
+  'height',
+  'heightMode',
+  'justifyContent',
+  'lineHeight',
+  'margin',
+  'maxHeight',
+  'maxWidth',
+  'minHeight',
+  'minTableWidth',
+  'minWidth',
+  'padding',
+  'paddingBottom',
+  'paddingLeft',
+  'paddingRight',
+  'paddingTop',
+  'panelRadius',
+  'width',
+  'widthMode',
+  'widthPercent',
+]);
+
+export function isInspectLayoutStylePropKey(key: string): boolean {
+  return INSPECT_LAYOUT_STYLE_PROP_KEYS.has(key);
+}

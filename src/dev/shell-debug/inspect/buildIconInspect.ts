@@ -1,7 +1,7 @@
-import { iconNames } from '@eds/desktop-components';
+import { getProcessedIcon, iconNames, type IconName } from '@eds/desktop-components';
 import type { InspectPropertyItem } from './buildElementInspectInfo';
 import type { EdsPropExtractContext } from './edsInspectCatalog';
-import { formatTokenVar, resolveTokenNameForValue } from './resolveDesignToken';
+import { formatTokenVar, inspectTokenFilters, requireInspectCssLine, resolveTokenNameForValue } from './resolveDesignToken';
 
 function formatIconName(value: unknown): string {
   const raw = String(value ?? '').trim();
@@ -35,7 +35,7 @@ export function resolveIconHostElement(element: Element): HTMLElement | null {
   const edsIcon = element.closest('.eds-icon');
   const parent = edsIcon?.parentElement;
   if (parent instanceof HTMLElement) return parent;
-  return element instanceof HTMLElement ? element : null;
+  return null;
 }
 
 function resolvePreviewRoot(element: Element): Element {
@@ -124,6 +124,69 @@ export function deriveIconName(ctx: EdsPropExtractContext): unknown {
   return resolveIconName(ctx.element, ctx.props);
 }
 
+function resolveIconRegistryName(element: Element, vueProps: Record<string, unknown>): IconName | null {
+  const name = resolveIconName(element, vueProps);
+  if (!name) return null;
+  const normalized = formatIconName(name);
+  if (normalized === '—') return null;
+  if (!iconNames.includes(normalized as IconName)) return null;
+  return normalized as IconName;
+}
+
+export function isBorderStrokeIcon(ctx: EdsPropExtractContext): boolean {
+  const iconName = resolveIconRegistryName(ctx.element, ctx.props);
+  if (iconName) {
+    const processed = getProcessedIcon(iconName);
+    if (processed) {
+      if (processed.colorMode !== 'token') return false;
+      return processed.kind === 'stroke' || processed.kind === 'mixed';
+    }
+  }
+
+  const host = resolveIconHostElement(ctx.element);
+  if (!host) return false;
+  return Boolean(host.querySelector('.eds-i-s'));
+}
+
+function resolveStrokeWidthToken(preview: Element, rawValue: string): string | null {
+  const normalized = rawValue.trim();
+  if (!normalized) return null;
+
+  const varMatch = normalized.match(/var\((--[\w-]+)\)/);
+  if (varMatch?.[1]?.startsWith('--stroke-')) {
+    return varMatch[1];
+  }
+
+  return resolveTokenNameForValue(
+    preview,
+    normalized,
+    inspectTokenFilters.stroke,
+  );
+}
+
+export function deriveIconBorderToken(ctx: EdsPropExtractContext): string | null {
+  if (!isBorderStrokeIcon(ctx)) return null;
+
+  const host = resolveIconHostElement(ctx.element);
+  if (!host) return null;
+
+  const preview = resolvePreviewRoot(ctx.element);
+  const strokeScreenVar = getComputedStyle(host).getPropertyValue('--eds-icon-stroke-screen').trim();
+  const strokeScreenToken = resolveStrokeWidthToken(preview, strokeScreenVar);
+  if (strokeScreenToken) return formatTokenVar(strokeScreenToken);
+
+  const strokeShape = host.querySelector('.eds-i-s');
+  if (strokeShape instanceof Element) {
+    const strokeWidthToken = resolveStrokeWidthToken(
+      preview,
+      getComputedStyle(strokeShape).strokeWidth,
+    );
+    if (strokeWidthToken) return formatTokenVar(strokeWidthToken);
+  }
+
+  return formatTokenVar('--stroke-lg');
+}
+
 export function deriveIconSize(ctx: EdsPropExtractContext): unknown {
   const props = { ...readIconVueProps(ctx.element), ...ctx.props };
   if (props.fit === true) return 'fit';
@@ -137,38 +200,159 @@ export function formatIconSizeToken(value: unknown): string {
   return ICON_SIZE_VAR[size] ?? ICON_SIZE_VAR.md;
 }
 
-function resolveDimensionToken(preview: Element, raw: string): string {
-  const normalized = raw.trim();
-  if (!normalized) return '—';
-  const token = resolveTokenNameForValue(preview, normalized, (name) => name.startsWith('--icon-') || name.startsWith('--scale-'));
-  if (token) return formatTokenVar(token);
-  const rounded = `${Math.round(Number.parseFloat(normalized) * 10) / 10}px`;
-  return Number.isFinite(Number.parseFloat(normalized)) ? rounded : normalized;
+function resolveDimensionCssLine(preview: Element, property: string, raw: string): string | null {
+  return requireInspectCssLine(preview, property, raw, inspectTokenFilters.graphic, 'width');
 }
 
 export function deriveIconColorToken(ctx: EdsPropExtractContext): string {
   const preview = resolvePreviewRoot(ctx.element);
   const host = resolveIconHostElement(ctx.element);
-  if (!host) return 'var(--stroke-base-secondary)';
+  if (!host) return '—';
 
   const style = getComputedStyle(host);
-  const fillTone =
-    (ctx.props.fillTone as string | undefined)
-    ?? (readIconVueProps(ctx.element).fillTone as string | undefined)
-    ?? 'primary';
-
   const colorCandidates = [style.color, style.stroke, style.fill].filter(Boolean);
   for (const candidate of colorCandidates) {
-    const token = resolveTokenNameForValue(
+    const line = requireInspectCssLine(
       preview,
+      'color',
       candidate,
-      (name) => name.startsWith('--stroke-') || name.startsWith('--text-'),
+      (name) => inspectTokenFilters.stroke(name) || inspectTokenFilters.textColor(name),
+      'color',
     );
-    if (token) return formatTokenVar(token);
+    if (line?.startsWith('color: var(')) {
+      return line.replace(/^color:\s*/, '').replace(/;$/, '');
+    }
   }
 
-  if (fillTone === 'brand') return 'var(--text-brand-primary)';
-  return 'var(--stroke-base-secondary)';
+  const first = colorCandidates[0]?.trim();
+  if (!first) return '—';
+  return `${first} /* 非 token */`;
+}
+
+type MotionClassRule = {
+  matches: (element: Element) => boolean;
+  hostClass: string;
+};
+
+/** Motion semantic class — 对齐 eds-desktop motion/semantic.json。 */
+const MOTION_CLASS_RULES: MotionClassRule[] = [
+  {
+    matches: (element) => element.classList.contains('motion-ease') && element.classList.contains('is-asym'),
+    hostClass: '.motion-ease.is-asym',
+  },
+  {
+    matches: (element) =>
+      element.classList.contains('motion-ease') && element.classList.contains('is-hover-enter-only'),
+    hostClass: '.motion-ease.is-hover-enter-only',
+  },
+  {
+    matches: (element) => element.classList.contains('motion-ease') && element.classList.contains('is-focus'),
+    hostClass: '.motion-ease.is-focus',
+  },
+  {
+    matches: (element) => element.classList.contains('motion-ease') && element.classList.contains('is-hover'),
+    hostClass: '.motion-ease.is-hover',
+  },
+  {
+    matches: (element) =>
+      element.classList.contains('motion-flotation') && element.classList.contains('is-active'),
+    hostClass: '.motion-flotation.is-active',
+  },
+  {
+    matches: (element) => element.classList.contains('motion-flotation'),
+    hostClass: '.motion-flotation',
+  },
+  {
+    matches: (element) => element.classList.contains('motion-layout') && element.classList.contains('is-active'),
+    hostClass: '.motion-layout.is-active',
+  },
+  {
+    matches: (element) => element.classList.contains('motion-layout'),
+    hostClass: '.motion-layout',
+  },
+  {
+    matches: (element) => element.classList.contains('motion-deform'),
+    hostClass: '.motion-deform',
+  },
+  {
+    matches: (element) => element.classList.contains('motion-page'),
+    hostClass: '.motion-page',
+  },
+  {
+    matches: (element) => element.classList.contains('motion-layout-deform'),
+    hostClass: '.motion-layout-deform',
+  },
+];
+
+const MOTION_BASE_CLASS_RULES: MotionClassRule[] = [
+  { matches: (element) => element.classList.contains('motion-ease'), hostClass: '.motion-ease' },
+  { matches: (element) => element.classList.contains('motion-flotation'), hostClass: '.motion-flotation' },
+  { matches: (element) => element.classList.contains('motion-layout'), hostClass: '.motion-layout' },
+  { matches: (element) => element.classList.contains('motion-deform'), hostClass: '.motion-deform' },
+  { matches: (element) => element.classList.contains('motion-page'), hostClass: '.motion-page' },
+  {
+    matches: (element) => element.classList.contains('motion-layout-deform'),
+    hostClass: '.motion-layout-deform',
+  },
+];
+
+export function resolveMotionSemanticClass(element: Element): string | null {
+  if (element.classList.contains('motion-none')) return '.motion-none';
+
+  for (const rule of MOTION_CLASS_RULES) {
+    if (rule.matches(element)) return rule.hostClass;
+  }
+
+  if (element.classList.contains('motion-flotation') && element.classList.contains('is-active')) {
+    return '.motion-flotation.is-active';
+  }
+  if (element.classList.contains('motion-layout') && element.classList.contains('is-active')) {
+    return '.motion-layout.is-active';
+  }
+
+  if (element.classList.contains('motion-deform')) return '.motion-deform';
+  if (element.classList.contains('motion-page')) return '.motion-page';
+  if (element.classList.contains('motion-layout-deform')) return '.motion-layout-deform';
+  if (element.classList.contains('motion-flotation')) return '.motion-flotation';
+  if (element.classList.contains('motion-layout')) return '.motion-layout';
+
+  return null;
+}
+
+function isMotionInteractionBlocked(element: Element): boolean {
+  if (element instanceof HTMLButtonElement && element.disabled) return true;
+  if (element instanceof HTMLInputElement && element.disabled) return true;
+  if (element.getAttribute('aria-disabled') === 'true') return true;
+  return false;
+}
+
+export function formatMotionInspectLabel(hostClass: string | null): string {
+  if (!hostClass) return '无';
+  return hostClass;
+}
+
+export function buildMotionPropertyItem(motion: string): InspectPropertyItem {
+  return {
+    label: '动效',
+    value: motion,
+    token: null,
+    copyLine: motion === '无' ? '' : motion,
+  };
+}
+
+/** 仅当前点击节点自身的 motion semantic class；不继承祖先/行级 motion。 */
+export function deriveInspectMotion(element: Element, _preview?: Element): string {
+  if (isMotionInteractionBlocked(element)) return '无';
+  return formatMotionInspectLabel(resolveMotionSemanticClass(element));
+}
+
+/** @deprecated 与 deriveInspectMotion 相同；保留 catalog derive 签名。 */
+export function deriveTextMotionToken(element: Element): string {
+  return deriveInspectMotion(element);
+}
+
+export function deriveIconMotionToken(ctx: EdsPropExtractContext): string {
+  return deriveInspectMotion(ctx.element);
 }
 
 export function buildIconPropertyItems(
@@ -179,9 +363,6 @@ export function buildIconPropertyItems(
   const ctx: EdsPropExtractContext = { props: vueProps, element, rootElement };
   const nameRaw = deriveIconName(ctx);
   const name = formatIconName(nameRaw);
-  const sizeRaw = deriveIconSize(ctx);
-  const size = formatIconSizeToken(sizeRaw);
-  const color = deriveIconColorToken(ctx);
 
   const items: InspectPropertyItem[] = [
     {
@@ -190,25 +371,9 @@ export function buildIconPropertyItems(
       token: null,
       copyLine: name === '—' ? '' : `name="${name}"`,
     },
-    {
-      label: '尺寸',
-      value: size,
-      token: null,
-      copyLine: sizeRaw === 'fit' ? 'width: 100%; height: 100%;' : `width: ${size}; height: ${size};`,
-    },
-    {
-      label: '颜色',
-      value: color,
-      token: null,
-      copyLine: `color: ${color};`,
-    },
   ];
 
   return items.filter((item) => item.value !== '—');
-}
-
-function formatCssLine(property: string, value: string): string {
-  return `${property}: ${value};`;
 }
 
 function formatSvgMultiline(svg: string): string {
@@ -225,16 +390,35 @@ export function buildIconCodeSections(element: Element): InspectCodeSection[] {
   const host = resolveIconHostElement(element);
   const svg = host?.querySelector('.eds-icon svg') ?? host?.querySelector('svg');
   const style = host ? getComputedStyle(host) : null;
+  const ctx: EdsPropExtractContext = {
+    props: readIconVueProps(element),
+    element,
+    rootElement: host,
+  };
 
-  const width = style ? resolveDimensionToken(preview, style.width) : '—';
-  const height = style ? resolveDimensionToken(preview, style.height) : '—';
-  const layoutContent = [formatCssLine('width', width), formatCssLine('height', height)].join('\n');
+  const width = style ? resolveDimensionCssLine(preview, 'width', style.width) : null;
+  const height = style ? resolveDimensionCssLine(preview, 'height', style.height) : null;
+  const layoutLines = [width, height].filter((line): line is string => Boolean(line));
+  const layoutContent = layoutLines.join('\n');
+
+  const border = deriveIconBorderToken(ctx);
+  const color = deriveIconColorToken(ctx);
+  const styleLines = [
+    border ? `--eds-icon-stroke-screen: ${border};` : '',
+    color && color !== '—' ? `color: ${color};` : '',
+  ].filter(Boolean);
+  const styleContent = styleLines.join('\n');
 
   const svgContent = svg?.outerHTML?.trim() ?? '';
 
-  const sections: InspectCodeSection[] = [
-    { title: '布局', content: layoutContent },
-  ];
+  const sections: InspectCodeSection[] = [];
+  if (layoutContent) {
+    sections.push({ title: '布局', content: layoutContent });
+  }
+
+  if (styleContent) {
+    sections.push({ title: '样式', content: styleContent });
+  }
 
   if (svgContent) {
     sections.push({ title: 'SVG', content: formatSvgMultiline(svgContent) });

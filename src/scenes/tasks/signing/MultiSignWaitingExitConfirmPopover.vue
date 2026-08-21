@@ -88,8 +88,8 @@ function onConfirm() {
           <p :class="styles.message">
             {{
               ui(
-                'After exiting, this signing will fail. Are you sure you want to exit?',
-              )
+              'If you exit, this signing will fail. Are you sure you want to exit?',
+            )
             }}
           </p>
           <div :class="styles.actions">

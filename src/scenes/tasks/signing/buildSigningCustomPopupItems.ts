@@ -71,7 +71,7 @@ export function buildSigningCustomPopupItems(
       value: currency.symbol,
       valueSymbolCrypto: currency.cryptoName,
       valueIcon: currency.cryptoName,
-      tag: currency.networkLabel || undefined,
+      tag: currency.networkLabel ? currency.networkLabel : '',
     }),
     buildDetailInitiationSourceItem(rowIndex, translate),
     createDetailApplyItemRow('amount', {

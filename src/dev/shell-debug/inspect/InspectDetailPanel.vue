@@ -1,11 +1,16 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import type { ElementInspectInfo } from './buildElementInspectInfo';
+import { computed, onBeforeUnmount, ref } from 'vue';
+import type { ElementInspectInfo, InspectPropertyItem } from './buildElementInspectInfo';
 import { copyDevInspectText } from './copyDevInspectText';
+import { DEV_INSPECT_COPY_FEEDBACK } from './devInspectCopyFeedback';
 import {
   resolveCodeLineMode,
+  resolveInspectPropertyValueTone,
   splitInspectCodeLines,
   tokenizeCodeLine,
+  tokenizeInspectPropertyCodeValue,
+  tokenizeInspectPropertyTokenValue,
+  tokenizeInspectValue,
   type InspectCodeToken,
 } from './inspectCodeHighlight';
 
@@ -14,8 +19,8 @@ const props = defineProps<{
   embedded?: boolean;
 }>();
 
-const copyState = ref<'idle' | 'done' | 'error'>('idle');
-const codeTab = ref<'layout' | 'style'>('layout');
+const copiedLineKey = ref<string | null>(null);
+let copiedLineTimer: ReturnType<typeof setTimeout> | undefined;
 
 const hasSelection = computed(() => props.info != null);
 
@@ -27,6 +32,8 @@ const propertyItems = computed(() => {
   return props.info.elementAttributes;
 });
 
+const adaptiveItems = computed(() => props.info?.adaptiveItems ?? []);
+
 const showUsageSnippet = computed(() => {
   const snippet = props.info?.edsComponent?.usageSnippet?.trim();
   if (!snippet) return false;
@@ -35,16 +42,9 @@ const showUsageSnippet = computed(() => {
 
 const codeSections = computed(() => props.info?.codeSections ?? []);
 
-const showCodeTabs = computed(
-  () =>
-    codeSections.value.length === 0
-    && (props.info?.code.layout.length ?? 0) + (props.info?.code.style.length ?? 0) > 0,
-);
-
-const activeCodeItems = computed(() => {
-  if (!props.info) return [];
-  return codeTab.value === 'layout' ? props.info.code.layout : props.info.code.style;
-});
+function propertyValueTone(item: InspectPropertyItem) {
+  return resolveInspectPropertyValueTone(item.value, item);
+}
 
 function tokenClass(kind: InspectCodeToken['kind']): string {
   switch (kind) {
@@ -66,9 +66,19 @@ function tokenClass(kind: InspectCodeToken['kind']): string {
       return 'tokenString';
     case 'punct':
       return 'tokenPunct';
+    case 'comment':
+      return 'tokenComment';
     default:
       return 'tokenPlain';
   }
+}
+
+function usageSnippetLines(snippet: string) {
+  return splitInspectCodeLines(snippet).map((line, index) => ({
+    number: index + 1,
+    line,
+    tokens: tokenizeInspectValue(line),
+  }));
 }
 
 function sectionLines(title: string, content: string) {
@@ -80,14 +90,26 @@ function sectionLines(title: string, content: string) {
   }));
 }
 
-async function onCopyLine(line: string) {
+async function onCopyLine(line: string, lineKey: string) {
   if (!line.trim()) return;
   const ok = await copyDevInspectText(line);
-  copyState.value = ok ? 'done' : 'error';
-  window.setTimeout(() => {
-    copyState.value = 'idle';
-  }, 1400);
+  if (!ok) return;
+
+  if (copiedLineTimer !== undefined) {
+    window.clearTimeout(copiedLineTimer);
+  }
+  copiedLineKey.value = lineKey;
+  copiedLineTimer = window.setTimeout(() => {
+    copiedLineKey.value = null;
+    copiedLineTimer = undefined;
+  }, 1000);
 }
+
+onBeforeUnmount(() => {
+  if (copiedLineTimer !== undefined) {
+    window.clearTimeout(copiedLineTimer);
+  }
+});
 </script>
 
 <template>
@@ -96,17 +118,9 @@ async function onCopyLine(line: string) {
     :class="[$style.root, embedded && $style.rootEmbedded]"
     data-dev-inspect-copy
   >
-    <div :class="$style.header">
-      <p :class="$style.meta">
-        <span v-if="info.edsComponent">{{ info.edsComponent.vueName }}</span>
-        <span v-else-if="info.vueComponentName">{{ info.vueComponentName }}</span>
-        <span v-else>{{ info.tagName }}</span>
-      </p>
-    </div>
-
-    <section v-if="propertyItems.length > 0" :class="$style.section">
+    <div v-if="propertyItems.length > 0" :class="$style.inspectGroup">
       <p :class="$style.sectionTitle">属性</p>
-      <ul :class="$style.propRows">
+      <ul :class="[$style.propRows, $style.inspectCardFrame]">
         <li
           v-for="item in propertyItems"
           :key="`property-${item.label}`"
@@ -116,30 +130,117 @@ async function onCopyLine(line: string) {
             type="button"
             :class="$style.propButton"
             :disabled="!item.copyLine"
-            @click="onCopyLine(item.copyLine)"
+            @click="onCopyLine(item.copyLine, `property-${item.label}`)"
           >
             <span :class="$style.propLabel">{{ item.label }}</span>
-            <span :class="$style.propValue">{{ item.value }}</span>
+            <span :class="$style.propValueCell">
+              <span :class="$style.propValue">
+                <template v-if="propertyValueTone(item) === 'code'">
+                  <span
+                    v-for="(token, tokenIndex) in tokenizeInspectPropertyCodeValue(item.value)"
+                    :key="`property-value-${item.label}-${tokenIndex}`"
+                    :class="$style[tokenClass(token.kind)]"
+                  >{{ token.text }}</span>
+                </template>
+                <template v-else-if="propertyValueTone(item) === 'token'">
+                  <span
+                    v-for="(token, tokenIndex) in tokenizeInspectPropertyTokenValue(item.value)"
+                    :key="`property-value-${item.label}-${tokenIndex}`"
+                    :class="$style[tokenClass(token.kind)]"
+                  >{{ token.text }}</span>
+                </template>
+                <template v-else>{{ item.value }}</template>
+              </span>
+              <span
+                v-if="copiedLineKey === `property-${item.label}`"
+                :class="$style.copyFeedback"
+              >{{ DEV_INSPECT_COPY_FEEDBACK }}</span>
+            </span>
           </button>
         </li>
       </ul>
-      <div v-if="showUsageSnippet && info.edsComponent" :class="$style.subBlock">
-        <p :class="$style.sectionTitle">用法</p>
-        <button
-          type="button"
-          :class="$style.usageSnippet"
-          title="点击复制"
-          @click="onCopyLine(info.edsComponent!.usageSnippet)"
-        >
-          {{ info.edsComponent!.usageSnippet }}
-        </button>
-      </div>
-    </section>
+    </div>
 
-    <section
+    <div v-if="adaptiveItems.length > 0" :class="$style.inspectGroup">
+      <p :class="$style.sectionTitle">DataList适配</p>
+      <ul :class="[$style.propRows, $style.inspectCardFrame]">
+        <li
+          v-for="item in adaptiveItems"
+          :key="`adaptive-${item.label}`"
+          :class="$style.propRow"
+        >
+          <button
+            type="button"
+            :class="$style.propButton"
+            :disabled="!item.copyLine"
+            @click="onCopyLine(item.copyLine, `adaptive-${item.label}`)"
+          >
+            <span :class="$style.propLabel">{{ item.label }}</span>
+            <span :class="$style.propValueCell">
+              <span :class="$style.propValue">
+                <template v-if="propertyValueTone(item) === 'code'">
+                  <span
+                    v-for="(token, tokenIndex) in tokenizeInspectPropertyCodeValue(item.value)"
+                    :key="`adaptive-value-${item.label}-${tokenIndex}`"
+                    :class="$style[tokenClass(token.kind)]"
+                  >{{ token.text }}</span>
+                </template>
+                <template v-else-if="propertyValueTone(item) === 'token'">
+                  <span
+                    v-for="(token, tokenIndex) in tokenizeInspectPropertyTokenValue(item.value)"
+                    :key="`adaptive-value-${item.label}-${tokenIndex}`"
+                    :class="$style[tokenClass(token.kind)]"
+                  >{{ token.text }}</span>
+                </template>
+                <template v-else>{{ item.value }}</template>
+              </span>
+              <span
+                v-if="copiedLineKey === `adaptive-${item.label}`"
+                :class="$style.copyFeedback"
+              >{{ DEV_INSPECT_COPY_FEEDBACK }}</span>
+            </span>
+          </button>
+        </li>
+      </ul>
+    </div>
+
+    <div v-if="showUsageSnippet && info.edsComponent" :class="$style.inspectGroup">
+      <p :class="$style.sectionTitle">用法</p>
+      <div :class="$style.codeBlockFrame">
+        <ul :class="$style.codeLineRows">
+          <li
+            v-for="row in usageSnippetLines(info.edsComponent!.usageSnippet)"
+            :key="`usage-${row.number}`"
+            :class="$style.codeLineRow"
+          >
+            <button
+              type="button"
+              :class="$style.codeLineButton"
+              title="点击复制"
+              @click="onCopyLine(row.line, `usage-${row.number}`)"
+            >
+              <span :class="$style.lineNumber">{{ row.number }}</span>
+              <span :class="$style.lineContent">
+                <span
+                  v-for="(token, tokenIndex) in row.tokens"
+                  :key="`usage-${row.number}-${tokenIndex}`"
+                  :class="$style[tokenClass(token.kind)]"
+                >{{ token.text }}</span>
+              </span>
+              <span
+                v-if="copiedLineKey === `usage-${row.number}`"
+                :class="$style.copyFeedback"
+              >{{ DEV_INSPECT_COPY_FEEDBACK }}</span>
+            </button>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div
       v-for="section in codeSections"
       :key="`code-section-${section.title}`"
-      :class="$style.section"
+      :class="$style.inspectGroup"
     >
       <p :class="$style.sectionTitle">{{ section.title }}</p>
       <div :class="$style.codeBlockFrame">
@@ -153,7 +254,7 @@ async function onCopyLine(line: string) {
               type="button"
               :class="$style.codeLineButton"
               title="点击复制"
-              @click="onCopyLine(row.line)"
+              @click="onCopyLine(row.line, `${section.title}-${row.number}`)"
             >
               <span :class="$style.lineNumber">{{ row.number }}</span>
               <span :class="$style.lineContent">
@@ -163,48 +264,15 @@ async function onCopyLine(line: string) {
                   :class="$style[tokenClass(token.kind)]"
                 >{{ token.text }}</span>
               </span>
+              <span
+                v-if="copiedLineKey === `${section.title}-${row.number}`"
+                :class="$style.copyFeedback"
+              >{{ DEV_INSPECT_COPY_FEEDBACK }}</span>
             </button>
           </li>
         </ul>
       </div>
-    </section>
-
-    <section v-if="showCodeTabs" :class="$style.section">
-      <div :class="$style.codeHeader">
-        <p :class="$style.sectionTitle">代码</p>
-        <div :class="$style.codeTabs">
-          <button
-            type="button"
-            :class="[$style.codeTab, codeTab === 'layout' && $style.codeTabActive]"
-            @click="codeTab = 'layout'"
-          >
-            布局
-          </button>
-          <button
-            type="button"
-            :class="[$style.codeTab, codeTab === 'style' && $style.codeTabActive]"
-            @click="codeTab = 'style'"
-          >
-            样式
-          </button>
-        </div>
-      </div>
-      <ul v-if="activeCodeItems.length > 0" :class="$style.codeRows">
-        <li v-for="item in activeCodeItems" :key="`${codeTab}-${item.label}`" :class="$style.codeRow">
-          <button
-            type="button"
-            :class="$style.codeLine"
-            title="点击复制"
-            @click="onCopyLine(item.copyLine)"
-          >
-            {{ item.copyLine }}
-          </button>
-        </li>
-      </ul>
-      <p v-else :class="$style.codeEmpty">当前图层没有可映射的{{ codeTab === 'layout' ? '布局' : '样式' }} token。</p>
-    </section>
-
-    <p v-if="copyState === 'done'" :class="$style.copyToast">已复制</p>
+    </div>
   </div>
 
   <ul v-else :class="[$style.hint, embedded && $style.hintEntry]">
@@ -217,39 +285,27 @@ async function onCopyLine(line: string) {
 .root {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-3);
+  gap: var(--spacing-4);
   padding: var(--spacing-4);
   user-select: text;
 }
 
 .rootEmbedded {
   padding: 0;
+  min-height: 0;
 }
 
-.header {
+.inspectGroup {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-025);
-}
-
-.meta {
-  margin: 0;
-  font-size: var(--eds-footnote-size);
-  line-height: var(--eds-footnote-line-height);
-  color: var(--text-base-secondary);
-}
-
-.section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-1-5);
+  gap: var(--spacing-1);
 }
 
 .sectionTitle {
   margin: 0;
-  font-size: var(--eds-footnote-strong-size);
-  font-weight: var(--eds-footnote-strong-weight);
-  line-height: var(--eds-footnote-strong-line-height);
+  font-size: var(--eds-footnote-size);
+  font-weight: var(--eds-footnote-weight);
+  line-height: var(--eds-footnote-line-height);
   color: var(--text-base-primary);
 }
 
@@ -259,12 +315,43 @@ async function onCopyLine(line: string) {
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+.propRows {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  column-gap: var(--spacing-5);
+  row-gap: var(--spacing-025);
+}
+
+.codeRows,
+.codeLineRows {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-025);
 }
 
-.propRow,
+.inspectCardFrame {
+  box-sizing: border-box;
+  padding: var(--spacing-1);
+  border: var(--stroke-xs) solid var(--stroke-outline-shallow);
+  border-radius: var(--radius-xs);
+  overflow: hidden;
+}
+
+.codeText {
+  font-family: var(--eds-family-mono, ui-monospace, monospace);
+  font-size: var(--eds-footnote-size);
+  font-weight: var(--eds-footnote-weight);
+  line-height: var(--eds-footnote-line-height);
+  color: var(--text-base-primary);
+}
+
+.propRow {
+  display: contents;
+  margin: 0;
+}
+
 .codeRow,
 .codeLineRow {
   margin: 0;
@@ -272,26 +359,31 @@ async function onCopyLine(line: string) {
 
 .propButton,
 .codeLineButton {
-  display: grid;
-  grid-template-columns: minmax(88px, 38%) 1fr;
-  gap: var(--spacing-2);
-  align-items: baseline;
-  width: 100%;
   margin: 0;
-  padding: var(--spacing-1) var(--spacing-2);
   border: none;
-  border-radius: var(--radius-sm);
   background: transparent;
   text-align: left;
   cursor: pointer;
   composes: motion-ease is-hover from global;
 }
 
+.propButton {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: baseline;
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--radius-xs);
+}
+
 .codeLineButton {
-  grid-template-columns: var(--spacing-4) 1fr;
-  gap: var(--spacing-2);
-  padding: var(--spacing-1) var(--spacing-3);
-  align-items: start;
+  display: grid;
+  width: 100%;
+  grid-template-columns: var(--spacing-6) minmax(0, 1fr) auto;
+  gap: 0;
+  padding: 0;
+  border-radius: var(--radius-xs);
+  align-items: stretch;
 }
 
 .propButton:disabled {
@@ -299,184 +391,140 @@ async function onCopyLine(line: string) {
 }
 
 .propButton:hover,
-.codeLine:hover,
-.codeLineButton:hover,
-.usageSnippet:hover {
+.codeLineButton:hover {
   background: var(--event-hover);
 }
 
-.codeLineButton:hover {
-  background: color-mix(in srgb, #ffffff 8%, transparent);
-}
-
 .propLabel {
-  font-size: var(--eds-footnote-size);
-  line-height: var(--eds-footnote-line-height);
-  color: var(--text-base-tertiary, var(--text-base-secondary));
-}
-
-.propValue {
-  font-family: var(--eds-family-mono, ui-monospace, monospace);
-  font-size: var(--eds-footnote-size);
-  line-height: var(--eds-footnote-line-height);
-  color: var(--text-base-primary);
-  word-break: break-word;
-}
-
-.subBlock {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-1);
-}
-
-.usageSnippet {
-  display: block;
-  width: 100%;
-  margin: 0;
-  padding: var(--spacing-1-5) var(--spacing-2);
-  border: var(--stroke-sm) solid var(--material-decor-subtle);
-  border-radius: var(--radius-sm);
-  background: var(--box-page-subtle, transparent);
-  font-family: var(--eds-family-mono, ui-monospace, monospace);
+  white-space: nowrap;
   font-size: var(--eds-footnote-size);
   line-height: var(--eds-footnote-line-height);
   color: var(--text-base-secondary);
+}
+
+.propValueCell {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-2);
+  min-width: 0;
+}
+
+.propValueCell .copyFeedback {
+  grid-column: auto;
+  align-self: auto;
+  padding-right: 0;
+}
+
+.propValue {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--eds-family-mono, ui-monospace, monospace);
+  font-size: var(--eds-footnote-size);
+  font-weight: var(--eds-footnote-weight);
+  line-height: var(--eds-footnote-line-height);
+  color: var(--text-base-primary);
   text-align: left;
-  cursor: pointer;
-  word-break: break-all;
-  composes: motion-ease is-hover from global;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .codeBlockFrame {
-  box-sizing: border-box;
-  padding: var(--spacing-1) 0;
-  border: 1px solid #3c3c3c;
-  border-radius: var(--radius-sm);
-  background: #2b2b2b;
-  overflow: hidden;
+  composes: inspectCardFrame;
 }
 
 .lineNumber {
-  flex: 0 0 auto;
-  min-width: var(--spacing-4);
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  box-sizing: border-box;
+  min-width: var(--spacing-6);
+  padding: var(--spacing-05) var(--spacing-2);
+  border-right: var(--stroke-xs) solid var(--stroke-outline-shallow);
   font-family: var(--eds-family-mono, ui-monospace, monospace);
   font-size: var(--eds-footnote-size);
+  font-weight: var(--eds-footnote-weight);
   line-height: var(--eds-footnote-line-height);
-  color: #858585;
+  color: var(--text-base-tertiary, var(--text-base-secondary));
   text-align: right;
   user-select: none;
 }
 
 .lineContent {
+  composes: codeText;
   flex: 1 1 auto;
   min-width: 0;
-  font-family: var(--eds-family-mono, ui-monospace, monospace);
-  font-size: var(--eds-footnote-size);
-  line-height: var(--eds-footnote-line-height);
+  padding: var(--spacing-05) var(--spacing-3);
   white-space: pre-wrap;
   word-break: break-word;
   text-align: left;
 }
 
 .tokenProp,
-.tokenPunct {
-  color: #d4d4d4;
+.tokenPunct,
+.tokenPlain,
+.tokenVariable {
+  color: var(--text-base-primary);
 }
 
-.tokenKeyword {
-  color: #f78c6c;
+.tokenKeyword,
+.tokenValue {
+  color: #ec008c;
+  color: color(display-p3 0.9255 0 0.549);
 }
 
 .tokenFunction,
-.tokenVariable {
-  color: #d7ba7d;
-}
-
-.tokenVariable {
-  text-decoration: underline dashed color-mix(in srgb, #8fae8f 70%, #858585);
-  text-underline-offset: 2px;
-}
-
-.tokenValue {
-  color: #ce9178;
-}
-
-.tokenAttr {
-  color: #9cdcfe;
-}
-
 .tokenString {
-  color: #ce9178;
+  color: #b45309;
+  color: color(display-p3 0.7059 0.3255 0.0353);
 }
 
-.tokenTag {
-  color: #569cd6;
+.codeBlockFrame .tokenComment {
+  color: var(--text-base-tertiary);
 }
 
-.tokenPlain {
-  color: #d4d4d4;
+.codeBlockFrame .tokenAttr {
+  color: #006d42;
 }
 
-.codeHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--spacing-2);
+.codeBlockFrame .tokenTag {
+  color: #6d28d9;
 }
 
-.codeTabs {
-  display: inline-flex;
-  gap: var(--spacing-025);
+:global([data-theme='dark']) .tokenKeyword,
+:global([data-theme='dark']) .tokenValue {
+  color: #ff77b9;
+  color: color(display-p3 1 0.4667 0.7255);
 }
 
-.codeTab {
-  margin: 0;
-  padding: var(--spacing-025) var(--spacing-1-5);
-  border: none;
-  border-radius: var(--radius-xs);
-  background: transparent;
-  font-size: var(--eds-caption-size, var(--eds-footnote-size));
-  line-height: var(--eds-footnote-line-height);
-  color: var(--text-base-secondary);
-  cursor: pointer;
+:global([data-theme='dark']) .tokenFunction,
+:global([data-theme='dark']) .tokenString {
+  color: #e8a749;
+  color: color(display-p3 0.9098 0.6549 0.2863);
 }
 
-.codeTabActive {
-  background: var(--event-hover);
-  color: var(--text-base-primary);
+:global([data-theme='dark']) .codeBlockFrame .tokenKeyword,
+:global([data-theme='dark']) .codeBlockFrame .tokenValue,
+:global([data-theme='dark']) .codeBlockFrame .tokenTag {
+  color: #af7dff;
+  color: color(display-p3 0.6863 0.4902 1);
 }
 
-.codeLine {
-  display: block;
-  width: 100%;
-  margin: 0;
-  padding: var(--spacing-1) var(--spacing-3);
-  border: none;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  font-family: var(--eds-family-mono, ui-monospace, monospace);
-  font-size: var(--eds-footnote-size);
-  line-height: var(--eds-footnote-line-height);
-  color: var(--text-base-primary);
-  text-align: left;
-  cursor: pointer;
-  word-break: break-all;
-  composes: motion-ease is-hover from global;
+:global([data-theme='dark']) .codeBlockFrame .tokenFunction,
+:global([data-theme='dark']) .codeBlockFrame .tokenString,
+:global([data-theme='dark']) .codeBlockFrame .tokenAttr {
+  color: #54e8ae;
+  color: color(display-p3 0.3294 0.9098 0.6824);
 }
 
-.codeEmpty {
-  margin: 0;
-  font-size: var(--eds-footnote-size);
-  line-height: var(--eds-footnote-line-height);
-  color: var(--text-base-tertiary, var(--text-base-secondary));
-}
-
-.copyToast {
-  margin: 0;
+.copyFeedback {
+  grid-column: 3;
+  align-self: center;
+  padding-right: var(--spacing-1);
   font-size: var(--eds-footnote-size);
   line-height: var(--eds-footnote-line-height);
   color: var(--text-base-secondary);
-  text-align: center;
+  white-space: nowrap;
 }
 
 .hint {

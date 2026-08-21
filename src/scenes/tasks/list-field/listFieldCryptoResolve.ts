@@ -1,4 +1,4 @@
-import { cryptoNames, getProcessedCrypto, type CryptoName } from '@eds/desktop-components';
+import { cryptoNames, formatCryptoDisplayName, getProcessedCrypto, type CryptoName } from '@eds/desktop-components';
 
 function registeredCryptoNames(): CryptoName[] {
   return cryptoNames.filter((name) => Boolean(getProcessedCrypto(name))) as CryptoName[];
@@ -30,4 +30,10 @@ export function resolveCryptoNameFromSymbol(symbol: string): CryptoName | undefi
   });
 
   return matches[0];
+}
+
+/** 文档 / 用法片段用业务名（无 `eds-` 前缀）。 */
+export function resolveCryptoBusinessNameFromSymbol(symbol: string): string {
+  const resolved = resolveCryptoNameFromSymbol(symbol);
+  return resolved ? formatCryptoDisplayName(resolved) : 'btc-bitcoin';
 }

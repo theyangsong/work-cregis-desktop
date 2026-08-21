@@ -15,6 +15,11 @@ import { router } from './router';
 import { installPageCopyGuard } from './utils/preventPageCopy';
 import './styles/global.css';
 import './styles/cregis-theme.css';
+import { installShellDebugFloatLayerGuard } from '@/dev/shell-debug/installShellDebugFloatLayerGuard';
+
+if (import.meta.env.DEV) {
+  installShellDebugFloatLayerGuard();
+}
 
 initLiquidGlass();
 initEdsDesktopRuntime();

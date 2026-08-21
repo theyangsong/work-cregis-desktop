@@ -296,6 +296,11 @@ export function tasksDataListShowsBatch(menuItem: string | undefined): boolean {
   return menuItem === 'Approval' || menuItem === 'Signing';
 }
 
+/** 待签名工具栏「自动化」入口；仅 Signing。 */
+export function tasksDataListShowsAutomation(menuItem: string | undefined): boolean {
+  return menuItem === 'Signing';
+}
+
 /** Sent Request 金额列 min-width。 */
 export const SENT_REQUEST_AMOUNT_DATA_LIST_COLUMN_MIN_WIDTH = '200px';
 
@@ -785,6 +790,7 @@ export const tasksDataListCustomizeDefaults = {
   stat2Text: 'Item',
   stat2Number: '0',
   ...iconButtonProItemDefaults('batch', { label: 'Batch Processing', icon: 'eds-batch' }),
+  ...iconButtonProItemDefaults('automation', { label: 'Automation', icon: 'eds-automatic' }),
   ...iconButtonProItemDefaults('filter', { label: 'Filter', icon: 'eds-filter' }),
   ...iconButtonProItemDefaults('refresh', { label: 'Refresh', icon: 'eds-arrow-refresh' }),
   ...iconButtonProItemDefaults('export', { label: 'Export', icon: 'eds-arrow-download' }),

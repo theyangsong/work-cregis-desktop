@@ -212,9 +212,7 @@
 }
 
 .countdown {
-  font-size: var(--eds-footnote-size);
-  font-weight: var(--eds-footnote-weight);
-  line-height: var(--eds-footnote-line-height);
+  composes: typography-footnote from global;
   min-width: 0;
   max-width: 100%;
 }

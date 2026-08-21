@@ -112,6 +112,31 @@
   padding-bottom: var(--spacing-1);
 }
 
+:global(.eds-popover:has(.shell-debug-dev-inspect-popover) [class*='topToolTitle']) {
+  font-size: var(--eds-body-medium-strong-size);
+  font-weight: var(--eds-body-medium-strong-weight);
+  line-height: var(--eds-body-medium-strong-line-height);
+  color: var(--text-base-primary);
+}
+
+:global(.eds-popover:has(.shell-debug-dev-inspect-popover) [class*='contentSlotPaddingTop']) {
+  padding: var(--spacing-2) var(--spacing-4) var(--spacing-4);
+}
+
+:global(.eds-popover:has(.shell-debug-dev-inspect-popover):not(:has(.shell-debug-dev-inspect-hint)) [class*='contentBodyWithTopTool']) {
+  min-height: 360px;
+  overflow: hidden;
+}
+
+/* DS 在 contentSlot 溢出时即显示 divider；Dev Inspect 改为滚动后才显示。 */
+:global(.eds-popover:has(.shell-debug-dev-inspect-popover) .eds-divider) {
+  display: none;
+}
+
+:global(.eds-popover.shell-debug-dev-inspect-scrolled:has(.shell-debug-dev-inspect-popover) .eds-divider:not([aria-hidden='true'])) {
+  display: block;
+}
+
 .popoverContent {
   display: flex;
   flex-direction: column;
@@ -125,6 +150,19 @@
   margin-inline: 0;
   margin-bottom: 0;
   box-sizing: border-box;
+  min-height: 0;
+  overflow: visible;
+}
+
+:global(.eds-popover:has(.shell-debug-dev-inspect-popover) [class*='contentSlotWithTopTool']) {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+:global(.eds-popover:has(.shell-debug-dev-inspect-popover) [class*='contentSlotWithTopTool']::-webkit-scrollbar) {
+  display: none;
 }
 
 :global(.shell-debug-dev-inspect-hint) {

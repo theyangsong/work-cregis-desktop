@@ -51,6 +51,7 @@ import {
   tasksDataListPrimaryActionLabel,
   tasksDataListShowsActionColumn,
   tasksDataListShowsExport,
+  tasksDataListShowsAutomation,
   tasksDataListShowsBatch,
   tasksDataListShowsStatusColumn,
   tasksDataListAmountColumnAlign,
@@ -184,6 +185,7 @@ watch(
 const customizeRef = computed(() => customize);
 
 const showBatchButton = computed(() => tasksDataListShowsBatch(menuItem.value));
+const showAutomationButton = computed(() => tasksDataListShowsAutomation(menuItem.value));
 const showToolBarSectionForMenu = computed(() => showBatchButton.value);
 const { active: listInteractionBlockActive } = useListRegionInteractionBlock();
 
@@ -496,6 +498,7 @@ async function handleBatchAction(
 
 const {
   DATA_LIST_FIGMA_PAGINER,
+  automationButton,
   batchButton,
   columnHeight,
   currentPage,
@@ -901,6 +904,16 @@ const displayBatchActions = computed(() => {
               @click="onToolbarBatchClick"
             >
               <EgIcon :name="batchButton.icon" size="sm" />
+            </EgIconButtonPro>
+            <EgIconButtonPro
+              v-if="showAutomationButton"
+              :label="ui(automationButton.label)"
+              :badge="automationButton.badge"
+              :show-badge="automationButton.showBadge"
+              :show-reddot="automationButton.showReddot"
+              :disabled="skidContentLocked || automationButton.disabled"
+            >
+              <EgIcon :name="automationButton.icon" size="sm" />
             </EgIconButtonPro>
           </template>
           <template v-if="showToolBarSectionForMenu" #section>

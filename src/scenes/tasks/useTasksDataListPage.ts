@@ -151,6 +151,11 @@ export function useTasksDataListPage(
     return readIconButtonProItem(customize.value, 'batch');
   });
 
+  const automationButton = computed(() => {
+    trackSingleIconButton('automation');
+    return readIconButtonProItem(customize.value, 'automation');
+  });
+
   const filterButton = computed(() => {
     trackSingleIconButton('filter');
     return readIconButtonProItem(customize.value, 'filter');
@@ -435,6 +440,7 @@ export function useTasksDataListPage(
   return {
     DATA_LIST_FIGMA_TOOLBAR,
     DATA_LIST_FIGMA_PAGINER,
+    automationButton,
     batchButton,
     columnHeight,
     currentPage,

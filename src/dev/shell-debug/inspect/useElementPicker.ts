@@ -11,6 +11,8 @@ import {
   inspectPinnedRect,
 } from './developerInspectSession';
 
+import { isInspectFloatLayerElement } from './inspectFloatLayerScope';
+
 const PREVIEW_SELECTOR = '.app-preview';
 const BLOCK_EVENT_TYPES = ['click', 'mousedown', 'dblclick'] as const;
 
@@ -36,13 +38,17 @@ function isInspectPanelTarget(target: Element): boolean {
   return Boolean(target.closest('[data-dev-inspect-panel]'));
 }
 
+function isInspectableTarget(target: Element, preview: Element): boolean {
+  if (preview.contains(target)) return true;
+  return isInspectFloatLayerElement(target);
+}
+
 function elementFromPreviewPoint(x: number, y: number, preview: Element): Element | null {
   const stack = document.elementsFromPoint(x, y);
   for (const node of stack) {
     if (!(node instanceof Element)) continue;
-    if (!preview.contains(node)) continue;
     if (node.closest('[data-shell-debug-ui], [data-dev-inspect-overlay], [data-app-client-float-host]')) continue;
-    return node;
+    if (preview.contains(node) || isInspectFloatLayerElement(node)) return node;
   }
   return null;
 }
@@ -199,7 +205,7 @@ function onPointerDown(event: PointerEvent) {
   const preview = resolvePreview();
   if (!preview) return;
 
-  if (!(eventTarget instanceof Element) || !preview.contains(eventTarget)) {
+  if (!(eventTarget instanceof Element) || !isInspectableTarget(eventTarget, preview)) {
     if (inspectPinnedInfo.value) {
       clearInspectSelection();
     }

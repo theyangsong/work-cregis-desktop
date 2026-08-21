@@ -21,7 +21,7 @@ export function buildDetailCurrencyAmountItems(
       value: detail.amountCryptoSymbol,
       valueSymbolCrypto: detail.amountCryptoName,
       valueIcon: detail.amountCryptoName,
-      tag: detail.amountNetworkLabel || undefined,
+      tag: detail.amountNetworkLabel.trim() ? detail.amountNetworkLabel : '',
     }),
   ];
 }

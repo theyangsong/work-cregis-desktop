@@ -31,6 +31,14 @@ export const COLLABORATION_LOCALE_OVERRIDES: Record<string, readonly [string, st
   'Non-signable Transactions': ['不可签名交易', '不可簽名交易'],
   'View Reason': ['查看原因', '查看原因'],
   'Stop Signing': ['停止签名', '停止簽名'],
+  'If you exit, this signing will fail. Are you sure you want to exit?': [
+    '退出后，本次签名将会失败，是否确定退出？',
+    '退出後，本次簽名將會失敗，是否確定退出？',
+  ],
+  'After stopping, transactions that have not yet been signed will no longer be signed, while transactions that have already been signed will not be affected. Are you sure you want to stop the current batch signing task?': [
+    '停止后，尚未完成签名的交易将不再继续签名，已完成签名的交易不受影响。是否确定停止当前批量签名任务？',
+    '停止後，尚未完成簽名的交易將不再繼續簽名，已完成簽名的交易不受影響。是否確定停止當前批量簽名任務？',
+  ],
   Withdrawal: ['撤回', '撤回'],
   'Withdraw Application': ['撤回申请', '撤回申請'],
 };
@@ -90,4 +98,8 @@ export const COLLABORATION_KEY_RENAMES: Record<string, string> = {
   'Previous item': 'Previous',
   'Next item': 'Next',
   'Ready to sign': 'Ready',
+  'After exiting, this signing will fail. Are you sure you want to exit?':
+    'If you exit, this signing will fail. Are you sure you want to exit?',
+  'After stopping, transactions that have not completed signing will not continue. Completed signatures are not affected. Stop the current batch signing task?':
+    'After stopping, transactions that have not yet been signed will no longer be signed, while transactions that have already been signed will not be affected. Are you sure you want to stop the current batch signing task?',
 };

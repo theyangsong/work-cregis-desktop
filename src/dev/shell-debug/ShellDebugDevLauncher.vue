@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import {
-  EgAnchoredPopover,
+  EgAnchoredTooltip,
   EgIcon,
+  EgPopover,
   EgTooltip,
 } from '@eds/desktop-components';
 import InspectDetailPanel from './inspect/InspectDetailPanel.vue';
@@ -14,30 +15,30 @@ import {
 } from './inspect/developerInspectSession';
 import styles from './ShellDebugLauncherAnchored.module.css';
 import {
-  SHELL_DEBUG_POPOVER_CHROME_HEIGHT,
   SHELL_DEBUG_POPOVER_MAX_HEIGHT,
-  shellDebugPopoverContentMaxHeight,
 } from './shellDebugPopover.constants';
 
 const DEV_INSPECT_POPOVER_WIDTH = 360;
 const REMINDER_POPOVER_EST_WIDTH = 220;
-const POPOVER_MIN_HEIGHT = 360;
 const POPOVER_MAX_HEIGHT = SHELL_DEBUG_POPOVER_MAX_HEIGHT;
-const POPOVER_CHROME_HEIGHT = SHELL_DEBUG_POPOVER_CHROME_HEIGHT;
-const popoverContentMaxHeight = shellDebugPopoverContentMaxHeight;
 const BOUNDARY_MARGIN = 8;
 const REMINDER_AUTO_DISMISS_MS = 2000;
+const INSPECT_SCROLL_EPSILON = 2;
 
 type PopoverAlign = 'center' | 'end';
 
 /** 右侧胶囊列：popover 与 trigger 右缘对齐，箭头落在 Dev 按钮上方。 */
 const popoverAlign = ref<PopoverAlign>('end');
 const triggerRef = ref<HTMLElement | null>(null);
-const anchoredRef = ref<{ close?: () => void; open?: () => void } | null>(null);
+const anchorRef = ref<{ close?: () => void; openPanel?: () => void } | null>(null);
 const popoverExpanded = ref(false);
 const pendingDeactivate = ref(false);
 let reminderDismissTimer: ReturnType<typeof setTimeout> | undefined;
 let deactivateTimer: ReturnType<typeof setTimeout> | undefined;
+let inspectScrollSlot: HTMLElement | null = null;
+let inspectScrollPopover: HTMLElement | null = null;
+let inspectScrollListener: (() => void) | undefined;
+let inspectScrollResizeObserver: ResizeObserver | undefined;
 
 /** 与 AnchoredTooltip microFloat leave 时长对齐（默认约 300ms）。 */
 const DEACTIVATE_AFTER_CLOSE_MS = 320;
@@ -59,7 +60,7 @@ function scheduleReminderDismiss() {
   reminderDismissTimer = setTimeout(() => {
     reminderDismissTimer = undefined;
     if (developerInspectActive.value && !inspectPinnedInfo.value) {
-      anchoredRef.value?.close?.();
+      anchorRef.value?.close?.();
     }
   }, REMINDER_AUTO_DISMISS_MS);
 }
@@ -95,7 +96,7 @@ function stopDeveloperInspect() {
 
   if (popoverExpanded.value) {
     pendingDeactivate.value = true;
-    anchoredRef.value?.close?.();
+    anchorRef.value?.close?.();
     return;
   }
 
@@ -130,26 +131,30 @@ function syncPopoverAlign() {
   popoverAlign.value = resolvePopoverAlign();
 }
 
+/** 直接 openPanel，绕过 EgAnchoredPopover.onTriggerClick 里的 closeAllAnchoredTooltips。 */
 function openDevPanel() {
   syncPopoverAlign();
   nextTick(() => {
-    anchoredRef.value?.open?.();
+    anchorRef.value?.openPanel?.();
   });
 }
 
-function onTriggerClick(event: MouseEvent, active: boolean, open: () => void) {
+function onTriggerClick(event: MouseEvent) {
   event.preventDefault();
   event.stopPropagation();
 
-  if (active || developerInspectActive.value) {
+  if (popoverExpanded.value || developerInspectActive.value) {
     stopDeveloperInspect();
     return;
   }
 
   clearInspectSelection();
   setDeveloperInspectActive(true);
-  syncPopoverAlign();
-  open();
+  openDevPanel();
+}
+
+function closeDevPanel() {
+  anchorRef.value?.close?.();
 }
 
 function onPopoverOpen() {
@@ -157,6 +162,7 @@ function onPopoverOpen() {
   syncPopoverAlign();
   nextTick(() => {
     syncPopoverAlign();
+    bindInspectScrollChrome();
   });
   if (isReminderState.value) {
     scheduleReminderDismiss();
@@ -166,10 +172,61 @@ function onPopoverOpen() {
 function onPopoverClose() {
   popoverExpanded.value = false;
   clearReminderDismissTimer();
+  unbindInspectScrollChrome();
   if (pendingDeactivate.value) {
     pendingDeactivate.value = false;
     scheduleFinishDeactivate();
   }
+}
+
+function syncInspectDividerScrollState() {
+  const slot = inspectScrollSlot;
+  const popover = inspectScrollPopover;
+  if (!slot || !popover) return;
+
+  const canScroll = slot.scrollHeight - slot.clientHeight > INSPECT_SCROLL_EPSILON;
+  const scrolled = slot.scrollTop > INSPECT_SCROLL_EPSILON;
+  popover.classList.toggle('shell-debug-dev-inspect-scrolled', canScroll && scrolled);
+}
+
+function unbindInspectScrollChrome() {
+  if (inspectScrollSlot && inspectScrollListener) {
+    inspectScrollSlot.removeEventListener('scroll', inspectScrollListener);
+  }
+  inspectScrollResizeObserver?.disconnect();
+  inspectScrollResizeObserver = undefined;
+  inspectScrollSlot = null;
+  inspectScrollPopover?.classList.remove('shell-debug-dev-inspect-scrolled');
+  inspectScrollPopover = null;
+  inspectScrollListener = undefined;
+}
+
+function bindInspectScrollChrome() {
+  unbindInspectScrollChrome();
+  if (isReminderState.value) return;
+
+  nextTick(() => {
+    const panel = document.querySelector('[data-dev-inspect-panel].shell-debug-dev-inspect-popover');
+    if (!(panel instanceof HTMLElement)) return;
+
+    const slot = panel.closest('[class*="contentSlotWithTopTool"]');
+    const popover = panel.closest('.eds-popover');
+    if (!(slot instanceof HTMLElement) || !(popover instanceof HTMLElement)) return;
+
+    inspectScrollSlot = slot;
+    inspectScrollPopover = popover;
+    inspectScrollListener = () => syncInspectDividerScrollState();
+    slot.addEventListener('scroll', inspectScrollListener, { passive: true });
+    inspectScrollResizeObserver = new ResizeObserver(() => syncInspectDividerScrollState());
+    inspectScrollResizeObserver.observe(slot);
+    syncInspectDividerScrollState();
+  });
+}
+
+function resetInspectScrollPosition() {
+  if (!inspectScrollSlot) return;
+  inspectScrollSlot.scrollTop = 0;
+  syncInspectDividerScrollState();
 }
 
 watch(
@@ -178,6 +235,10 @@ watch(
     clearReminderDismissTimer();
     if (!info || !developerInspectActive.value) return;
     openDevPanel();
+    nextTick(() => {
+      bindInspectScrollChrome();
+      resetInspectScrollPosition();
+    });
   },
 );
 
@@ -194,85 +255,89 @@ onMounted(() => {
 onBeforeUnmount(() => {
   clearReminderDismissTimer();
   clearDeactivateTimer();
+  unbindInspectScrollChrome();
 });
 </script>
 
 <template>
   <div ref="triggerRef">
-    <EgAnchoredPopover
-      ref="anchoredRef"
+    <EgAnchoredTooltip
+      ref="anchorRef"
       placement="top"
       :align="popoverAlign"
-      :width-mode="isReminderState ? 'adaptive' : 'fixed'"
-      :width="isReminderState ? undefined : DEV_INSPECT_POPOVER_WIDTH"
-      height-mode="adaptive"
-      :max-height="isReminderState ? undefined : POPOVER_MAX_HEIGHT"
-      :top-tool="Boolean(pinnedInfo)"
-      :top-tool-title="panelTitle"
-      top-tool-closable
+      trigger="click"
+      :click-toggle="false"
+      :wrap-tooltip="false"
       :close-on-scroll="false"
       teleport-to="body"
       boundary-selector="body"
       @open="onPopoverOpen"
       @close="onPopoverClose"
     >
-      <template #trigger="{ active, onClick }">
-        <span
-          data-eds-trigger-metrics
-          :class="[
-            styles.triggerMetrics,
-            developerInspectActive && styles.triggerMetricsDevActive,
-          ]"
+      <span
+        data-eds-trigger-metrics
+        :class="[
+          styles.triggerMetrics,
+          developerInspectActive && styles.triggerMetricsDevActive,
+        ]"
+      >
+        <EgTooltip
+          :class="styles.launcherShell"
+          panel-kind="popup"
+          panel-radius="radius-full"
+          width-mode="adaptive"
+          height-mode="adaptive"
+          :scrollable="false"
         >
-          <EgTooltip
-            :class="styles.launcherShell"
-            panel-kind="popup"
-            panel-radius="radius-full"
-            width-mode="adaptive"
-            height-mode="adaptive"
-            :scrollable="false"
+          <button
+            type="button"
+            :class="[
+              styles.launcherButton,
+              developerInspectActive && styles.launcherButtonDevActive,
+            ]"
+            aria-label="Toggle developer inspect tools"
+            :aria-pressed="developerInspectActive"
+            :aria-expanded="popoverExpanded"
+            @click.stop.prevent="onTriggerClick"
           >
-            <button
-              type="button"
-              :class="[
-                styles.launcherButton,
-                developerInspectActive && styles.launcherButtonDevActive,
-              ]"
-              aria-label="Toggle developer inspect tools"
-              :aria-pressed="developerInspectActive"
-              :aria-expanded="active"
-              @click.stop.prevent="onTriggerClick($event, active, onClick)"
-            >
-              <span :class="styles.launcherIcon" aria-hidden="true">
-                <EgIcon name="eds-sign-hashtag" size="sm" />
-              </span>
-              <span :class="styles.launcherLabel">Dev</span>
-            </button>
-          </EgTooltip>
-        </span>
-      </template>
+            <span :class="styles.launcherIcon" aria-hidden="true">
+              <EgIcon name="eds-sign-hashtag" size="sm" />
+            </span>
+            <span :class="styles.launcherLabel">Dev</span>
+          </button>
+        </EgTooltip>
+      </span>
 
-      <template #default>
-        <div
-          v-if="isReminderState"
-          class="shell-debug-dev-inspect-hint"
-          data-dev-inspect-panel
+      <template #content>
+        <EgPopover
+          placement="top"
+          :align="popoverAlign"
+          :width-mode="isReminderState ? 'adaptive' : 'fixed'"
+          :width="isReminderState ? undefined : DEV_INSPECT_POPOVER_WIDTH"
+          height-mode="adaptive"
+          :max-height="isReminderState ? undefined : POPOVER_MAX_HEIGHT"
+          :top-tool="Boolean(pinnedInfo)"
+          :top-tool-title="panelTitle"
+          top-tool-closable
+          @top-tool-close="closeDevPanel"
         >
-          <InspectDetailPanel :info="null" embedded />
-        </div>
-        <div
-          v-else
-          class="shell-debug-popover-content shell-debug-dev-inspect-popover"
-          :class="styles.popoverContent"
-          data-dev-inspect-panel
-          :style="{
-            minHeight: `${POPOVER_MIN_HEIGHT - POPOVER_CHROME_HEIGHT}px`,
-            maxHeight: `${popoverContentMaxHeight}px`,
-          }"
-        >
-          <InspectDetailPanel :info="pinnedInfo" embedded />
-        </div>
+          <div
+            v-if="isReminderState"
+            class="shell-debug-dev-inspect-hint"
+            data-dev-inspect-panel
+          >
+            <InspectDetailPanel :info="null" embedded />
+          </div>
+          <div
+            v-else
+            class="shell-debug-popover-content shell-debug-dev-inspect-popover"
+            :class="styles.popoverContent"
+            data-dev-inspect-panel
+          >
+            <InspectDetailPanel :info="pinnedInfo" embedded />
+          </div>
+        </EgPopover>
       </template>
-    </EgAnchoredPopover>
+    </EgAnchoredTooltip>
   </div>
 </template>

@@ -11,6 +11,37 @@ alwaysApply: true
 > **DS 权威**：`../eds-desktop/.cursor/rules/eds-project.mdc`、`packages/tokens/spec/**`。  
 > **Showcase 无兜底**：Showcase 外层 Website 壳会继承无效 token；本仓库无效 token 直接失效。
 
+## Agent 工作思路
+
+**【必须】** 收到任务后**先思考、再动手**——禁止一上来就写代码。顺序固定为：
+
+```
+听清需求 → 还原真问题 → 分步分析 → 定边界与验收表 → 再改代码 → 校验 + 简明反馈
+```
+
+| 阶段 | **【必须】** | **【禁止】** |
+|------|------------|------------|
+| 1. 听清需求 | 区分「用户要什么」与「我假设什么」；有截图 / DOM Path 时逐层对照 | 凭直觉套方案名（借名、继承、特判）直接开改 |
+| 2. 还原真问题 | 读 **DS 源码**、DOM 结构、现有规则真源；弄清「现象根因」而非「表象症状」 | 只改业务侧补丁、不查引用库 / 规则为何失效 |
+| 3. 分步分析 | 列出 2～3 种可行路径及各自会踩的坑；职责是否该分离（展示 vs 数据 vs 命名） | 局部修一块留一块；方案被否后仍在旧路上打补丁 |
+| 4. 定边界 | 写清 **什么进 A、什么进 B、什么禁止**；复杂交互用表格列「操作 → 名字 → 属性 / 祖先」 | 边界模糊就写代码「试一把」 |
+| 5. 再改代码 | 小步、可验证；改规则同步想回归（同名、参数串位、HMR） | 大范围 refactor 混在同一 diff |
+| 6. 校验 + 反馈 | 跑相关 `verify-*` / `typecheck`；结论一句 + 原因 + 分层表 + 怎么验 | 空喊「理解一致」；改完只说「已通过」不说明验了什么 |
+
+**反馈格式（给用户）**：结论一句 → 根因 → 分层表或对照表 → 校验项 → 是否需要用户目测的一步。
+
+**案例（Shell Debug Inspect · 点谁是谁）**—— 职责分离比堆规则更稳：
+
+| 职责 | 放哪里 | 说明 |
+|------|--------|------|
+| 当前层叫什么 | `primaryLabel`（五条命名规则） | 只描述**点到的这一层**自己是什么 |
+| 点不到的父层 | 属性面板首行「祖先」 | 祖先是存在的，只是点不到（如 ToolBar 根被 `.raw` 铺满） |
+| 父子同名 / 参数串位 | **【禁止】** 祖先回流进名字或 props | 历史上子树借名、外壳借名、`__vnode.ctx` 继承均因此回归 |
+
+「来自设计系统」= 节点**自己**是 DS 组件或具名区域，不是「被 DS 组件渲染」—— `_functionalGroup_` 由 ToolBar 渲染，但它只是 `<div>` → 名字 `Div`，祖先 `ToolBar`。
+
+方案被用户判定**不稳定**（如外壳类借名白名单）→ **整轮回撤**，换边界更清晰的方案，勿在废弃方案上续修补丁。
+
 **规则用语**
 
 | 标记 | 含义 |
@@ -25,8 +56,9 @@ alwaysApply: true
 
 | 主题 | 章节 |
 |------|------|
+| Agent 工作思路（先思考再动手） | 文首 |
 | 禁止复制、Desktop-only | §1 |
-| 本仓库 vs eds-desktop、同步、dev HMR | §2 |
+| 本仓库 vs eds-desktop、同步、dev HMR、Git 推送 | §2 |
 | DOM、EgPopup 挂载位置 | §3 |
 | Eg* 组件用法 | §4 |
 | UI 文案 i18n | §5 |
@@ -116,6 +148,30 @@ alwaysApply: true
 `src/scenes/tasks/list-field/listFieldCryptoSampleAddresses.ts` 含业务专用导出：`getPinnedAddressForRow`、`ton`/`sui`、`familyOverride`、`DEMO_ADDRESS_POOL_MIN = 23`。
 
 **【禁止】** showcase 同名文件整文件替换（sync 已 skip）。**【必须】** 保留 marker；`node scripts/verify-list-field-crypto.mjs` 校验。Tasks 整页空白 → 先查此文件。
+
+### 2.5 Git 提交与推送（双仓库 + Pages CI）
+
+本仓库 Pages CI（`.github/workflows/deploy-pages.yml`）会 **按 SHA pin** 检出远程 `theyangsong/evergreen-design-system-desktop`。本地未推的 DS 提交、或 pin 指向远程不存在的 SHA，都会让 Deploy 失败。
+
+**【禁止】** Agent 主动执行 `git push`（含 `--force`、upstream 首次推送）。用户说「推」之后：**只** 准备 commit 说明、预检命令、以及用户可复制的 `git push` 命令；**由用户在自己的终端推送**。
+
+**【必须】** 用户要求推送时，视为「截止当前、两个仓库一起最新」：
+
+| 仓库 | 必须包含 |
+|------|----------|
+| `../eds-desktop` | 本次相关的 DS 改动已提交到 **远程** `main`（`.vscode/` 等 IDE 文件默认不提交） |
+| 本仓库 | 业务改动 + CI 里 `Checkout eds-desktop` 的 `ref` = **该远程最新 SHA** |
+
+**【禁止】** 只改 pin、不把对应 DS 本地改动推到远程；**【禁止】** pin 用仅存在于本机的 SHA。
+
+**【必须】** 推送前一次验完，再交给用户推；**【禁止】** 推完再靠反复修 CI 补洞。至少：
+
+1. 两仓库工作区干净（仅允许用户明确排除的未跟踪文件，如 `.vscode/`）。
+2. `pnpm typecheck`（及本次改动相关的 lint / 业务校验）。
+3. 本地按 Pages 同路径预览：`VITE_BASE_PATH=/work-cregis-desktop/` 的 preview（端口 **4174**，勿占用 `pnpm dev` 的 **4173**）。
+4. 确认 pin SHA 在远程存在：`git ls-remote` / `git fetch` 后 `git cat-file -e <sha>`。
+
+用户未要求 commit / push 时，**不得** 提交或推送。
 
 ---
 
@@ -389,9 +445,31 @@ usePopupShellLifecycle({
 
 ### 7.5 Shell Debug（DEV only）
 
+**【必须】** 壳外工具与 `.app-preview` 业务 **互不影响**：调 Inspect / QA / Popover 只改 `src/dev/shell-debug/**`（及 `AppRoot.vue` 的 DEV 挂载）；**【禁止】** 为壳外改 `src/views/**`、`src/scenes/**`、业务布局/CSS。业务 **【禁止】** import `src/dev/**` 或为 Dev 加 `if (DEV)`。
+
 **【允许】** 只改 `src/dev/shell-debug/**`；import 业务已 export API。**【禁止】** 业务 `import src/dev/**`；为 QA 改 `src/scenes/**`。
 
-详案：`src/dev/shell-debug/AGENTS.md`。
+**Inspect 命名（点谁是谁）** — 真源 `src/dev/shell-debug/inspect/inspectNamingRules.ts`，五条规则按序判定：
+
+1. 原子图形宿主（`.eds-icon` / `.eds-crypto` / `.eds-avatar`）→ 宿主组件
+2. 节点自身 catalog `eds-*` 根类 **或** 节点就是**任意** DS 包组件 Vue DOM 根 → 该组件 + props
+3. 排版文本叶子 → `Text`
+4. DS 组件 CSS Module 的具名 Figma 区域（`Pagination`、`Apply_Item`）→ 区域名
+5. 其余 → HTML 标签（`Div` / `Span` / `Td`…）
+
+**【必须】** 一层一名：内层要不要组件名，只看 **它自己是什么** —— 自己是 DS 组件 → 组件名；自己只有 CSS Module 类 → HTML 标签。**「来自设计系统」= 节点自己就是 DS 组件**，不是「被 DS 组件渲染」（`_functionalGroup_` 由 `ToolBar.vue` 渲染，但它自己只是 `<div>` → `Div`）。
+
+**点不到的父层走属性面板首行「祖先」**（`resolveInspectAncestorName.ts`）：`ToolBar.module.css` 的 `.root` / `.chrome` 无内边距、`width: 100%`，被 `.raw` 完全铺满，`header.eds-tool-bar` 没有可点像素 —— 祖先存在只是点不到，故单独成一行属性。**【必须】** 取最近**具名**层（纯标签层返回 `null`）；恒为**第一条** item；组件 props 与元素属性**两条路径**都加。**【禁止】** 祖先回流进 `primaryLabel` / `componentChain` / props。**【禁止】** 重提「外壳类借名」方案（白名单无法稳定界定，业务也会打 `eds-popup-inner-backdrop`）。
+
+**【禁止】** 任何形式的祖先取名 —— `root.contains(element)`、沿 `parentElement` 回溯最近具名层取**名字**、按渲染归属（`__vnode.ctx`）继承。三者都会让父级与子级同名（如 ToolBar 根与内部 `_functional_`），属性与代码片段随之取到同一份参数。组件内部普通容器（`_stage_` / `_functional_` / `_itemTitle_` / `_cellContent_`）在 DS 里就是 `<div>` → 走规则 5。
+
+**【必须】** R2 覆盖**任意** DS 包组件根（DS 105 个组件里 33 个未入 catalog，用 dev 的 `__file` 判定）。未入 catalog 只是「没有精选 props」，**【禁止】** 让其根退化成 HTML 标签 —— 否则 `Verify` / `CryptoAddress` / `MinerFee*Panel` 会显示成外层 `Popup`。
+
+**【必须】** 同组件多 Figma 角色走 catalog `resolveDisplayName` hook（现有：`EgTooltip` 按 `panelKind` → `PopupBox` / `ContainerBox`，依据 tokens `effect/semantic.json` 的 `title`），**【禁止】** 在 resolver 写逐组件 `if` 或直读 `entry.displayName` 旁路。
+
+**【禁止】** R4 区域层复制组件 props（props 只属规则 2 组件根）；**【禁止】** 为普通容器编造区域名或与 catalog 组件重名；**【禁止】** UI 层另起命名 fallback。
+
+**【必须】** 改 Inspect 后跑 `node scripts/verify-shell-debug-inspect-naming.mjs`（12 项不变量，已接 `predev` / `prebuild`）。详案：`src/dev/shell-debug/AGENTS.md`。
 
 ---
 
@@ -411,6 +489,7 @@ usePopupShellLifecycle({
 - [ ] 网络 Tag 链全名（§6.4）
 - [ ] dev HMR 已目测（§2.3）
 - [ ] `listFieldCryptoSampleAddresses.ts` 业务扩展仍在
+- [ ] 若本次含 DS 改动：远程 eds-desktop 已含对应提交；CI pin 与该 SHA 一致（§2.5）
 
 ---
 
@@ -428,6 +507,7 @@ usePopupShellLifecycle({
 | 批处理 | `src/scenes/tasks/signing/batch/useSigningBatchFlow.ts` |
 | list-field 校验 | `scripts/verify-list-field-crypto.mjs` |
 | Shell Debug | `src/dev/shell-debug/AGENTS.md` |
+| Pages CI pin | `.github/workflows/deploy-pages.yml`（`Checkout eds-desktop` 的 `ref`） |
 
 ---
 
@@ -435,8 +515,10 @@ usePopupShellLifecycle({
 
 | 字段 | 值 |
 |------|-----|
-| 文档版本 | 2.0 |
+| 文档版本 | 2.2 |
 | 合并 `i18n.mdc` + `top&botton-mask.mdc` + 历史分散规则 → 单文件 | 2026-08-18 |
+| 增补 §2.5 Git 推送 / Pages pin | 2026-08-19 |
+| 增补文首 Agent 工作思路（先思考再动手） | 2026-08-21 |
 | 维护 | EDS Desktop 维护者 |
 
 **本规范为业务项目强制约束。违反项须在 PR 修正或取得维护者书面例外。**

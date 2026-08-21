@@ -91,6 +91,7 @@ export const UI_TEXT_ZH_CN: Record<string, string> = {
   // Data list toolbar & paginer
   Item: '项',
   'Batch Processing': '批处理',
+  Automation: '自动化',
   Selected: '已选中',
   '{ num } Selected': '已选中',
   Filter: '筛选',
@@ -363,11 +364,11 @@ export const UI_TEXT_ZH_CN: Record<string, string> = {
   'Increase quota': '提升额度',
   'Selected {count} transactions': '本次选择 {count} 笔交易',
   'Stop Signing': '停止签名',
-  'After stopping, transactions that have not completed signing will not continue. Completed signatures are not affected. Stop the current batch signing task?':
-    '停止后，尚未完成签名的交易将不再继续签名，已完成签名的交易不受影响。是否确认停止当前批量签名任务？',
-  'Warm reminder': '温馨提示',
-  'After exiting, this signing will fail. Are you sure you want to exit?':
+  'If you exit, this signing will fail. Are you sure you want to exit?':
     '退出后，本次签名将会失败，是否确定退出？',
+  'After stopping, transactions that have not yet been signed will no longer be signed, while transactions that have already been signed will not be affected. Are you sure you want to stop the current batch signing task?':
+    '停止后，尚未完成签名的交易将不再继续签名，已完成签名的交易不受影响。是否确定停止当前批量签名任务？',
+  'Warm reminder': '温馨提示',
   'Insufficient Withdrawal Limit': '提币额度不足',
   'Withdrawal quota exceeded': '超出提币额度',
   'Team withdrawal quota remaining ${remaining}. A 0.1% over-quota service fee applies to the excess. This transaction will incur ${overageFee} in over-quota service fees. We recommend upgrading your team plan or expanding your withdrawal package to waive over-quota fees and enjoy a higher withdrawal limit.':

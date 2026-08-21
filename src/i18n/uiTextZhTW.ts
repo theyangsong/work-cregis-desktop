@@ -276,6 +276,10 @@ export const UI_TEXT_ZH_TW: Record<string, string> = {
   'Insufficient miner fee': '礦工費不足',
   'Increase quota': '提升額度',
   'Stop Signing': '停止簽名',
+  'If you exit, this signing will fail. Are you sure you want to exit?':
+    '退出後，本次簽名將會失敗，是否確定退出？',
+  'After stopping, transactions that have not yet been signed will no longer be signed, while transactions that have already been signed will not be affected. Are you sure you want to stop the current batch signing task?':
+    '停止後，尚未完成簽名的交易將不再繼續簽名，已完成簽名的交易不受影響。是否確定停止當前批量簽名任務？',
   'Warm reminder': '溫馨提示',
   'Insufficient Withdrawal Limit': '提幣額度不足',
   'Withdrawal quota exceeded': '超出提幣額度',

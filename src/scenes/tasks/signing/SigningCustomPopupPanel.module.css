@@ -86,6 +86,11 @@
   color: var(--material-base-tertiary);
 }
 
+.systemBarClose :global(.eds-icon-button .eds-icon .eds-i-f),
+.systemBarClose :global(.eds-icon-button .eds-icon path) {
+  fill: currentColor;
+}
+
 .systemBarClose :global(.eds-icon-button:hover:not(:disabled):not(.isDisabled)),
 .systemBarClose :global(.eds-icon-button:focus-visible:not(:disabled):not(.isDisabled)),
 .systemBarClose :global(.eds-icon-button:active:not(:disabled):not(.isDisabled)) {
@@ -93,9 +98,12 @@
 }
 
 .systemBarClose :global(.eds-icon-button:hover:not(:disabled):not(.isDisabled) > span),
-.systemBarClose :global(.eds-icon-button:focus-visible:not(:disabled):not(.isDisabled) > span),
-.systemBarClose :global(.eds-icon-button:active:not(:disabled):not(.isDisabled) > span) {
+.systemBarClose :global(.eds-icon-button:focus-visible:not(:disabled):not(.isDisabled) > span) {
   color: var(--material-base-secondary);
+}
+
+.systemBarClose :global(.eds-icon-button:active:not(:disabled):not(.isDisabled) > span) {
+  color: var(--material-base-tertiary);
 }
 
 .scroll {
