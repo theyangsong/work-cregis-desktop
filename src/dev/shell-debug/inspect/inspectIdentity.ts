@@ -11,7 +11,7 @@ import {
 } from './edsInspectCatalog';
 import { isStructuralEdsDomClass } from './edsInspectStructuralDom';
 
-type VueComponentInternal = {
+export type VueComponentInternal = {
   type?: { name?: string; __name?: string };
   parent?: VueComponentInternal;
   props?: Record<string, unknown>;
@@ -30,7 +30,7 @@ function resolveVueComponentName(instance: VueComponentInternal): string | null 
   return instance.type?.name || instance.type?.__name || null;
 }
 
-function resolveComponentRootElement(instance: VueComponentInternal): Element | null {
+export function resolveComponentRootElement(instance: VueComponentInternal): Element | null {
   const subTreeEl = instance.subTree?.el;
   if (subTreeEl instanceof Element) return subTreeEl;
   const vnodeEl = instance.vnode?.el;
@@ -38,7 +38,7 @@ function resolveComponentRootElement(instance: VueComponentInternal): Element | 
   return null;
 }
 
-function walkVueChain(element: Element): VueComponentInternal[] {
+export function walkVueChain(element: Element): VueComponentInternal[] {
   const chain: VueComponentInternal[] = [];
   const probe = element as Element & { __vueParentComponent?: VueComponentInternal };
   let current = probe.__vueParentComponent;

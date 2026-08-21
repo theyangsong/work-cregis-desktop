@@ -6,6 +6,7 @@ import {
   EgTooltip,
 } from '@eds/desktop-components';
 import styles from './ShellDebugLauncherAnchored.module.css';
+import { markShellDebugUiInteraction } from './installShellDebugFloatLayerGuard';
 import {
   SHELL_DEBUG_POPOVER_CHROME_HEIGHT,
   SHELL_DEBUG_POPOVER_MAX_HEIGHT,
@@ -73,6 +74,11 @@ function syncPopoverAlign() {
   popoverAlign.value = resolvePopoverAlign();
 }
 
+function onLauncherPointerDown(event: PointerEvent) {
+  event.stopPropagation();
+  markShellDebugUiInteraction();
+}
+
 function onTriggerClick(event: MouseEvent, active: boolean, open: () => void) {
   event.preventDefault();
   event.stopPropagation();
@@ -126,6 +132,7 @@ onMounted(() => {
             :class="styles.launcherButton"
             :aria-label="triggerAriaLabel"
             :aria-expanded="active"
+            @pointerdown.stop="onLauncherPointerDown"
             @click.stop.prevent="onTriggerClick($event, active, onClick)"
           >
             <span :class="styles.launcherIcon" aria-hidden="true">

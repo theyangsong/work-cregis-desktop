@@ -1,7 +1,11 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { computed } from 'vue';
 import { EgDivider, EgListFieldOverflowText } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
+import {
+  formatExpiryCountdownHms,
+  parseExpiryCountdownTotal,
+} from '../shared/expiryCountdownUtils';
 import { splitBusinessTypeSecondaryKey } from './businessTypeDisplay';
 import styles from './TasksListFieldOperationType.module.css';
 
@@ -38,78 +42,18 @@ const cellMinWidthStyle = computed(() => {
   return { minWidth: `${parsed}px` };
 });
 
-function parseExpiryCountdownTotal(hoursRaw: string, minutesRaw: string, secondsRaw: string): number {
-  const hours = Math.max(0, Number.parseInt(hoursRaw, 10) || 0);
-  const minutes = Math.max(0, Number.parseInt(minutesRaw, 10) || 0);
-  const seconds = Math.max(0, Number.parseInt(secondsRaw, 10) || 0);
-  return hours * 3600 + minutes * 60 + seconds;
-}
-
-function formatCountdownTotal(totalSeconds: number): string {
-  const total = Math.max(0, totalSeconds);
-  const hours = Math.floor(total / 3600);
-  const minutes = Math.floor((total % 3600) / 60);
-  const seconds = total % 60;
-  if (hours > 0) {
-    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-  }
-  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-}
-
-const countdownRemainingSeconds = ref(0);
-let countdownTimer: ReturnType<typeof setInterval> | undefined;
-
-function clearCountdownTimer() {
-  if (countdownTimer !== undefined) {
-    clearInterval(countdownTimer);
-    countdownTimer = undefined;
-  }
-}
-
-function resetCountdownFromCustomize() {
-  clearCountdownTimer();
-  if (!showCountdown.value) {
-    countdownRemainingSeconds.value = 0;
-    return;
-  }
-  countdownRemainingSeconds.value = parseExpiryCountdownTotal(
-    String(props.customize.countdownHours ?? '0'),
-    String(props.customize.countdownMinutes ?? '30'),
-    String(props.customize.countdownSeconds ?? '00'),
-  );
-  countdownTimer = setInterval(() => {
-    if (countdownRemainingSeconds.value <= 0) {
-      clearCountdownTimer();
-      return;
-    }
-    countdownRemainingSeconds.value -= 1;
-  }, 1000);
-}
-
-watch(
-  () => [
-    props.customize.showCountdown,
-    props.customize.countdownHours,
-    props.customize.countdownMinutes,
-    props.customize.countdownSeconds,
-  ],
-  () => {
-    resetCountdownFromCustomize();
-  },
-  { immediate: true },
-);
-
-onBeforeUnmount(() => {
-  clearCountdownTimer();
-});
-
 const countdownSuffixKey = computed(() =>
   String(props.customize.countdownSuffixKey ?? 'Expires in xx:xx').trim() || 'Expires in xx:xx',
 );
 
+/** 列表仅展示静态 H:MM:SS；实时倒计时只在详情 ExpiryCountdown。 */
 const countdownListText = computed(() => {
-  const total = countdownRemainingSeconds.value;
-  return `${formatCountdownTotal(total)} ${ui(countdownSuffixKey.value)}`;
+  const total = parseExpiryCountdownTotal(
+    String(props.customize.countdownMinutes ?? '30'),
+    String(props.customize.countdownSeconds ?? '00'),
+    String(props.customize.countdownHours ?? '0'),
+  );
+  return `${formatExpiryCountdownHms(total)} ${ui(countdownSuffixKey.value)}`;
 });
 </script>
 

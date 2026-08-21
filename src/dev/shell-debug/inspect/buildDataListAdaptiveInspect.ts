@@ -3,19 +3,19 @@ import {
   getVisibleColumnSlotIndices,
   resolveColumnMinWidthPx,
 } from '@eds/desktop-components/organisms/data-list/useResponsiveColumns';
+import { lookupEdsCatalogByVueName } from './edsInspectCatalog';
 import type { InspectPropertyItem } from './buildElementInspectInfo';
+import { resolveComponentRootElement, walkVueChain, type VueComponentInternal } from './inspectIdentity';
 
 const DATA_LIST_ROOT_SELECTOR = '.eds-data-list';
 const SELECT_COLUMN_WIDTH_PX = 40;
+const DATA_LIST_INSPECT_EXCLUDE_SELECTORS = '.eds-popup, .eds-detail';
 
-type VueInternal = {
-  type?: { name?: string; __name?: string };
-  parent?: VueInternal;
+type VueInternal = VueComponentInternal & {
   props?: Record<string, unknown>;
   setupState?: Record<string, unknown>;
   slots?: Record<string, (...args: unknown[]) => VNode[]>;
   ctx?: { slots?: Record<string, (...args: unknown[]) => VNode[]> };
-  subTree?: { el?: Element };
 };
 
 export type DataListColumnAdaptiveConfig = {
@@ -48,22 +48,40 @@ function isPresentAttr(value: unknown): boolean {
   return value === true || value === '';
 }
 
-function parsePx(value?: string): number {
-  if (!value) return 0;
-  const parsed = Number.parseFloat(value);
-  return Number.isFinite(parsed) ? parsed : 0;
+function resolveVueComponentName(instance: VueInternal): string | null {
+  return instance.type?.name || instance.type?.__name || null;
 }
 
-function resolveDataListVueInstance(dataListEl: Element): VueInternal | null {
-  const probe = dataListEl as Element & { __vueParentComponent?: VueInternal };
-  let current = probe.__vueParentComponent;
-  while (current) {
-    const name = current.type?.name || current.type?.__name;
-    if (name === 'DataList' || name === 'EgDataList') {
-      return current;
-    }
-    current = current.parent;
+function isDataListInstance(instance: VueInternal): boolean {
+  const vueName = resolveVueComponentName(instance);
+  if (!vueName) return false;
+  if (vueName === 'DataList' || vueName === 'EgDataList') return true;
+  return lookupEdsCatalogByVueName(vueName)?.displayName === 'DataList';
+}
+
+function instanceOwnsDataListRoot(instance: VueInternal, dataListRoot: HTMLElement): boolean {
+  const root = resolveComponentRootElement(instance);
+  if (!(root instanceof Element)) return false;
+  return root === dataListRoot || root.contains(dataListRoot);
+}
+
+function resolveDataListVueInstance(probe: Element, dataListRoot: HTMLElement): VueInternal | null {
+  const starts = new Set<Element>([probe, dataListRoot]);
+  let el: Element | null = dataListRoot.parentElement;
+  while (el) {
+    starts.add(el);
+    el = el.parentElement;
   }
+
+  for (const start of starts) {
+    for (const instance of walkVueChain(start)) {
+      if (!isDataListInstance(instance)) continue;
+      if (instanceOwnsDataListRoot(instance, dataListRoot)) {
+        return instance;
+      }
+    }
+  }
+
   return null;
 }
 
@@ -146,32 +164,52 @@ function buildAdaptiveValue(minWidth: string | undefined, flex: boolean): string
   return flex ? `${base}（flex）` : base;
 }
 
+function mapSetupColumns(
+  columns: Array<{
+    minWidth?: string;
+    width?: string;
+    flexGrow?: boolean;
+  }>,
+): DataListColumnAdaptiveConfig[] {
+  return columns.map((column) => ({
+    minWidth: column.minWidth,
+    width: column.width,
+    flexGrow: column.flexGrow,
+  }));
+}
+
 function readColumnsFromSetupState(instance: VueInternal): DataListColumnAdaptiveConfig[] | null {
   const setupState = instance.setupState;
   if (!setupState) return null;
 
-  const headerColumns = readSetupRef<
-    Array<{
-      minWidth?: string;
-      width?: string;
-      flexGrow?: boolean;
-      isAction?: boolean;
-    }>
-  >(setupState, 'headerColumns');
+  for (const key of ['headerColumns', 'bodyColumns'] as const) {
+    const columns = readSetupRef<
+      Array<{
+        minWidth?: string;
+        width?: string;
+        flexGrow?: boolean;
+      }>
+    >(setupState, key);
+    if (columns?.length) {
+      return mapSetupColumns(columns);
+    }
+  }
 
-  if (headerColumns?.length) {
-    return headerColumns.map((column) => ({
-      minWidth: column.minWidth,
-      width: column.width,
-      flexGrow: column.flexGrow,
-      isAction: column.isAction,
-    }));
+  const visibleNodes = readSetupRef<VNode[]>(setupState, 'visibleColumnNodes');
+  if (visibleNodes?.length) {
+    const mapped = visibleNodes
+      .filter((node) => isDataListColumnVNode(node))
+      .map((node) => mapVNodeColumnConfig(node));
+    if (mapped.length > 0) return mapped;
   }
 
   return null;
 }
 
-function readColumnsFromSlotVNodes(instance: VueInternal): DataListColumnAdaptiveConfig[] {
+function readColumnsFromSlotVNodes(
+  instance: VueInternal,
+  dataListRoot: HTMLElement,
+): DataListColumnAdaptiveConfig[] {
   const hasPrimaryAction = Boolean(readProp(instance.props, 'primaryAction'));
   const slotNodes = readDefaultSlotVNodes(instance).filter(
     (node) => isDataListColumnVNode(node) && readProp(node.props as Record<string, unknown>, 'hidden') !== true,
@@ -189,10 +227,7 @@ function readColumnsFromSlotVNodes(instance: VueInternal): DataListColumnAdaptiv
     };
   });
 
-  const dataListEl = instance.subTree?.el as Element | undefined;
-  const containerWidth = dataListEl instanceof HTMLElement
-    ? dataListEl.getBoundingClientRect().width
-    : 0;
+  const containerWidth = dataListRoot.getBoundingClientRect().width;
 
   const selectMode = Boolean(readProp(instance.props, 'selectMode'));
   const skidOpen = Boolean(readSetupRef<boolean>(instance.setupState ?? {}, 'effectiveSkidOpen'))
@@ -212,21 +247,24 @@ function readColumnsFromSlotVNodes(instance: VueInternal): DataListColumnAdaptiv
 
 function resolveAdaptiveColumns(
   instance: VueInternal,
+  dataListRoot: HTMLElement,
 ): DataListColumnAdaptiveConfig[] {
-  return readColumnsFromSetupState(instance) ?? readColumnsFromSlotVNodes(instance);
+  return readColumnsFromSetupState(instance) ?? readColumnsFromSlotVNodes(instance, dataListRoot);
 }
 
 export function buildDataListAdaptiveInspect(
   preview: Element,
   element: Element,
 ): InspectPropertyItem[] {
+  if (element.closest(DATA_LIST_INSPECT_EXCLUDE_SELECTORS)) return [];
+
   const dataListEl = element.closest(DATA_LIST_ROOT_SELECTOR);
   if (!(dataListEl instanceof HTMLElement) || !preview.contains(dataListEl)) return [];
 
-  const instance = resolveDataListVueInstance(dataListEl);
+  const instance = resolveDataListVueInstance(element, dataListEl);
   if (!instance) return [];
 
-  const columns = resolveAdaptiveColumns(instance);
+  const columns = resolveAdaptiveColumns(instance, dataListEl);
   if (columns.length === 0) return [];
 
   return columns.map((column, index) => {

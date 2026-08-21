@@ -79,9 +79,9 @@ const accentStyle = computed(
   padding: var(--spacing-025) var(--spacing-1);
   border-radius: var(--radius-xs);
   background: var(--dev-inspect-accent, #ff308d);
-  font-size: var(--eds-body-medium-strong-size);
-  font-weight: var(--eds-body-medium-strong-weight);
-  line-height: var(--eds-body-medium-strong-line-height);
+  font-size: var(--eds-body-small-strong-size);
+  font-weight: var(--eds-body-small-strong-weight);
+  line-height: var(--eds-body-small-strong-line-height);
   color: #ffffff;
   white-space: nowrap;
 }

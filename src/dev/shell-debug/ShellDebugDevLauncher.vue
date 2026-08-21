@@ -14,6 +14,7 @@ import {
   setDeveloperInspectActive,
 } from './inspect/developerInspectSession';
 import styles from './ShellDebugLauncherAnchored.module.css';
+import { markShellDebugUiInteraction } from './installShellDebugFloatLayerGuard';
 import {
   SHELL_DEBUG_POPOVER_MAX_HEIGHT,
 } from './shellDebugPopover.constants';
@@ -137,6 +138,11 @@ function openDevPanel() {
   nextTick(() => {
     anchorRef.value?.openPanel?.();
   });
+}
+
+function onLauncherPointerDown(event: PointerEvent) {
+  event.stopPropagation();
+  markShellDebugUiInteraction();
 }
 
 function onTriggerClick(event: MouseEvent) {
@@ -298,6 +304,7 @@ onBeforeUnmount(() => {
             aria-label="Toggle developer inspect tools"
             :aria-pressed="developerInspectActive"
             :aria-expanded="popoverExpanded"
+            @pointerdown.stop="onLauncherPointerDown"
             @click.stop.prevent="onTriggerClick"
           >
             <span :class="styles.launcherIcon" aria-hidden="true">

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { computed } from 'vue';
 import { EgAvatar, EgDivider, EgIcon, EgListFieldOverflowText, EgTag, type IconName, type TagSystemType } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
 import {
@@ -22,28 +22,11 @@ function resolveInitiatorDisplayName(raw: string): string {
   return trimmed;
 }
 
-const COUNTDOWN_LOOP_SECONDS = 60 * 60;
-
 function parsePreviewMinWidth(customize: Record<string, unknown>): number | undefined {
   const raw = String(customize.minWidth ?? '').trim();
   if (!raw) return undefined;
   const parsed = Number(raw);
   return parsed > 0 ? parsed : undefined;
-}
-
-function parseCountdownTotal(customize: Record<string, unknown>): number {
-  const minutes = Math.max(0, Number.parseInt(String(customize.countdownMinutes ?? '30'), 10) || 0);
-  const seconds = Math.max(
-    0,
-    Math.min(59, Number.parseInt(String(customize.countdownSeconds ?? '0'), 10) || 0),
-  );
-  return minutes * 60 + seconds;
-}
-
-function formatCountdownTotal(total: number): string {
-  const minutes = Math.floor(total / 60);
-  const seconds = total % 60;
-  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
 const value = computed(() => String(props.customize.value ?? ''));
@@ -110,14 +93,20 @@ const appIconName = computed(
 const countdownSuffixKey = computed(() =>
   String(props.customize.countdownSuffixKey ?? 'Until Expiry').trim() || 'Until Expiry',
 );
-const countdownListText = computed(() => {
-  const total = parseExpiryCountdownTotal(
+const countdownStaticTotal = computed(() =>
+  parseExpiryCountdownTotal(
     String(props.customize.countdownMinutes ?? '30'),
     String(props.customize.countdownSeconds ?? '00'),
     String(props.customize.countdownHours ?? '0'),
-  );
-  return `${formatExpiryCountdownHms(total)} ${ui(countdownSuffixKey.value)}`;
-});
+  ),
+);
+
+/** 列表仅展示静态 H:MM:SS；实时倒计时只在详情 ExpiryCountdown。 */
+const countdownListText = computed(() =>
+  `${formatExpiryCountdownHms(countdownStaticTotal.value)} ${ui(countdownSuffixKey.value)}`,
+);
+
+const countdownStaticTime = computed(() => formatExpiryCountdownHms(countdownStaticTotal.value));
 const primaryDisplayText = computed(() => value.value);
 const avatarDisplayName = computed(() => resolveInitiatorDisplayName(value.value));
 const avatarColorSeed = computed(() =>
@@ -134,59 +123,6 @@ const hashLikeMinWidthStyle = computed(() => {
   return { width: '100%', maxWidth: '100%', minWidth: '0' };
 });
 
-const countdownRemainingSeconds = ref(0);
-let countdownTimer: ReturnType<typeof setInterval> | undefined;
-
-function resetCountdownFromCustomize() {
-  countdownRemainingSeconds.value = parseCountdownTotal(props.customize);
-}
-
-function clearCountdownTimer() {
-  if (countdownTimer !== undefined) {
-    clearInterval(countdownTimer);
-    countdownTimer = undefined;
-  }
-}
-
-function startCountdownTimer() {
-  clearCountdownTimer();
-  if (!showCountdown.value) return;
-  resetCountdownFromCustomize();
-  countdownTimer = setInterval(() => {
-    if (countdownRemainingSeconds.value <= 0) {
-      countdownRemainingSeconds.value = COUNTDOWN_LOOP_SECONDS;
-      return;
-    }
-    countdownRemainingSeconds.value -= 1;
-  }, 1000);
-}
-
-watch(
-  showCountdown,
-  (active) => {
-    if (active) {
-      startCountdownTimer();
-      return;
-    }
-    clearCountdownTimer();
-  },
-  { immediate: true },
-);
-
-watch(
-  () => [props.customize.countdownMinutes, props.customize.countdownSeconds],
-  () => {
-    if (showCountdown.value) {
-      resetCountdownFromCustomize();
-    }
-  },
-);
-
-onBeforeUnmount(() => {
-  clearCountdownTimer();
-});
-
-const countdownTime = computed(() => formatCountdownTotal(countdownRemainingSeconds.value));
 </script>
 
 <template>
@@ -480,7 +416,7 @@ const countdownTime = computed(() => formatCountdownTotal(countdownRemainingSeco
           />
         </div>
         <span v-if="showCountdown" :class="styles.countdown">
-          <span :class="styles.countdownTime">{{ countdownTime }}</span>
+          <span :class="styles.countdownTime">{{ countdownStaticTime }}</span>
           <span :class="styles.countdownSuffix"> {{ ui(countdownSuffixKey) }}</span>
         </span>
       </div>
