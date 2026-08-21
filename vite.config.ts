@@ -108,8 +108,14 @@ function watchEdsDesktopPackages(): Plugin {
   };
 }
 
+const shellDebugEnabled = process.env.VITE_SHELL_DEBUG !== 'false';
+
 export default defineConfig({
   base: process.env.VITE_BASE_PATH || '/',
+  define: {
+    /** Shell Debug Inspect 依赖 DOM 上的 __vueParentComponent；4173 dev 自带，4174 须开 prod devtools。 */
+    __VUE_PROD_DEVTOOLS__: shellDebugEnabled,
+  },
   plugins: [vue(), watchEdsDesktopPackages()],
   resolve: {
     alias: [

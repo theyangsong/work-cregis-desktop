@@ -1,11 +1,11 @@
-import { Fragment, type VNode } from 'vue';
+import { Fragment, unref, type VNode } from 'vue';
 import {
   getVisibleColumnSlotIndices,
   resolveColumnMinWidthPx,
 } from '@eds/desktop-components/organisms/data-list/useResponsiveColumns';
 import { lookupEdsCatalogByVueName } from './edsInspectCatalog';
 import type { InspectPropertyItem } from './buildElementInspectInfo';
-import { resolveComponentRootElement, walkVueChain, type VueComponentInternal } from './inspectIdentity';
+import { walkVueChain, type VueComponentInternal } from './inspectIdentity';
 
 const DATA_LIST_ROOT_SELECTOR = '.eds-data-list';
 const SELECT_COLUMN_WIDTH_PX = 40;
@@ -15,7 +15,11 @@ type VueInternal = VueComponentInternal & {
   props?: Record<string, unknown>;
   setupState?: Record<string, unknown>;
   slots?: Record<string, (...args: unknown[]) => VNode[]>;
-  ctx?: { slots?: Record<string, (...args: unknown[]) => VNode[]> };
+  ctx?: {
+    setupState?: Record<string, unknown>;
+    slots?: Record<string, (...args: unknown[]) => VNode[]>;
+  };
+  devtoolsRawSetupState?: Record<string, unknown>;
 };
 
 export type DataListColumnAdaptiveConfig = {
@@ -26,10 +30,20 @@ export type DataListColumnAdaptiveConfig = {
 
 function readSetupRef<T>(setupState: Record<string, unknown>, key: string): T | undefined {
   const raw = setupState[key];
+  if (raw === undefined) return undefined;
+  const unwrapped = unref(raw as object);
+  if (unwrapped !== undefined) return unwrapped as T;
   if (raw && typeof raw === 'object' && 'value' in raw) {
     return (raw as { value: T }).value;
   }
   return raw as T | undefined;
+}
+
+function readInstanceSetupState(instance: VueInternal): Record<string, unknown> | null {
+  const state = instance.setupState
+    ?? instance.ctx?.setupState
+    ?? instance.devtoolsRawSetupState;
+  return state && typeof state === 'object' ? state : null;
 }
 
 function readProp(
@@ -59,29 +73,18 @@ function isDataListInstance(instance: VueInternal): boolean {
   return lookupEdsCatalogByVueName(vueName)?.displayName === 'DataList';
 }
 
-function instanceOwnsDataListRoot(instance: VueInternal, dataListRoot: HTMLElement): boolean {
-  const root = resolveComponentRootElement(instance);
-  if (!(root instanceof Element)) return false;
-  return root === dataListRoot || root.contains(dataListRoot);
-}
 
-function resolveDataListVueInstance(probe: Element, dataListRoot: HTMLElement): VueInternal | null {
-  const starts = new Set<Element>([probe, dataListRoot]);
-  let el: Element | null = dataListRoot.parentElement;
-  while (el) {
-    starts.add(el);
-    el = el.parentElement;
-  }
-
-  for (const start of starts) {
-    for (const instance of walkVueChain(start)) {
-      if (!isDataListInstance(instance)) continue;
-      if (instanceOwnsDataListRoot(instance, dataListRoot)) {
-        return instance;
-      }
+function resolveDataListVueInstance(_probe: Element, dataListRoot: HTMLElement): VueInternal | null {
+  const probe = dataListRoot as Element & { __vueParentComponent?: VueInternal };
+  const candidates = [
+    probe.__vueParentComponent,
+    ...walkVueChain(dataListRoot),
+  ];
+  for (const instance of candidates) {
+    if (instance && isDataListInstance(instance)) {
+      return instance;
     }
   }
-
   return null;
 }
 
@@ -93,7 +96,9 @@ function columnTypeName(node: VNode): string | undefined {
 
 function isDataListColumnVNode(node: VNode): boolean {
   const name = columnTypeName(node);
-  return name === 'EgDataListColumn' || name === 'TableListColumn';
+  return name === 'EgDataListColumn'
+    || name === 'TableListColumn'
+    || name === 'DataListColumn';
 }
 
 function flattenSlotVNodes(nodes: VNode[] | undefined): VNode[] {
@@ -118,6 +123,31 @@ function readDefaultSlotVNodes(instance: VueInternal): VNode[] {
   } catch {
     return [];
   }
+}
+
+function readVisibleColumnNodesFromSetup(
+  setupState: Record<string, unknown>,
+): DataListColumnAdaptiveConfig[] | null {
+  const visibleNodes = readSetupRef<VNode[]>(setupState, 'visibleColumnNodes');
+  if (visibleNodes?.length) {
+    const mapped = visibleNodes
+      .filter((node) => isDataListColumnVNode(node))
+      .map((node) => mapVNodeColumnConfig(node));
+    if (mapped.length > 0) return mapped;
+  }
+
+  const visibleIndices = readSetupRef<number[]>(setupState, 'visibleSlotIndices');
+  const allNodes = readSetupRef<VNode[]>(setupState, 'allColumnNodes');
+  if (visibleIndices?.length && allNodes?.length) {
+    const visibleSet = new Set(visibleIndices);
+    const mapped = allNodes
+      .filter((_, index) => visibleSet.has(index))
+      .filter((node) => isDataListColumnVNode(node))
+      .map((node) => mapVNodeColumnConfig(node));
+    if (mapped.length > 0) return mapped;
+  }
+
+  return null;
 }
 
 function columnIsAction(
@@ -179,7 +209,7 @@ function mapSetupColumns(
 }
 
 function readColumnsFromSetupState(instance: VueInternal): DataListColumnAdaptiveConfig[] | null {
-  const setupState = instance.setupState;
+  const setupState = readInstanceSetupState(instance);
   if (!setupState) return null;
 
   for (const key of ['headerColumns', 'bodyColumns'] as const) {
@@ -195,15 +225,7 @@ function readColumnsFromSetupState(instance: VueInternal): DataListColumnAdaptiv
     }
   }
 
-  const visibleNodes = readSetupRef<VNode[]>(setupState, 'visibleColumnNodes');
-  if (visibleNodes?.length) {
-    const mapped = visibleNodes
-      .filter((node) => isDataListColumnVNode(node))
-      .map((node) => mapVNodeColumnConfig(node));
-    if (mapped.length > 0) return mapped;
-  }
-
-  return null;
+  return readVisibleColumnNodesFromSetup(setupState);
 }
 
 function readColumnsFromSlotVNodes(
@@ -230,7 +252,8 @@ function readColumnsFromSlotVNodes(
   const containerWidth = dataListRoot.getBoundingClientRect().width;
 
   const selectMode = Boolean(readProp(instance.props, 'selectMode'));
-  const skidOpen = Boolean(readSetupRef<boolean>(instance.setupState ?? {}, 'effectiveSkidOpen'))
+  const setupState = readInstanceSetupState(instance) ?? {};
+  const skidOpen = Boolean(readSetupRef<boolean>(setupState, 'effectiveSkidOpen'))
     || Boolean(readProp(instance.props, 'skidOpen'));
 
   const visibleIndices = getVisibleColumnSlotIndices(metas, containerWidth, {
@@ -249,7 +272,72 @@ function resolveAdaptiveColumns(
   instance: VueInternal,
   dataListRoot: HTMLElement,
 ): DataListColumnAdaptiveConfig[] {
-  return readColumnsFromSetupState(instance) ?? readColumnsFromSlotVNodes(instance, dataListRoot);
+  return readColumnsFromSetupState(instance)
+    ?? readColumnsFromSlotVNodes(instance, dataListRoot)
+    ?? readColumnsFromMountedCells(instance, dataListRoot);
+}
+
+function isDataListColumnVueName(vueName: string | null): boolean {
+  return vueName === 'EgDataListColumn'
+    || vueName === 'TableListColumn'
+    || vueName === 'DataListColumn';
+}
+
+function readColumnsFromMountedCells(
+  instance: VueInternal,
+  dataListRoot: HTMLElement,
+): DataListColumnAdaptiveConfig[] {
+  const firstRow = [...dataListRoot.querySelectorAll('tbody tr')].find((row) => {
+    if (row.getAttribute('aria-hidden') === 'true') return false;
+    if (row.querySelector(':scope > td') == null) return false;
+    return true;
+  });
+  if (!firstRow) return [];
+
+  const slotNodes: Array<{ propsBag: Record<string, unknown>; config: DataListColumnAdaptiveConfig }> = [];
+  for (const td of firstRow.querySelectorAll(':scope > td')) {
+    const columnInstance = (td as Element & { __vueParentComponent?: VueInternal }).__vueParentComponent;
+    if (!columnInstance) continue;
+    const vueName = resolveVueComponentName(columnInstance);
+    if (!isDataListColumnVueName(vueName)) continue;
+    const propsBag = (columnInstance.props ?? {}) as Record<string, unknown>;
+    if (readProp(propsBag, 'type') === 'select') continue;
+    slotNodes.push({
+      propsBag,
+      config: {
+        minWidth: readProp(propsBag, 'minWidth') as string | undefined,
+        width: readProp(propsBag, 'width') as string | undefined,
+        flexGrow: Boolean(readProp(propsBag, 'flexGrow')),
+      },
+    });
+  }
+
+  if (slotNodes.length === 0) return [];
+
+  const hasPrimaryAction = Boolean(readProp(instance.props, 'primaryAction'));
+  const metas = slotNodes.map(({ propsBag }, slotIndex) => ({
+    slotIndex,
+    minWidthPx: resolveColumnMinWidthPx(readProp(propsBag, 'minWidth') as string | undefined),
+    displayOrder: Number(readProp(propsBag, 'displayOrder') ?? slotIndex + 1),
+    isAction: columnIsAction(propsBag, slotIndex === slotNodes.length - 1, hasPrimaryAction),
+  }));
+
+  const containerWidth = dataListRoot.getBoundingClientRect().width;
+  const selectMode = Boolean(readProp(instance.props, 'selectMode'));
+  const setupState = readInstanceSetupState(instance) ?? {};
+  const skidOpen = Boolean(readSetupRef<boolean>(setupState, 'effectiveSkidOpen'))
+    || Boolean(readProp(instance.props, 'skidOpen'));
+
+  const visibleIndices = getVisibleColumnSlotIndices(metas, containerWidth, {
+    clientViewportWidth: window.innerWidth,
+    skidOpen,
+    selectOffsetPx: selectMode ? SELECT_COLUMN_WIDTH_PX : 0,
+  });
+  const visibleSet = new Set(visibleIndices);
+
+  return slotNodes
+    .filter((_, index) => visibleSet.has(index))
+    .map(({ config }) => config);
 }
 
 export function buildDataListAdaptiveInspect(

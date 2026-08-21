@@ -133,14 +133,14 @@ function readFunctionBody(source, name) {
   return end < 0 ? source.slice(start) : source.slice(start, end + 2);
 }
 
-for (const fnName of ['findComponentRootOwner', 'findDsComponentRootInstance']) {
+for (const fnName of ['findComponentRootOwner', 'findDsComponentRootInstance', 'findVueInstancesWithDomRoot']) {
   const body = readFunctionBody(identitySource, fnName);
   if (!body) {
     fail('I2', `缺少 ${fnName}（组件根判定入口）`);
     continue;
   }
-  if (!body.includes('root !== element')) {
-    fail('I2', `${fnName} 必须以 root !== element 排除子树节点`);
+  if (!body.includes('root === target') && !body.includes('root !== element')) {
+    fail('I2', `${fnName} 必须以 root === target / root !== element 排除子树节点`);
   }
   if (/root\??\.contains\(element\)/.test(body)) {
     fail('I2', `${fnName} 不得以 root.contains(element) 判定 owner（子树借名）`);

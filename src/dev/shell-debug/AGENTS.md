@@ -1,6 +1,6 @@
 # Shell Debug Platform（壳外调试）
 
-**仅 DEV 挂载**（`AppRoot.vue` + `import.meta.env.DEV`）。生产构建不包含。
+**仅 DEV 挂载**（`AppRoot.vue` + `VITE_SHELL_DEBUG !== 'false'`）。`pnpm dev`（4173）与 Pages preview（4174，`VITE_BASE_PATH=/work-cregis-desktop/`）在 Shell Debug 开启时均包含壳层；**4174 production 还须** `vite.config.ts` 的 `__VUE_PROD_DEVTOOLS__`（与 Shell Debug 同开），否则 Vue 3.5 不在 DOM 上挂 `__vueParentComponent`，Inspect R2 / DataList 适配在 4174 失效。
 
 ## 硬边界
 
@@ -159,9 +159,11 @@ DS 组件识别用 dev 下 plugin-vue 注入的 `__file`（含 `eds-desktop/pack
 
 **Catalog 覆盖**：`node scripts/verify-shell-debug-inspect-catalog.mjs` 对照 `../eds-desktop` 组件根 `eds-*` 与 `edsInspectCatalog.ts`；缺条目时补 catalog，勿再开 CSS Module 借名后门。
 
-**Inspect 命名**：`node scripts/verify-shell-debug-inspect-naming.mjs` —— 11 项全局不变量（规则顺序、归属判据、region 真源 / 不重名 / 不覆盖组件根、旧机制已清、样式对准点击节点、片段匹配、单一命名路径、任意 DS 组件根有自己的名字、多角色走 catalog hook）。已接入 `predev` / `prebuild`，与 catalog 覆盖脚本同时跑。
+**Inspect 命名**：`node scripts/verify-shell-debug-inspect-naming.mjs` —— 12 项全局不变量（规则顺序、归属判据、region 真源 / 不重名 / 不覆盖组件根、旧机制已清、样式对准点击节点、片段匹配、单一命名路径、任意 DS 组件根有自己的名字、多角色走 catalog hook、祖先只作属性首行）。已接入 `predev` / `prebuild`，与 catalog 覆盖脚本同时跑。
 
-**DataList适配（Inspect）**：仅当 **点选节点在 `.eds-data-list` 子树内** 时，Dev 面板在 **属性** 与 **用法** 之间展示 **DataList适配** 组（Popup / Popover 内 Inspect **不展示**）。每可见列一行（`第1列` …），值为 `min-width: xxxpx`，参与 flex 均分则后缀 `（flex）`。
+**4174 Inspect 与 4173 对齐**：R2 / DataList 实例读取依赖 DOM 上的 `__vueParentComponent`（`inspectIdentity.ts` 的 `findVueInstancesWithDomRoot`）。Vue 3.5 production 默认不写入，须在 Shell Debug 构建中开启 `__VUE_PROD_DEVTOOLS__`（见 `vite.config.ts`）；`verify-pages-artifact.mjs` 会检查 bundle 含 `__vueParentComponent`。
+
+**DataList 适配（Inspect）**：仅当 **点选节点在 `.eds-data-list` 子树内** 时，Dev 面板在 **属性** 与 **用法** 之间展示 **DataList 适配** 组（`.eds-popup` / `.eds-detail` 内 **不展示**）。每可见列一行（`第1列` …），值为 `min-width: xxxpx`，参与 flex 均分则后缀 `（flex）`。**【必须】** 仅在 **Pin（pointerdown 固定）** 时计算（`buildElementInspectInfo` 的 `includeAdaptive: true`）；hover 不算，避免 Inspect 模式鼠标移动卡死。
 
 ## 扩展
 

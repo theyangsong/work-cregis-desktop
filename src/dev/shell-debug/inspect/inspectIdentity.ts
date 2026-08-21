@@ -49,6 +49,43 @@ export function walkVueChain(element: Element): VueComponentInternal[] {
   return chain;
 }
 
+type ElementWithVue = Element & {
+  __vueParentComponent?: VueComponentInternal;
+  __vnode?: { component?: VueComponentInternal };
+};
+
+function pushInstanceIfDomRoot(
+  target: Element,
+  instance: VueComponentInternal | null | undefined,
+  matches: VueComponentInternal[],
+  seen: Set<VueComponentInternal>,
+): void {
+  if (!instance || seen.has(instance)) return;
+  if (resolveComponentRootElement(instance) !== target) return;
+  seen.add(instance);
+  matches.push(instance);
+}
+
+/**
+ * 找出 Vue DOM 根 === target 的组件实例。
+ * production 须配合 vite `__VUE_PROD_DEVTOOLS__` 才有 `__vueParentComponent`。
+ */
+export function findVueInstancesWithDomRoot(target: Element): VueComponentInternal[] {
+  // root !== element：只收 resolveComponentRootElement(instance) === target 的实例。
+  const matches: VueComponentInternal[] = [];
+  const seen = new Set<VueComponentInternal>();
+  const probe = target as ElementWithVue;
+
+  pushInstanceIfDomRoot(target, probe.__vnode?.component, matches, seen);
+  pushInstanceIfDomRoot(target, probe.__vueParentComponent, matches, seen);
+
+  for (const instance of walkVueChain(target)) {
+    pushInstanceIfDomRoot(target, instance, matches, seen);
+  }
+
+  return matches;
+}
+
 function resolveCatalogForVueName(vueName: string | null | undefined): EdsInspectCatalogEntry | null {
   if (!vueName) return null;
   return lookupEdsCatalogByVueName(vueName) ?? lookupEdsCatalogByVueName(`Eg${vueName}`) ?? null;
@@ -89,12 +126,10 @@ export function findDirectDomCatalogEntry(
  * 子树内节点一律不匹配 —— 这是全站统一「点谁是谁」的关键约束。
  */
 export function findComponentRootOwner(element: Element): VueCatalogOwnerMatch | null {
-  for (const instance of walkVueChain(element)) {
-    const root = resolveComponentRootElement(instance);
-    if (root !== element) continue;
-
+  // root !== element：委托 findVueInstancesWithDomRoot，只在 root === target 时命中。
+  for (const instance of findVueInstancesWithDomRoot(element)) {
     const entry = resolveCatalogForVueName(resolveVueComponentName(instance));
-    if (entry) return { entry, instance, root, depth: 0 };
+    if (entry) return { entry, instance, root: element, depth: 0 };
   }
 
   return null;
@@ -118,10 +153,8 @@ function isDsPackageInstance(instance: VueComponentInternal): boolean {
 export function findDsComponentRootInstance(
   element: Element,
 ): { vueName: string; instance: VueComponentInternal } | null {
-  for (const instance of walkVueChain(element)) {
-    const root = resolveComponentRootElement(instance);
-    if (root !== element) continue;
-
+  // root !== element：委托 findVueInstancesWithDomRoot，只在 root === target 时命中。
+  for (const instance of findVueInstancesWithDomRoot(element)) {
     const vueName = resolveVueComponentName(instance);
     if (!vueName) continue;
     if (!isDsPackageInstance(instance) && !vueName.startsWith('Eg')) continue;

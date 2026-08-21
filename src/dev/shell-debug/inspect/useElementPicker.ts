@@ -223,7 +223,7 @@ function onPointerDown(event: PointerEvent) {
     return;
   }
 
-  const info = buildElementInspectInfo(target, preview);
+  const info = buildElementInspectInfo(target, preview, { includeAdaptive: true });
   if (!info) {
     clearInspectSelection();
     return;

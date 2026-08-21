@@ -162,7 +162,7 @@ onBeforeUnmount(() => {
     </div>
 
     <div v-if="adaptiveItems.length > 0" :class="$style.inspectGroup">
-      <p :class="$style.sectionTitle">DataList适配</p>
+      <p :class="$style.sectionTitle">DataList 适配</p>
       <ul :class="[$style.propRows, $style.inspectCardFrame]">
         <li
           v-for="item in adaptiveItems"

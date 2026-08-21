@@ -217,9 +217,15 @@ function buildCopyBundle(
   return lines.join('\n').trim();
 }
 
+export type BuildElementInspectInfoOptions = {
+  /** DataList 适配较重，仅点击固定时算；hover 不算，避免 Inspect 模式鼠标移动卡死。 */
+  includeAdaptive?: boolean;
+};
+
 export function buildElementInspectInfo(
   element: Element,
   preview: Element,
+  options: BuildElementInspectInfoOptions = {},
 ): ElementInspectInfo | null {
   if (!preview.contains(element) && !isInspectFloatLayerElement(element)) return null;
   if (element.closest('[data-shell-debug-ui]')) return null;
@@ -269,7 +275,9 @@ export function buildElementInspectInfo(
     edsComponent?.codeSections,
     declaredCode,
   );
-  const adaptiveItems = buildDataListAdaptiveInspect(preview, element);
+  const adaptiveItems = options.includeAdaptive
+    ? buildDataListAdaptiveInspect(preview, element)
+    : [];
 
   return {
     element,

@@ -51,6 +51,33 @@ if (!assetNames.some((name) => name.includes('IBMPlexMono'))) {
   errors.push('dist/assets missing IBMPlexMono font files');
 }
 
+/** Pages 与 4173 dev 功能 parity：Shell Debug 须进生产构建（VITE_SHELL_DEBUG 默认 true）。 */
+if (!bundleJs.includes('data-shell-debug-ui')) {
+  errors.push('production bundle missing Shell Debug UI marker (4173/4174 parity)');
+}
+const shellDebugChunk = assetNames.find(
+  (name) => name.startsWith('ShellDebugPlatform-') && name.endsWith('.js'),
+);
+if (!shellDebugChunk) {
+  errors.push('production bundle missing ShellDebugPlatform lazy chunk');
+} else {
+  const shellDebugJs = readFileSync(`dist/assets/${shellDebugChunk}`, 'utf8');
+  if (!shellDebugJs.includes('data-dev-inspect-overlay')) {
+    errors.push('Shell Debug chunk missing developer inspect overlay');
+  }
+  if (!shellDebugJs.includes('DataList 适配')) {
+    errors.push('Shell Debug chunk missing DataList 适配 inspect section');
+  }
+}
+if (!bundleJs.includes('installShellDebugFloatLayerGuard') && !bundleJs.includes('composedPath')) {
+  errors.push('production bundle missing Shell Debug popover guard (early install)');
+}
+if (!bundleJs.includes('__vueParentComponent')) {
+  errors.push(
+    'production bundle missing __vueParentComponent (Shell Debug Inspect 须 vite define __VUE_PROD_DEVTOOLS__)',
+  );
+}
+
 if (errors.length > 0) {
   console.error('✗ verify-pages-artifact failed:');
   for (const message of errors) {
