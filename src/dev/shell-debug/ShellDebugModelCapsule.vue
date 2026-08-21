@@ -12,6 +12,7 @@ import {
   useAppLocale,
 } from '@/composables/useAppLocale';
 import styles from './ShellDebugModelCapsule.module.css';
+import { markShellDebugUiInteraction } from './installShellDebugFloatLayerGuard';
 import { SHELL_DEBUG_POPOVER_CHROME_HEIGHT } from './shellDebugPopover.constants';
 
 const MODEL_POPOVER_WIDTH = 240;
@@ -50,6 +51,11 @@ function resolvePopoverAlign(): PopoverAlign {
 
 function syncPopoverAlign() {
   popoverAlign.value = resolvePopoverAlign();
+}
+
+function onLauncherPointerDown(event: PointerEvent) {
+  event.stopPropagation();
+  markShellDebugUiInteraction();
 }
 
 function onTriggerClick(event: MouseEvent, active: boolean, open: () => void) {
@@ -110,6 +116,7 @@ onMounted(() => {
               :class="styles.launcherButton"
               aria-label="Open model preferences"
               :aria-expanded="active"
+              @pointerdown.stop="onLauncherPointerDown"
               @click.stop.prevent="onTriggerClick($event, active, onClick)"
             >
               <span :class="styles.launcherIcon" aria-hidden="true">

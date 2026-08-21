@@ -122,6 +122,10 @@ export default defineConfig({
         replacement: EDS_COMPONENTS_SRC,
       },
       {
+        find: `${EDS_COMPONENTS_SRC_DIR}/molecules/tooltip/anchoredTooltipManager.ts`,
+        replacement: resolve(__dirname, 'src/dev/shell-debug/shim/anchoredTooltipManager.ts'),
+      },
+      {
         find: '@eds/desktop-animations',
         replacement: EDS_ANIMATIONS_SRC,
       },
