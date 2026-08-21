@@ -110,7 +110,7 @@ function patchCaptureListenerTarget(target: EventTargetLike): void {
  * Dev 壳层与业务 click Popover 并存：点击 Dev / QA / Model 启动器或壳层 Popover 时，
  * 不应触发 AnchoredTooltip 的 document/window capture pointerdown / scroll 外部关闭。
  *
- * 仅 DEV 在 main.ts 最前同步安装；包装 document/window capture pointerdown 与 scroll。
+ * main.ts 最前同步安装（VITE_SHELL_DEBUG !== 'false'，含 Pages preview）；包装 document/window capture pointerdown 与 scroll。
  */
 export function installShellDebugFloatLayerGuard(): void {
   if (installed || typeof document === 'undefined') return;
