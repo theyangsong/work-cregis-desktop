@@ -1,0 +1,87 @@
+.triggerMetrics {
+  display: inline-flex;
+  max-width: 100%;
+}
+
+.launcherShell {
+  composes: launcherShell from './ShellDebugLauncherAnchored.module.css';
+}
+
+.launcherButton {
+  composes: launcherButton from './ShellDebugLauncherAnchored.module.css';
+}
+
+.launcherIcon {
+  composes: launcherIcon from './ShellDebugLauncherAnchored.module.css';
+}
+
+.launcherLabel {
+  composes: launcherLabel from './ShellDebugLauncherAnchored.module.css';
+}
+
+.popoverContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-05);
+  box-sizing: border-box;
+  min-height: 0;
+  margin-inline: calc(-1 * (var(--spacing-4) - var(--spacing-1)));
+  margin-bottom: calc(-1 * (var(--spacing-4) - var(--spacing-1)));
+}
+
+:global(.eds-popover:has(.shell-debug-wnd-popover-content) [class*='topToolTitle']) {
+  padding-bottom: var(--spacing-1);
+}
+
+.actionRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-3);
+  width: 100%;
+  margin: 0;
+  padding: var(--spacing-2) var(--spacing-3);
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  cursor: default;
+  font: inherit;
+  text-align: left;
+  composes: motion-ease is-hover from global;
+}
+
+.actionRow:hover {
+  background: var(--event-hover);
+}
+
+.actionRow:focus-visible {
+  outline: 2px solid var(--material-brand-primary);
+  outline-offset: 1px;
+}
+
+.actionLabel {
+  font-size: var(--eds-body-medium-size);
+  font-weight: var(--eds-body-medium-weight);
+  line-height: var(--eds-body-medium-line-height);
+  color: var(--text-base-primary);
+}
+
+.actionValue {
+  font-size: var(--eds-body-medium-size);
+  font-weight: var(--eds-body-medium-weight);
+  line-height: var(--eds-body-medium-line-height);
+  color: var(--text-base-secondary);
+  white-space: nowrap;
+}
+
+:global(#app > .app-preview[data-shell-debug-window-mode='minimum']) {
+  --app-preview-width: var(--app-preview-min-width);
+  --app-preview-height: var(--app-preview-min-height);
+}
+
+:global(#app > .app-preview[data-shell-debug-window-mode='windows']) {
+  width: 100vw;
+  height: 100vh;
+  max-width: none;
+  max-height: none;
+}

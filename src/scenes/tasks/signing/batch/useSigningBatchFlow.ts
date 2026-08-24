@@ -281,7 +281,6 @@ export function useSigningBatchFlow(options: {
     }
 
     signConfirmOpen.value = true;
-    options.closeDataListSelect?.();
   }
 
   /** @deprecated 仅保留类型兼容；签名请用 openBatchSignConfirm。 */

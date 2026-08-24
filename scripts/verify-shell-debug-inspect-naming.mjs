@@ -372,11 +372,16 @@ if (!existsSync(ancestorPath)) {
   }
 }
 
-const prependBody = readFunctionBody(infoSource, 'prependAncestorProperty');
+const prependStart = infoSource.indexOf('function prependAncestorProperty(');
+const prependEnd = infoSource.indexOf('\nfunction buildElementAttributes(', prependStart);
+const prependBody =
+  prependStart >= 0 && prependEnd > prependStart
+    ? infoSource.slice(prependStart, prependEnd)
+    : readFunctionBody(infoSource, 'prependAncestorProperty');
 if (!prependBody) {
   fail('I12', '缺少 prependAncestorProperty');
-} else if (!/label: '祖先'/.test(prependBody) || !/\.\.\.items,/.test(prependBody)) {
-  fail('I12', '「祖先」必须作为第一条 item 前插（label: 祖先 + ...items）');
+} else if (!/label: '祖先'/.test(prependBody) || !/buildSizePropertyItem\(rect\)/.test(prependBody)) {
+  fail('I12', '「祖先」须为第一条、「尺寸」须紧跟其后（见 prependAncestorProperty）');
 }
 
 // 两条属性路径都要带祖先：组件 props 与元素属性（面板二选一渲染）

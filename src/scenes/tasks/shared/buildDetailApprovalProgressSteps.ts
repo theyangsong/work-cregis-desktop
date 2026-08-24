@@ -193,7 +193,7 @@ function buildWithdrawnStep(
   if (detail.initiatorKind === 'waas') {
     return {
       key: 'withdrawn',
-      title: 'Withdrawal',
+      title: 'Withdraw',
       atDisplay,
       completed: true,
       members: [
@@ -211,7 +211,7 @@ function buildWithdrawnStep(
   const initiator = detail.initiatorMember;
   return {
     key: 'withdrawn',
-    title: 'Withdrawal',
+    title: 'Withdraw',
     atDisplay,
     completed: true,
     members: initiator

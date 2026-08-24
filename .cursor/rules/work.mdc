@@ -247,7 +247,7 @@ alwaysApply: true
 
 ### 6.3 顶底毛玻璃（Top & Bottom Mask）
 
-**DS 真源**：`../eds-desktop/.cursor/rules/top&botton-mask.mdc`、`Skid.vue`。  
+**DS 真源**：`../eds-desktop/.cursor/rules/eds-project.mdc` §13、`Skid.vue`。  
 **本仓库 composable**：`src/scenes/tasks/shared/useScrollChromeScrim.ts`。  
 **示例**：`SigningBatchNetworkPickerMenu.vue`、`SigningBatchPopupSlotChrome.vue`。
 
@@ -470,7 +470,7 @@ usePopupShellLifecycle({
 |------|------|
 | Agent 入口摘要 | `AGENTS.md` |
 | EDS 完整约定 | `../eds-desktop/.cursor/rules/eds-project.mdc` |
-| 顶底毛玻璃 DS 真源 | `../eds-desktop/.cursor/rules/top&botton-mask.mdc` |
+| 顶底毛玻璃 DS 真源 | `../eds-desktop/.cursor/rules/eds-project.mdc` §13 |
 | Popup lifecycle | `src/scenes/tasks/shared/usePopupShellLifecycle.ts` |
 | Scroll scrim | `src/scenes/tasks/shared/useScrollChromeScrim.ts` |
 | 千分位 | `src/utils/formatGroupedDisplay.ts` |

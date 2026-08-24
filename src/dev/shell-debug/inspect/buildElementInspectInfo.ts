@@ -5,7 +5,11 @@ import {
 } from './buildIconInspect';
 import { buildDataListAdaptiveInspect } from './buildDataListAdaptiveInspect';
 import { buildDeclaredInspectCode } from './buildDeclaredInspectCode';
-import { resolveInspectStyleTargetElement } from './resolveInspectStyleTarget';
+import { resolveDataListColumnLayoutMinWidth } from './buildDataListAdaptiveInspect';
+import {
+  resolveFrostedPageChromeStyleSource,
+  resolveInspectStyleTargetElement,
+} from './resolveInspectStyleTarget';
 import { buildInspectCodeSections } from './buildInspectCodeSections';
 import { formatDomTagInspectLabel } from './buildTextInspect';
 import { isInspectFloatLayerElement, resolveInspectScopeRoot } from './inspectFloatLayerScope';
@@ -65,49 +69,50 @@ function ensureInspectMotionProperty(
   return [...withoutMotion, buildMotionPropertyItem(motion)];
 }
 
+function buildSizePropertyItem(rect: DOMRect): InspectPropertyItem {
+  return {
+    label: '尺寸',
+    value: `${roundPx(rect.width)} × ${roundPx(rect.height)}`,
+    token: null,
+    copyLine: `size: ${roundPx(rect.width)} × ${roundPx(rect.height)}`,
+  };
+}
+
 /**
  * 「祖先」恒为属性面板 **第一条** item —— 组件 props 与元素属性两条路径都要加，
  * 因为点不到的组件根（如被 `.raw` 铺满的 `header.eds-tool-bar`）只能靠它交代归属。
+ * 「尺寸」紧跟祖先（无祖先时则为第一条）。
  * 仅作展示：**【禁止】** 让它参与命名（见 `resolveInspectAncestorName.ts`）。
  */
 function prependAncestorProperty(
   items: InspectPropertyItem[],
   ancestorName: string | null,
+  rect: DOMRect,
 ): InspectPropertyItem[] {
-  if (!ancestorName) return items;
+  const rest = items.filter((item) => item.label !== '尺寸');
+  const leading: InspectPropertyItem[] = [];
 
-  return [
-    {
+  if (ancestorName) {
+    leading.push({
       label: '祖先',
       value: ancestorName,
       token: null,
       copyLine: `ancestor: ${ancestorName}`,
-    },
-    ...items,
-  ];
+    });
+  }
+
+  leading.push(buildSizePropertyItem(rect));
+
+  return [...leading, ...rest];
 }
 
 function buildElementAttributes(
   element: Element,
   _preview: Element,
   _style: CSSStyleDeclaration,
-  rect: DOMRect,
+  _rect: DOMRect,
 ): InspectPropertyItem[] {
   const items: InspectPropertyItem[] = [];
-
-  items.push({
-    label: '尺寸',
-    value: `${roundPx(rect.width)} × ${roundPx(rect.height)}`,
-    token: null,
-    copyLine: `size: ${roundPx(rect.width)} × ${roundPx(rect.height)}`,
-  });
-
-  items.push({
-    label: '标签',
-    value: element.tagName.toLowerCase(),
-    token: null,
-    copyLine: `tag: ${element.tagName.toLowerCase()}`,
-  });
 
   if (element.id) {
     items.push({
@@ -125,16 +130,6 @@ function buildElementAttributes(
       value: role,
       token: null,
       copyLine: `role="${role}"`,
-    });
-  }
-
-  const edsClasses = [...element.classList].filter((name) => name.startsWith('eds-'));
-  if (edsClasses.length > 0) {
-    items.push({
-      label: 'EDS 类名',
-      value: edsClasses.join(' '),
-      token: null,
-      copyLine: edsClasses.map((name) => `.${name}`).join(' '),
     });
   }
 
@@ -242,6 +237,7 @@ export function buildElementInspectInfo(
       props: prependAncestorProperty(
         ensureInspectMotionProperty(edsComponent.props, element, preview),
         ancestorName,
+        rect,
       ),
     };
   }
@@ -253,6 +249,7 @@ export function buildElementInspectInfo(
       preview,
     ),
     ancestorName,
+    rect,
   );
   const tagName = element.tagName.toLowerCase();
   const scopeRoot = resolveInspectScopeRoot(element, preview);
@@ -263,7 +260,10 @@ export function buildElementInspectInfo(
     ? inspectTarget.componentChain
     : [label];
   const styleTarget = resolveInspectStyleTargetElement(element, edsComponent);
-  const declaredCode = buildDeclaredInspectCode(styleTarget, preview);
+  const declaredCode = buildDeclaredInspectCode(styleTarget, preview, {
+    frostedChromeStyleSource: resolveFrostedPageChromeStyleSource(element),
+    dataListColumnMinWidth: resolveDataListColumnLayoutMinWidth(preview, element),
+  });
 
   const code = {
     layout: declaredCode.layout,

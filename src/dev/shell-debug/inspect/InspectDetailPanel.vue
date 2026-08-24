@@ -24,12 +24,18 @@ let copiedLineTimer: ReturnType<typeof setTimeout> | undefined;
 
 const hasSelection = computed(() => props.info != null);
 
+const HIDDEN_INSPECT_PROPERTY_LABELS = new Set(['标签', 'EDS 类名']);
+
+function filterInspectPropertyPanelItems(items: InspectPropertyItem[]): InspectPropertyItem[] {
+  return items.filter((item) => !HIDDEN_INSPECT_PROPERTY_LABELS.has(item.label));
+}
+
 const propertyItems = computed(() => {
   if (!props.info) return [];
   if (props.info.edsComponent?.props.length) {
-    return props.info.edsComponent.props;
+    return filterInspectPropertyPanelItems(props.info.edsComponent.props);
   }
-  return props.info.elementAttributes;
+  return filterInspectPropertyPanelItems(props.info.elementAttributes);
 });
 
 const adaptiveItems = computed(() => props.info?.adaptiveItems ?? []);

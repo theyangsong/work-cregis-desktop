@@ -93,7 +93,7 @@
 | Popup / Flotation 自定义列表壳 | `useScrollChromeScrim` + `var(--effect-mask)` + `var(--eds-blur-bg)` |
 | 改 mask 不透明度 | eds-desktop 改 `effect-mask` token，再同步 |
 
-详案：`.cursor/rules/work.mdc` §6.3。DS 真源：`../eds-desktop/.cursor/rules/top&botton-mask.mdc`。
+详案：`.cursor/rules/work.mdc` §6.3。DS 真源：`../eds-desktop/.cursor/rules/eds-project.mdc` §13。
 
 **注意**：顶部未滚动时顶栏为实色；下滚后才 scrim——与 DS 一致。
 

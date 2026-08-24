@@ -478,20 +478,8 @@ export const EDS_INSPECT_CATALOG: EdsInspectCatalogEntry[] = [
     displayName: 'DataListColumn',
     priority: 83,
     vueNames: ['DataListColumn', 'EgDataListColumn'],
-    props: [
-      { key: 'prop', label: resolveInspectPropLabel('prop'), format: formatOptionalText },
-      { key: 'label', label: resolveInspectPropLabel('label'), format: formatOptionalText },
-      { key: 'type', label: resolveInspectPropLabel('type'), defaultValue: 'default' },
-      { key: 'selected', label: resolveInspectPropLabel('selected'), defaultValue: false, format: formatBoolean },
-      { key: 'blank', label: resolveInspectPropLabel('blank'), defaultValue: false, format: formatBoolean },
-      { key: 'hidden', label: resolveInspectPropLabel('hidden'), defaultValue: false, format: formatBoolean },
-      { key: 'sortable', label: resolveInspectPropLabel('sortable'), defaultValue: false, format: formatBoolean },
-      { key: 'displayOrder', label: resolveInspectPropLabel('displayOrder'), format: formatOptionalText },
-      { key: 'isAction', label: resolveInspectPropLabel('isAction'), defaultValue: false, format: formatBoolean },
-      { key: 'hideActions', label: resolveInspectPropLabel('hideActions'), defaultValue: false, format: formatBoolean },
-      { key: 'showOverflowTooltip', label: resolveInspectPropLabel('showOverflowTooltip'), defaultValue: true, format: formatBoolean },
-      { key: 'index', label: resolveInspectPropLabel('index'), format: formatOptionalText },
-    ],
+    /** 列元数据（prop / type / sortable…）不进属性面板；列宽见 DataList 适配。 */
+    props: [],
   },
   {
     displayName: 'Paginer',

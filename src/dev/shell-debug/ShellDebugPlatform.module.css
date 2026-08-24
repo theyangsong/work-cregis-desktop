@@ -8,7 +8,8 @@
 /* AnchoredPopover 默认 z-index:1000，低于 launcherColumn(10000)，会露出下层胶囊。 */
 :global(body [class*='floating']:has(.shell-debug-popover-content)),
 :global(body [class*='floating']:has(.shell-debug-dev-inspect-hint)),
-:global(body [class*='floating']:has(.shell-debug-model-popover-content)) {
+:global(body [class*='floating']:has(.shell-debug-model-popover-content)),
+:global(body [class*='floating']:has(.shell-debug-wnd-popover-content)) {
   z-index: 10001;
 }
 

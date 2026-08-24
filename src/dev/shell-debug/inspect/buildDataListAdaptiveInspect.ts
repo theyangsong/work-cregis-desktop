@@ -189,6 +189,54 @@ function formatDeclaredMinWidth(minWidth?: string): string {
   return `${px}px`;
 }
 
+function isDataListSelectColumnCell(cell: Element): boolean {
+  if (cell.className.includes('columnSelect')) return true;
+  const columnInstance = (cell as Element & { __vueParentComponent?: VueInternal }).__vueParentComponent;
+  if (!columnInstance) return false;
+  const propsBag = (columnInstance.props ?? {}) as Record<string, unknown>;
+  return readProp(propsBag, 'type') === 'select';
+}
+
+function resolveDataListColumnDomIndex(td: HTMLTableCellElement): number {
+  const tr = td.closest('tr');
+  if (!tr) return -1;
+
+  let dataColumnIndex = -1;
+  for (const cell of tr.querySelectorAll(':scope > td')) {
+    if (isDataListSelectColumnCell(cell)) continue;
+    dataColumnIndex += 1;
+    if (cell === td) return dataColumnIndex;
+  }
+  return -1;
+}
+
+/** DataList 列 min-width 来自 EgDataListColumn prop，不在 td/cellContent 的 CSS 上。 */
+export function resolveDataListColumnLayoutMinWidth(
+  preview: Element,
+  element: Element,
+): string | null {
+  if (element.closest(DATA_LIST_INSPECT_EXCLUDE_SELECTORS)) return null;
+
+  const dataListEl = element.closest(DATA_LIST_ROOT_SELECTOR);
+  if (!(dataListEl instanceof HTMLElement) || !preview.contains(dataListEl)) return null;
+
+  const td = element.closest('td');
+  if (!(td instanceof HTMLTableCellElement) || !dataListEl.contains(td)) return null;
+  if (isDataListSelectColumnCell(td)) return null;
+
+  const columnIndex = resolveDataListColumnDomIndex(td);
+  if (columnIndex < 0) return null;
+
+  const instance = resolveDataListVueInstance(element, dataListEl);
+  if (!instance) return null;
+
+  const columns = resolveAdaptiveColumns(instance, dataListEl);
+  const column = columns[columnIndex];
+  if (!column) return null;
+
+  return formatDeclaredMinWidth(column.minWidth);
+}
+
 function buildAdaptiveValue(minWidth: string | undefined, flex: boolean): string {
   const base = `min-width: ${formatDeclaredMinWidth(minWidth)}`;
   return flex ? `${base}（flex）` : base;

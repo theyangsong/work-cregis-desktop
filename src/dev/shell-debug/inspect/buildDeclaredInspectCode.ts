@@ -66,6 +66,16 @@ const STYLE_ORDER = [
   'mix-blend-mode',
 ] as const;
 
+const CHROME_SURFACE_STYLE_LABELS = new Set(['background', 'background-color', 'backdrop-filter']);
+
+const BACKDROP_FILTER_DECLARED_KEYS = ['backdrop-filter', '-webkit-backdrop-filter'] as const;
+
+function backgroundTokenFilter(name: string): boolean {
+  return inspectTokenFilters.material(name)
+    || name.startsWith('--eds-avatar-')
+    || name.startsWith('--effect-');
+}
+
 const PADDING_PROPS = ['padding-top', 'padding-right', 'padding-bottom', 'padding-left'] as const;
 const MARGIN_PROPS = ['margin-top', 'margin-right', 'margin-bottom', 'margin-left'] as const;
 
@@ -85,6 +95,36 @@ function isZeroSpacing(value: string): boolean {
   return !normalized || normalized === '0' || normalized === '0px' || normalized === '0%';
 }
 
+function isInactiveGap(value: string): boolean {
+  const normalized = normalizeCss(value).toLowerCase();
+  return isZeroSpacing(value) || normalized === 'normal';
+}
+
+function isNoiseMinMaxConstraint(
+  property: 'min-width' | 'min-height' | 'max-width' | 'max-height',
+  value: string,
+): boolean {
+  const normalized = normalizeCss(value).toLowerCase();
+  if (property.startsWith('min-')) {
+    return isZeroSpacing(normalized)
+      || normalized === 'var(--scale-0)'
+      || normalized === 'auto';
+  }
+  return normalized === 'none' || normalized === 'auto';
+}
+
+function isInsideDataListBodyCell(element: Element): boolean {
+  const td = element.closest('.eds-data-list tbody td');
+  if (!(td instanceof HTMLElement)) return false;
+  return !td.className.includes('columnSelect');
+}
+
+function isDataListColumnBodyCell(element: Element): boolean {
+  const td = element.closest('.eds-data-list tbody td');
+  if (!(td instanceof HTMLElement) || td.className.includes('columnSelect')) return false;
+  return element === td || td.contains(element);
+}
+
 function isMeaninglessBorder(value: string): boolean {
   const normalized = normalizeCss(value).toLowerCase();
   return normalized === 'none' || normalized === '0' || normalized.startsWith('0px');
@@ -95,13 +135,14 @@ function propertyRank(property: string, order: readonly string[]): number {
   return index >= 0 ? index : order.length + 1;
 }
 
-function makeItem(property: string, value: string): InspectPropertyItem {
+function makeItem(property: string, value: string, copyNote?: string): InspectPropertyItem {
   const { display, token } = formatAuthoredInspectValue(value);
+  const note = copyNote ? ` /* ${copyNote} */` : '';
   return {
     label: property,
     value: display,
     token,
-    copyLine: `${property}: ${display};`,
+    copyLine: `${property}: ${display};${note}`,
   };
 }
 
@@ -204,8 +245,8 @@ function buildGapShorthand(
 
   const rowComputed = style.rowGap;
   const columnComputed = style.columnGap;
-  const hasRow = rowComputed && !isZeroSpacing(rowComputed);
-  const hasColumn = columnComputed && !isZeroSpacing(columnComputed);
+  const hasRow = rowComputed && !isInactiveGap(rowComputed);
+  const hasColumn = columnComputed && !isInactiveGap(columnComputed);
 
   if (hasRow && hasColumn) {
     const row = resolveSpacingCSSValue(preview, rowComputed, 'rowGap');
@@ -217,7 +258,7 @@ function buildGapShorthand(
   if (hasColumn) return { columnGap: resolveSpacingCSSValue(preview, columnComputed, 'columnGap') };
 
   const legacyGap = style.gap;
-  if (legacyGap && !isZeroSpacing(legacyGap)) {
+  if (legacyGap && !isInactiveGap(legacyGap)) {
     return { gap: resolveSpacingCSSValue(preview, legacyGap, 'rowGap') };
   }
 
@@ -340,6 +381,7 @@ function resolveSizeConstraintValue(
   declared: DeclaredCssValues,
   style: CSSStyleDeclaration,
   preview: Element,
+  element: Element,
 ): string | null {
   const declaredValue = pickDeclaredCssValue(declared, [property]);
   if (declaredValue) return declaredValue;
@@ -351,10 +393,20 @@ function resolveSizeConstraintValue(
     return resolveSizeCSSValue(preview, property, computed);
   }
 
+  if (
+    isInsideDataListBodyCell(element)
+    && (property === 'min-width' || property === 'min-height')
+  ) {
+    return null;
+  }
+
   const camel = property.replace(/-([a-z])/g, (_, char: string) => char.toUpperCase()) as keyof CSSStyleDeclaration;
   const computed = String(style[camel] ?? '');
   if (!computed || computed === 'none' || computed === 'auto') return null;
-  return resolveSizeCSSValue(preview, property, computed) ?? computed;
+
+  const resolved = resolveSizeCSSValue(preview, property, computed) ?? computed;
+  if (isNoiseMinMaxConstraint(property, resolved)) return null;
+  return resolved;
 }
 
 function shouldShowOverflow(declared: DeclaredCssValues, style: CSSStyleDeclaration): boolean {
@@ -377,11 +429,17 @@ function pickPositionOffsets(declared: DeclaredCssValues): InspectPropertyItem[]
   return items;
 }
 
+type BuildLayoutOptions = {
+  dataListColumnMinWidth?: string | null;
+};
+
 function buildLayoutItems(
+  element: Element,
   preview: Element,
   style: CSSStyleDeclaration,
   declared: DeclaredCssValues,
   ctx: LayoutContext,
+  options: BuildLayoutOptions = {},
 ): InspectPropertyItem[] {
   const items: InspectPropertyItem[] = [];
 
@@ -398,8 +456,24 @@ function buildLayoutItems(
   }
 
   for (const property of ['min-width', 'max-width', 'min-height', 'max-height', 'width', 'height'] as const) {
-    const value = resolveSizeConstraintValue(property, declared, style, preview);
-    if (value) pushUnique(items, makeItem(property, value));
+    const value = resolveSizeConstraintValue(property, declared, style, preview, element);
+    if (!value) continue;
+    if (
+      property === 'max-width'
+      && isDataListColumnBodyCell(element)
+      && (value === '0' || value === '0px')
+    ) {
+      pushUnique(items, makeItem(property, value, 'table 列 flex ellipsis'));
+      continue;
+    }
+    pushUnique(items, makeItem(property, value));
+  }
+
+  if (options.dataListColumnMinWidth) {
+    const withoutMinWidth = items.filter((item) => item.label !== 'min-width');
+    items.length = 0;
+    items.push(...withoutMinWidth);
+    pushUnique(items, makeItem('min-width', options.dataListColumnMinWidth, 'EgDataListColumn prop'));
   }
 
   const padding = buildBoxShorthand(declared, style, preview, 'padding');
@@ -494,6 +568,86 @@ function resolveStyleCSSValue(
   return normalizeCss(raw);
 }
 
+function buildBackgroundStyleItem(
+  preview: Element,
+  style: CSSStyleDeclaration,
+  declared: DeclaredCssValues,
+): InspectPropertyItem | null {
+  const backgroundDeclared = pickDeclaredCssValue(declared, ['background', 'background-color']);
+  if (backgroundDeclared && !isMeaninglessBorder(backgroundDeclared)) {
+    const property = declared.has('background') ? 'background' : 'background-color';
+    return makeItem(property, backgroundDeclared);
+  }
+
+  const backgroundComputed = style.backgroundColor;
+  if (!backgroundComputed || isMeaninglessBorder(backgroundComputed) || backgroundComputed === 'rgba(0, 0, 0, 0)') {
+    return null;
+  }
+
+  const resolved = resolveStyleCSSValue(
+    preview,
+    'background',
+    backgroundComputed,
+    'backgroundColor',
+    backgroundTokenFilter,
+  );
+  return resolved ? makeItem('background', resolved) : null;
+}
+
+function buildBackdropFilterStyleItem(
+  preview: Element,
+  style: CSSStyleDeclaration,
+  declared: DeclaredCssValues,
+): InspectPropertyItem | null {
+  const declaredValue = pickDeclaredCssValue(declared, BACKDROP_FILTER_DECLARED_KEYS);
+  if (declaredValue && declaredValue !== 'none') {
+    return makeItem('backdrop-filter', declaredValue);
+  }
+
+  const computed = style.backdropFilter;
+  if (!computed || computed === 'none') {
+    return null;
+  }
+
+  const resolved = resolveStyleCSSValue(
+    preview,
+    'backdrop-filter',
+    computed,
+    'backdropFilter',
+    inspectTokenFilters.blur,
+  );
+  return resolved ? makeItem('backdrop-filter', resolved) : null;
+}
+
+function buildFrostedChromeSurfaceStyleItems(
+  preview: Element,
+  element: Element,
+): InspectPropertyItem[] {
+  const declared = collectDeclaredCssValues(element, { excludeDevInspectRules: true });
+  const style = getComputedStyle(element);
+  const items: InspectPropertyItem[] = [];
+
+  const background = buildBackgroundStyleItem(preview, style, declared);
+  if (background) items.push(background);
+
+  const backdrop = buildBackdropFilterStyleItem(preview, style, declared);
+  if (backdrop) items.push(backdrop);
+
+  return items;
+}
+
+function mergeFrostedChromeSurfaceStyles(
+  primaryItems: InspectPropertyItem[],
+  chromeItems: InspectPropertyItem[],
+): InspectPropertyItem[] {
+  if (chromeItems.length === 0) return primaryItems;
+
+  const rest = primaryItems.filter((item) => !CHROME_SURFACE_STYLE_LABELS.has(item.label));
+  const merged = [...chromeItems, ...rest];
+  merged.sort((left, right) => propertyRank(left.label, STYLE_ORDER) - propertyRank(right.label, STYLE_ORDER));
+  return merged;
+}
+
 function buildStyleItems(
   preview: Element,
   style: CSSStyleDeclaration,
@@ -501,23 +655,8 @@ function buildStyleItems(
 ): InspectPropertyItem[] {
   const items: InspectPropertyItem[] = [];
 
-  const backgroundDeclared = pickDeclaredCssValue(declared, ['background', 'background-color']);
-  if (backgroundDeclared && !isMeaninglessBorder(backgroundDeclared)) {
-    const property = declared.has('background') ? 'background' : 'background-color';
-    pushUnique(items, makeItem(property, backgroundDeclared));
-  } else {
-    const backgroundComputed = style.backgroundColor;
-    if (backgroundComputed && !isMeaninglessBorder(backgroundComputed) && backgroundComputed !== 'rgba(0, 0, 0, 0)') {
-      const resolved = resolveStyleCSSValue(
-        preview,
-        'background',
-        backgroundComputed,
-        'backgroundColor',
-        (name) => inspectTokenFilters.material(name) || name.startsWith('--eds-avatar-'),
-      );
-      if (resolved) pushUnique(items, makeItem('background', resolved));
-    }
-  }
+  const background = buildBackgroundStyleItem(preview, style, declared);
+  if (background) pushUnique(items, background);
 
   const border = pickDeclaredCssValue(declared, ['border']);
   if (border && !isMeaninglessBorder(border)) {
@@ -573,27 +712,47 @@ function buildStyleItems(
     pushUnique(items, makeItem('opacity', style.opacity));
   }
 
-  for (const property of ['filter', 'backdrop-filter', 'mix-blend-mode'] as const) {
+  for (const property of ['filter', 'mix-blend-mode'] as const) {
     const value = pickDeclaredCssValue(declared, [property]);
     if (!value || value === 'none' || value === 'normal') continue;
     pushUnique(items, makeItem(property, value));
   }
 
+  const backdrop = buildBackdropFilterStyleItem(preview, style, declared);
+  if (backdrop) pushUnique(items, backdrop);
+
   items.sort((left, right) => propertyRank(left.label, STYLE_ORDER) - propertyRank(right.label, STYLE_ORDER));
   return items;
 }
+
+export type BuildDeclaredInspectCodeOptions = {
+  /** ToolBar / Paginer / Skid 内点不到 frosted 条时，background / backdrop-filter 从此层补全。 */
+  frostedChromeStyleSource?: Element | null;
+  /** DataList 列 min-width 来自 EgDataListColumn prop，与「适配」区一致。 */
+  dataListColumnMinWidth?: string | null;
+};
 
 /** Dev Mode：布局 / 样式代码（declared 优先 + computed 非默认 + token 解析）。 */
 export function buildDeclaredInspectCode(
   element: Element,
   preview: Element,
+  options: BuildDeclaredInspectCodeOptions = {},
 ): { layout: InspectPropertyItem[]; styleItems: InspectPropertyItem[] } {
   const declared = collectDeclaredCssValues(element, { excludeDevInspectRules: true });
   const style = getComputedStyle(element);
   const ctx = resolveLayoutContext(element, style);
 
+  let styleItems = buildStyleItems(preview, style, declared);
+  const frostedSource = options.frostedChromeStyleSource;
+  if (frostedSource && frostedSource !== element) {
+    const chromeItems = buildFrostedChromeSurfaceStyleItems(preview, frostedSource);
+    styleItems = mergeFrostedChromeSurfaceStyles(styleItems, chromeItems);
+  }
+
   return {
-    layout: buildLayoutItems(preview, style, declared, ctx),
-    styleItems: buildStyleItems(preview, style, declared),
+    layout: buildLayoutItems(element, preview, style, declared, ctx, {
+      dataListColumnMinWidth: options.dataListColumnMinWidth,
+    }),
+    styleItems,
   };
 }
