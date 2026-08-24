@@ -31,11 +31,10 @@ const addressTooltipTrigger = computed(
   () => String(props.customize.addressTooltipTrigger ?? 'hover') as 'hover' | 'focus',
 );
 const cellMinWidthStyle = computed(() => {
-  if (props.alignEnd) {
+  if (props.alignEnd || parsePreviewMinWidth(props.customize) != null) {
     return { width: '100%', maxWidth: '100%', minWidth: '0' };
   }
-  const width = parsePreviewMinWidth(props.customize);
-  return width ? { minWidth: `${width}px`, maxWidth: `${width}px` } : undefined;
+  return undefined;
 });
 </script>
 

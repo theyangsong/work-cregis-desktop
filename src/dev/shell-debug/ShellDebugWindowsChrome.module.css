@@ -1,0 +1,44 @@
+.titleBar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 100%;
+  background: var(--box-page);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.titleBarRow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  box-sizing: border-box;
+  width: 100%;
+  padding-block: var(--spacing-1);
+  padding-inline: var(--spacing-1-5);
+}
+
+.controls {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-05);
+  flex-shrink: 0;
+}
+
+.controls :global(.eds-icon-button .eds-icon) {
+  --eds-icon-stroke-screen: var(--stroke-lg);
+}
+
+.controls :global(.eds-icon-button > span) {
+  color: var(--stroke-base-primary);
+}
+
+.controls :global(.eds-icon-button:hover:not(:disabled):not(.isDisabled) > span) {
+  color: var(--stroke-base-primary);
+}
+
+.controls :global(.eds-icon-button:active:not(:disabled):not(.isDisabled) > span) {
+  color: var(--stroke-base-secondary);
+}

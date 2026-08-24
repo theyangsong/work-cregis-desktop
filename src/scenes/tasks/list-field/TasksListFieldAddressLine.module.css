@@ -93,6 +93,16 @@
   justify-content: flex-end;
 }
 
+.walletAliasHost {
+  width: 100%;
+  max-width: 100%;
+}
+
+.walletAliasHost .aliasPrimaryRow {
+  display: flex;
+  width: 100%;
+}
+
 .addressLineHost {
   display: flex;
   width: 100%;
@@ -179,16 +189,25 @@
 }
 
 .walletPrimaryText {
+  display: flex;
   flex: 0 1 auto;
+  flex-grow: 0;
   min-width: 0;
   max-width: 100%;
   overflow: hidden;
 }
 
-.walletPrimaryText :global(span) {
-  display: block;
-  max-width: 100%;
+.walletPrimaryText > :global(span) {
+  display: inline-flex;
+  flex: 0 1 auto;
   min-width: 0;
+  max-width: 100%;
+}
+
+.walletAliasHost .aliasPrimaryRow :global(.eds-anchored-tooltip) {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .aliasPrimaryRow :global(.eds-anchored-tooltip) {

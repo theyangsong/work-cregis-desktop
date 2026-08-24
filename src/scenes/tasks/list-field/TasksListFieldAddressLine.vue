@@ -131,7 +131,7 @@ function isColorfulTag(tag: (typeof inlineTags.value)[number]): boolean {
 
   <div
     v-else-if="useWalletPrimaryLayout"
-    :class="[styles.aliasHost, alignEnd && styles.aliasHostAlignEnd]"
+    :class="[styles.aliasHost, styles.walletAliasHost, alignEnd && styles.aliasHostAlignEnd]"
   >
     <div :class="styles.aliasPrimaryRow">
       <div :class="styles.walletPrimaryText">

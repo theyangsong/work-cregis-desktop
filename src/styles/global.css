@@ -4,6 +4,8 @@
   --app-preview-height: 800px;
   --app-preview-min-width: 960px;
   --app-preview-min-height: 720px;
+  --app-preview-max-width: 1280px;
+  --app-preview-max-height: 800px;
 }
 
 *,
@@ -297,6 +299,39 @@ body > [id^='eds-tooltip-v-'] > div:first-child:has(> :not([class*='floatingInne
   min-height: 0;
   max-height: 100%;
   overflow: hidden;
+}
+
+/*
+ * Windows 预览壳（Wnd. → Windows）：模块菜单列与主内容区同色。
+ * 改 Layout 槽位 ancestor（div:has(> .eds-module-menu)），不覆盖 EgModuleMenu 根节点 token。
+ */
+#app
+  > .app-preview[data-shell-debug-windows-chrome='true']
+  .app-shell-container
+  .eds-layout:not(.eds-layout-chrome-overlay)
+  > div:has(> .eds-module-menu) {
+  background: var(--box-page);
+}
+
+#app
+  > .app-preview[data-shell-debug-windows-chrome='true']
+  .app-shell-container
+  .eds-layout:not(.eds-layout-chrome-overlay)
+  > div:has(> .eds-module-menu)
+  > .eds-module-menu {
+  background: transparent;
+}
+
+/* ModuleMenuTitle 固定栏默认 frosted box-menu；Windows 预览壳与列表区统一为 page。 */
+#app
+  > .app-preview[data-shell-debug-windows-chrome='true']
+  .app-shell-container
+  .eds-layout:not(.eds-layout-chrome-overlay)
+  > div:has(> .eds-module-menu)
+  .eds-frosted-menu-chrome {
+  background: var(--box-page);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 .app-shell-container .eds-layout .main {

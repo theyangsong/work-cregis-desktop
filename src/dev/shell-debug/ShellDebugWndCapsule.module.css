@@ -73,15 +73,3 @@
   color: var(--text-base-secondary);
   white-space: nowrap;
 }
-
-:global(#app > .app-preview[data-shell-debug-window-mode='minimum']) {
-  --app-preview-width: var(--app-preview-min-width);
-  --app-preview-height: var(--app-preview-min-height);
-}
-
-:global(#app > .app-preview[data-shell-debug-window-mode='windows']) {
-  width: 100vw;
-  height: 100vh;
-  max-width: none;
-  max-height: none;
-}

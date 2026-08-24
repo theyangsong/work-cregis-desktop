@@ -1,0 +1,17 @@
+/*
+ * Shell Debug · EgAnchoredPopover（top-tool）公共 chrome。
+ * 仅隐藏 Popover 标题下分割线；不改各 capsule 内容布局。
+ */
+.eds-popover:has(
+  .shell-debug-popover-content,
+  .shell-debug-model-popover-content,
+  .shell-debug-wnd-popover-content
+) .eds-divider {
+  display: none;
+}
+
+/* Dev Inspect：内容滚动后才显示分割线。 */
+.eds-popover.shell-debug-dev-inspect-scrolled:has(.shell-debug-dev-inspect-popover)
+  .eds-divider:not([aria-hidden='true']) {
+  display: block;
+}

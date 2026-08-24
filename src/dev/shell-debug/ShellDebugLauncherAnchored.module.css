@@ -128,15 +128,6 @@
   overflow: hidden;
 }
 
-/* DS 在 contentSlot 溢出时即显示 divider；Dev Inspect 改为滚动后才显示。 */
-:global(.eds-popover:has(.shell-debug-dev-inspect-popover) .eds-divider) {
-  display: none;
-}
-
-:global(.eds-popover.shell-debug-dev-inspect-scrolled:has(.shell-debug-dev-inspect-popover) .eds-divider:not([aria-hidden='true'])) {
-  display: block;
-}
-
 .popoverContent {
   display: flex;
   flex-direction: column;

@@ -197,6 +197,7 @@ defineExpose({
       ref="bitcoinPanelRef"
       :translate="ui"
       :hide-inline-confirm="hideInlineConfirm"
+      :transaction-count="selectedCount"
       @miner-fee-screen-change="onMinerFeeScreenChange"
       @confirm="onMinerFeeConfirm"
     />
@@ -207,6 +208,7 @@ defineExpose({
       :translate="ui"
       :symbol="resolvedProfile.symbol"
       :hide-inline-confirm="hideInlineConfirm"
+      :transaction-count="selectedCount"
       @miner-fee-screen-change="onMinerFeeScreenChange"
       @confirm="onMinerFeeConfirm"
     />
@@ -217,6 +219,7 @@ defineExpose({
       :translate="ui"
       :symbol="resolvedProfile.symbol"
       :hide-inline-confirm="hideInlineConfirm"
+      :transaction-count="selectedCount"
       @confirm="onMinerFeeConfirm"
     />
 
@@ -225,6 +228,7 @@ defineExpose({
       ref="tronPanelRef"
       :translate="ui"
       :hide-inline-confirm="hideInlineConfirm"
+      :transaction-count="selectedCount"
       @confirm="onMinerFeeConfirm"
     />
   </div>

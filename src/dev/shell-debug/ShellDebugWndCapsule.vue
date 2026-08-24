@@ -11,7 +11,7 @@ import { SHELL_DEBUG_POPOVER_CHROME_HEIGHT } from './shellDebugPopover.constants
 import {
   SHELL_DEBUG_WINDOW_MODE_OPTIONS,
   useShellDebugWindowMode,
-  type ShellDebugWindowMode,
+  type ShellDebugWindowPreset,
 } from './shellDebugWindowMode';
 
 const WND_POPOVER_WIDTH = 240;
@@ -20,7 +20,7 @@ const BOUNDARY_MARGIN = 8;
 
 type PopoverAlign = 'center' | 'end';
 
-const { windowMode, setWindowModePreview } = useShellDebugWindowMode();
+const { windowMode, windowsChromeActive, setWindowModePreview } = useShellDebugWindowMode();
 
 const popoverAlign = ref<PopoverAlign>('end');
 const triggerRef = ref<HTMLElement | null>(null);
@@ -64,8 +64,13 @@ function onTriggerClick(event: MouseEvent, active: boolean, open: () => void) {
   open();
 }
 
-function selectWindowMode(mode: ShellDebugWindowMode) {
+function selectWindowMode(mode: ShellDebugWindowPreset) {
   setWindowModePreview(mode);
+}
+
+function isWindowOptionActive(mode: ShellDebugWindowPreset) {
+  if (mode === 'windows') return windowsChromeActive.value;
+  return windowMode.value === mode && !windowsChromeActive.value;
 }
 
 onMounted(() => {
@@ -133,7 +138,7 @@ onMounted(() => {
             @click="selectWindowMode(option.value)"
           >
             <span :class="styles.actionLabel">{{ option.label }}</span>
-            <span v-if="windowMode === option.value" :class="styles.actionValue">Active</span>
+            <span v-if="isWindowOptionActive(option.value)" :class="styles.actionValue">Active</span>
           </button>
         </div>
       </template>

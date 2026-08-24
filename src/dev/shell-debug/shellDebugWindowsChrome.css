@@ -1,0 +1,70 @@
+/*
+ * Windows 预览壳：Wnd. → Windows 时在 AppShell 顶层 EgLayout 顶行插入系统条。
+ * 仅调整顶层 layout 网格；:not(.eds-layout-chrome-overlay) 排除 Tasks 内嵌 layout。
+ * 勿用 .content — EgContainer 内容为 CSS Module 类名，无全局 .content。
+ */
+#app
+  > .app-preview[data-shell-debug-windows-chrome='true']
+  .app-shell-container
+  .eds-layout:not(.eds-layout-chrome-overlay) {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr);
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+#app
+  > .app-preview[data-shell-debug-windows-chrome='true']
+  .app-shell-container
+  .eds-layout:not(.eds-layout-chrome-overlay)
+  > [data-shell-debug-windows-titlebar] {
+  grid-column: 2 / -1;
+  grid-row: 1;
+}
+
+#app
+  > .app-preview[data-shell-debug-windows-chrome='true']
+  .app-shell-container
+  .eds-layout:not(.eds-layout-chrome-overlay)
+  > div:has(> .app-shell-nav),
+#app
+  > .app-preview[data-shell-debug-windows-chrome='true']
+  .app-shell-container
+  .eds-layout:not(.eds-layout-chrome-overlay)
+  > div:has(> .eds-nav-bar-shell) {
+  grid-row: 1 / -1;
+  grid-column: 1;
+}
+
+#app
+  > .app-preview[data-shell-debug-windows-chrome='true']
+  .app-shell-container
+  .eds-layout:not(.eds-layout-chrome-overlay)
+  > div:has(> .eds-module-menu) {
+  grid-row: 2;
+  grid-column: 2;
+}
+
+#app
+  > .app-preview[data-shell-debug-windows-chrome='true']
+  .app-shell-container
+  .eds-layout:not(.eds-layout-chrome-overlay)
+  > div:has(> .scrollPanel) {
+  grid-row: 2;
+  grid-column: 3;
+}
+
+#app
+  > .app-preview[data-shell-debug-windows-chrome='true']
+  .app-shell-container
+  .eds-layout:not(.eds-layout-chrome-overlay)
+  > div:has([class*='skidInner']) {
+  grid-row: 2;
+  grid-column: 4;
+}
+
+#app > .app-preview[data-shell-debug-windows-chrome='true'] .eds-nav-bar-system-buttons {
+  display: none;
+}

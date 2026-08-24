@@ -124,26 +124,26 @@
 }
 
 .secondaryRowAction {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   max-width: 100%;
   overflow: hidden;
 }
 
 .secondaryRowAction :global(.eds-anchored-tooltip) {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-width: 0;
   max-width: 100%;
 }
 
 .secondaryRowCountdown {
-  flex: 0 1 auto;
+  flex: 0 0 auto;
   min-width: 0;
   max-width: 100%;
   overflow: hidden;
 }
 
 .secondaryRowCountdown :global(.eds-anchored-tooltip) {
-  flex: 0 1 auto;
+  flex: 0 0 auto;
   min-width: 0;
   max-width: 100%;
 }
