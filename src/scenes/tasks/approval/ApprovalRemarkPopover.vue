@@ -14,6 +14,7 @@ import {
   type MinerFeeProfile,
   type MinerFeeSelection,
 } from '../shared/minerFeeProfile';
+import { MINER_FEE_POPOVER_CHROME } from '../shared/minerFeePopoverChrome';
 import ApprovalRemarkFormPanel from './ApprovalRemarkFormPanel.vue';
 import ApprovalRemarkPopoverPanel from './ApprovalRemarkPopoverPanel.vue';
 
@@ -136,7 +137,10 @@ function onMinerFeePopoverDismiss() {
 }
 
 async function onDirectMinerFeeTriggerClick() {
-  if (minerFeeExpanded.value) return;
+  if (minerFeeExpanded.value) {
+    minerFeeAnchoredRef.value?.close();
+    return;
+  }
   if (props.onBeforeOpen) {
     try {
       await props.onBeforeOpen();
@@ -180,13 +184,8 @@ function onDirectMinerFeeTooltipOpen() {
     />
     <template #content>
       <EgPopover
-        placement="top"
-        align="center"
-        top-tool
+        v-bind="MINER_FEE_POPOVER_CHROME"
         :top-tool-title="minerFeeTopToolTitle"
-        top-tool-closable
-        width-mode="fixed"
-        :width="POPOVER_PRESET_WIDTH_BASE"
         @top-tool-close="onMinerFeePopoverTopToolClose"
       >
         <ApprovalRemarkPopoverPanel
@@ -251,13 +250,8 @@ function onDirectMinerFeeTooltipOpen() {
     </EgAnchoredPopover>
     <template #content>
       <EgPopover
-        placement="top"
-        align="center"
-        top-tool
+        v-bind="MINER_FEE_POPOVER_CHROME"
         :top-tool-title="minerFeeTopToolTitle"
-        top-tool-closable
-        width-mode="fixed"
-        :width="POPOVER_PRESET_WIDTH_BASE"
         @top-tool-close="onMinerFeePopoverTopToolClose"
       >
         <ApprovalRemarkPopoverPanel

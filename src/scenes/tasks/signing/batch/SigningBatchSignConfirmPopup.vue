@@ -14,7 +14,6 @@ import {
   EgButton,
   EgAnchoredTooltip,
   EgPopover,
-  POPOVER_PRESET_WIDTH_BASE,
   MOTION_LAYOUT_DEFORM_CONTENT,
   MOTION_LAYOUT_DEFORM_CONTENT_ENTERING,
   MOTION_LAYOUT_DEFORM_CONTENT_EXITING,
@@ -32,6 +31,7 @@ import {
   type MinerFeeSelection,
   resolveMinerFeePopoverTitleKey,
 } from '../../shared/minerFeeProfile';
+import { MINER_FEE_POPOVER_CHROME } from '../../shared/minerFeePopoverChrome';
 import { formatBreakdownLine, buildBatchSummary } from './buildBatchSummary';
 import { splitDetailAmountHeadline } from '../../shared/splitDetailAmountHeadline';
 import { buildWithdrawalQuotaNoticeText } from '../buildWithdrawalQuotaNoticeText';
@@ -327,7 +327,11 @@ function onMinerFeePopoverClose() {
 
 function onMinerFeeConfirmTriggerClick(event: MouseEvent) {
   event.stopPropagation();
-  if (minerFeePopoverOpen.value || toolbarConfirmDisabled.value) {
+  if (toolbarConfirmDisabled.value) {
+    return;
+  }
+  if (minerFeePopoverOpen.value) {
+    minerFeeAnchoredRef.value?.close();
     return;
   }
   minerFeeAnchoredRef.value?.openPanel();
@@ -416,13 +420,8 @@ useBatchSignConfirmEscape({
           </span>
           <template #content>
             <EgPopover
-              placement="top"
-              align="center"
-              top-tool
+              v-bind="MINER_FEE_POPOVER_CHROME"
               :top-tool-title="minerFeeSectionTitle"
-              top-tool-closable
-              width-mode="fixed"
-              :width="POPOVER_PRESET_WIDTH_BASE"
               @top-tool-close="onMinerFeePopoverTopToolClose"
             >
               <ApprovalRemarkPopoverPanel

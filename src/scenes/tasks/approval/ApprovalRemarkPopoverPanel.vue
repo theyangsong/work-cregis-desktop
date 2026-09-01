@@ -219,58 +219,61 @@ defineExpose({
 </script>
 
 <template>
-  <div v-if="resolvedProfile" :class="minerFeeConfirmClass">
-    <EgMinerFeeBatchStubPanel
-      v-if="showBatchStubOnly"
-      ref="batchStubPanelRef"
-      :translate="ui"
-      :symbol="resolvedProfile.symbol"
-      :profile-kind="resolvedProfile.kind"
-      :transaction-count="minerFeeTransactionCount"
-      :hide-inline-confirm="hideInlineConfirm"
-      @confirm="onMinerFeeConfirm"
-    />
+  <EgMinerFeeBatchStubPanel
+    v-if="resolvedProfile && showBatchStubOnly"
+    ref="batchStubPanelRef"
+    :class="minerFeeConfirmClass"
+    :translate="ui"
+    :symbol="resolvedProfile.symbol"
+    :profile-kind="resolvedProfile.kind"
+    :transaction-count="minerFeeTransactionCount"
+    :hide-inline-confirm="hideInlineConfirm"
+    @confirm="onMinerFeeConfirm"
+  />
 
-    <EgMinerFeeBitcoinPanel
-      v-else-if="isBitcoinProfile"
-      ref="bitcoinPanelRef"
-      :translate="ui"
-      :hide-inline-confirm="hideInlineConfirm"
-      :transaction-count="minerFeeTransactionCount"
-      @miner-fee-screen-change="onMinerFeeScreenChange"
-      @confirm="onMinerFeeConfirm"
-    />
+  <EgMinerFeeBitcoinPanel
+    v-else-if="resolvedProfile && isBitcoinProfile"
+    ref="bitcoinPanelRef"
+    :class="minerFeeConfirmClass"
+    :translate="ui"
+    :hide-inline-confirm="hideInlineConfirm"
+    :transaction-count="minerFeeTransactionCount"
+    @miner-fee-screen-change="onMinerFeeScreenChange"
+    @confirm="onMinerFeeConfirm"
+  />
 
-    <EgMinerFeeEthereumPanel
-      v-else-if="resolvedProfile.kind === 'evm'"
-      ref="evmPanelRef"
-      :translate="ui"
-      :symbol="resolvedProfile.symbol"
-      :hide-inline-confirm="hideInlineConfirm"
-      :transaction-count="minerFeeTransactionCount"
-      @miner-fee-screen-change="onMinerFeeScreenChange"
-      @confirm="onMinerFeeConfirm"
-    />
+  <EgMinerFeeEthereumPanel
+    v-else-if="resolvedProfile && resolvedProfile.kind === 'evm'"
+    ref="evmPanelRef"
+    :class="minerFeeConfirmClass"
+    :translate="ui"
+    :symbol="resolvedProfile.symbol"
+    :hide-inline-confirm="hideInlineConfirm"
+    :transaction-count="minerFeeTransactionCount"
+    @miner-fee-screen-change="onMinerFeeScreenChange"
+    @confirm="onMinerFeeConfirm"
+  />
 
-    <EgMinerFeeTonPanel
-      v-else-if="resolvedProfile.kind === 'ton-xrp'"
-      ref="tonPanelRef"
-      :translate="ui"
-      :symbol="resolvedProfile.symbol"
-      :hide-inline-confirm="hideInlineConfirm"
-      :transaction-count="minerFeeTransactionCount"
-      @confirm="onMinerFeeConfirm"
-    />
+  <EgMinerFeeTonPanel
+    v-else-if="resolvedProfile && resolvedProfile.kind === 'ton-xrp'"
+    ref="tonPanelRef"
+    :class="minerFeeConfirmClass"
+    :translate="ui"
+    :symbol="resolvedProfile.symbol"
+    :hide-inline-confirm="hideInlineConfirm"
+    :transaction-count="minerFeeTransactionCount"
+    @confirm="onMinerFeeConfirm"
+  />
 
-    <EgMinerFeeTronPanel
-      v-else-if="resolvedProfile.kind === 'tron'"
-      ref="tronPanelRef"
-      :translate="ui"
-      :hide-inline-confirm="hideInlineConfirm"
-      :transaction-count="minerFeeTransactionCount"
-      @confirm="onMinerFeeConfirm"
-    />
-  </div>
+  <EgMinerFeeTronPanel
+    v-else-if="resolvedProfile && resolvedProfile.kind === 'tron'"
+    ref="tronPanelRef"
+    :class="minerFeeConfirmClass"
+    :translate="ui"
+    :hide-inline-confirm="hideInlineConfirm"
+    :transaction-count="minerFeeTransactionCount"
+    @confirm="onMinerFeeConfirm"
+  />
 
   <ApprovalRemarkFormPanel
     v-else
