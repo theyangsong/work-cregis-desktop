@@ -65,7 +65,7 @@ const primaryLineText = computed(() => {
 });
 const secondaryLineText = computed(() => {
   if (useWalletPrimaryLayout.value) {
-    return truncateAddressMiddle(model.value.address, 6, 6);
+    return truncateAddressMiddle(model.value.address);
   }
   return String(props.secondaryText ?? '').trim();
 });
@@ -99,7 +99,13 @@ const tooltipTriggerBodyClass = computed(() =>
     .join(' '),
 );
 const walletMetaRowClass = computed(() =>
-  [styles.metaRow, styles.walletMetaRow, props.alignEnd && styles.walletMetaRowAlignEnd]
+  [styles.walletMetaRow, props.alignEnd && styles.walletMetaRowAlignEnd]
+    .filter(Boolean)
+    .join(' '),
+);
+/** measureRef 专用：覆盖 DS .measure 的 nowrap，勿与 walletMetaRow 混用。 */
+const walletMetaMeasureClass = computed(() =>
+  [styles.walletMetaMeasureHost, props.alignEnd && styles.walletMetaMeasureHostAlignEnd]
     .filter(Boolean)
     .join(' '),
 );
@@ -159,59 +165,62 @@ function isColorfulTag(tag: (typeof inlineTags.value)[number]): boolean {
       :trigger="tooltipTrigger"
       semantic-truncated
       target-tone="secondary"
-      :typography-class="styles.walletMetaAddress"
-      :measure-class="walletMetaRowClass"
+      defer-hover-target
+      :measure-class="walletMetaMeasureClass"
       :copy-label="copyLabel"
       show-tooltip-copy
       :menu-tags="showTags ? tags : undefined"
       boundary-selector=".eds-data-list"
       :host-class="addressTooltipHostClass"
     >
-      <div
-        :class="[
-          walletMetaRowClass,
-          styles.addressHoverMotion,
-          'eds-hover-tooltip-trigger__target',
-          'eds-hover-tooltip-trigger__target--secondary',
-        ]"
-      >
-        <span v-if="showSecondaryText" :class="styles.walletMetaAddress">
+      <div :class="walletMetaRowClass">
+        <span
+          v-if="showSecondaryText"
+          :class="[
+            styles.walletMetaAddress,
+            styles.addressHoverMotion,
+            'eds-hover-tooltip-trigger__target',
+            'eds-hover-tooltip-trigger__target--secondary',
+          ]"
+        >
           {{ secondaryLineText }}
         </span>
 
-        <template v-for="(tag, index) in inlineTags" :key="`wallet-meta-tag-${index}`">
-          <EgTag
-            v-if="isCustomTag(tag)"
-            family="custom"
-            :custom-style="tag.customStyle ?? 'vermilion'"
-            size="sm"
-            truncate
-          >
-            {{ tagLabel(tag.label) }}
-          </EgTag>
-          <EgTag
-            v-else-if="isColorfulTag(tag)"
-            family="colorful"
-            :colorful-style="tag.colorfulStyle ?? 'apricot'"
-            size="sm"
-            truncate
-          >
-            {{ tagLabel(tag.label) }}
-          </EgTag>
-          <EgTag
-            v-else
-            family="system"
-            :system-type="tag.systemType ?? 'solid-red'"
-            size="sm"
-            truncate
-          >
-            {{ tagLabel(tag.label) }}
-          </EgTag>
-        </template>
+        <span v-if="showTags || showMoreTag" :class="styles.walletMetaTags">
+          <template v-for="(tag, index) in inlineTags" :key="`wallet-meta-tag-${index}`">
+            <EgTag
+              v-if="isCustomTag(tag)"
+              family="custom"
+              :custom-style="tag.customStyle ?? 'vermilion'"
+              size="sm"
+              truncate
+            >
+              {{ tagLabel(tag.label) }}
+            </EgTag>
+            <EgTag
+              v-else-if="isColorfulTag(tag)"
+              family="colorful"
+              :colorful-style="tag.colorfulStyle ?? 'apricot'"
+              size="sm"
+              truncate
+            >
+              {{ tagLabel(tag.label) }}
+            </EgTag>
+            <EgTag
+              v-else
+              family="system"
+              :system-type="tag.systemType ?? 'solid-red'"
+              size="sm"
+              truncate
+            >
+              {{ tagLabel(tag.label) }}
+            </EgTag>
+          </template>
 
-        <EgTag v-if="showMoreTag" family="system" system-type="gray" size="sm" truncate>
-          {{ moreTagLabel }}
-        </EgTag>
+          <EgTag v-if="showMoreTag" family="system" system-type="gray" size="sm" truncate>
+            {{ moreTagLabel }}
+          </EgTag>
+        </span>
       </div>
     </EgTextOverflowTooltip>
   </div>

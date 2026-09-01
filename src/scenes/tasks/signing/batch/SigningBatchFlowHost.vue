@@ -47,6 +47,7 @@ const signConfirmShellSuspended = computed(
     :summary="flow.signSummary.value"
     :remark="flow.remark.value"
     :miner-fee-profile="flow.batchMinerFeeProfile.value"
+    :pending-transaction-count="flow.pendingRowIndexes.value.length"
     @update:remark="flow.remark.value = $event"
     @cancel="flow.onSignConfirmCancel()"
     @confirm="(selection) => {

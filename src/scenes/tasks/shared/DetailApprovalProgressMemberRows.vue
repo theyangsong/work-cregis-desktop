@@ -5,10 +5,16 @@ import DetailProgressMemberDeviceInfoTrigger from './DetailProgressMemberDeviceI
 import type { ApprovalProgressMember } from '../approval/types';
 import styles from './DetailApprovalProgressTimeline.module.css';
 
-defineProps<{
-  members: ApprovalProgressMember[];
-  listKey: string;
-}>();
+withDefaults(
+  defineProps<{
+    members: ApprovalProgressMember[];
+    listKey: string;
+    presentation?: 'acted-rows' | 'pending-inline';
+  }>(),
+  {
+    presentation: 'acted-rows',
+  },
+);
 
 const { ui } = useAppI18n();
 
@@ -18,7 +24,32 @@ function memberDisplayName(member: ApprovalProgressMember): string {
 </script>
 
 <template>
-  <ul v-if="members.length" :class="styles.members">
+  <div
+    v-if="members.length && presentation === 'pending-inline'"
+    :class="styles.pendingMembers"
+  >
+    <template
+      v-for="(member, index) in members"
+      :key="`${listKey}-${member.emailMasked || member.name}`"
+    >
+      <span v-if="index > 0" :class="styles.pendingMemberSeparator" aria-hidden="true">/</span>
+      <span :class="styles.pendingMember">
+        <EgAvatar
+          size="xs"
+          :name="member.avatarName"
+          :variant="member.avatarVariant ?? 'initials'"
+        />
+        <span :class="styles.memberText">
+          {{ memberDisplayName(member) }}
+          <span v-if="!member.hideEmail && member.emailMasked" :class="styles.memberEmail">
+            {{ member.emailMasked }}
+          </span>
+        </span>
+      </span>
+    </template>
+  </div>
+
+  <ul v-else-if="members.length" :class="styles.members">
     <li
       v-for="member in members"
       :key="`${listKey}-${member.emailMasked || member.name}`"

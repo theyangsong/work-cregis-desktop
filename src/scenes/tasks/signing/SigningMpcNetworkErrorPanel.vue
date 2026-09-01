@@ -27,6 +27,7 @@ function selectNetwork(index: number) {
         :class="styles.formSubmission"
         type="danger"
         :text="ui('Signing failed. Please check the MPC network status and try again.')"
+        :show-link="false"
       />
     </div>
 

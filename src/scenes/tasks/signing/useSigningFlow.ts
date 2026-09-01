@@ -21,7 +21,13 @@ import {
 } from './multiSignInvitation/multiSignInvitationStore';
 import type { MultiSignInvitation } from './multiSignInvitation/types';
 import type { MultiSignInvitationJoinResult } from './multiSignInvitation/types';
-import { SIGNING_PROGRESS_STEP_HOLD_MS } from './signingCustomPopup.constants';
+import {
+  SIGNING_PROGRESS_BROADCAST_HOLD_MS,
+  SIGNING_PROGRESS_ON_CHAIN_HOLD_MS,
+  SIGNING_PROGRESS_SIGN_HOLD_MS,
+  SIGNING_PROGRESS_STEP_HOLD_MS,
+  SIGNING_PROGRESS_SUCCESS_AUTO_CLOSE_MS,
+} from './signingCustomPopup.constants';
 import { resolveSigningProgressDemoFailure } from './signingProgressDemo';
 import {
   MULTI_SIGN_MEMBER_JOIN_LAST_DELAY_MS,
@@ -85,11 +91,11 @@ export function useSigningFlow(options: {
   const multiSignPerspective = ref<MultiSignWaitingPerspective>('signer');
   const multiSignParticipantDemoOutcome = ref<'success' | 'mpc-network-error'>('success');
   const pendingParticipantSuccessFeedback = ref(false);
+  const pendingProgressSuccessFeedback = ref(false);
+
+  let progressDemoTimers: ReturnType<typeof window.setTimeout>[] = [];
 
   const detail = shallowRef<SigningDetail | null>(null);
-  const pendingAutoAdvanceId = ref<string | null>(null);
-  /** Progress 关闭后待翻页目标；在 verify 成功时按 pending 导航序捕获（此时当前项仍 pending）。 */
-  const pendingDetailAdvanceAfterProgress = ref<string | null>(null);
   const selectedMinerFeeDisplay = ref<string | null>(null);
 
   const currentIndex = computed(() => {
@@ -245,38 +251,85 @@ export function useSigningFlow(options: {
     startMultiSignRoomAsParticipant(buildSigningDetailFromMultiSignInvitation(invitation));
   }
 
+  function finishProgressBroadcastSuccess() {
+    progressPhase.value = 'broadcast-success';
+    pendingProgressSuccessFeedback.value = true;
+    progressDemoTimers.push(
+      window.setTimeout(() => {
+        if (progressOpen.value && progressPhase.value === 'broadcast-success') {
+          progressOpen.value = false;
+        }
+      }, SIGNING_PROGRESS_SUCCESS_AUTO_CLOSE_MS),
+    );
+  }
+
   function startProgressPopup() {
     const rowIndex = currentSigningId.value
       ? parseRowIndexFromSigningId(currentSigningId.value)
       : -1;
     const demoFailure = resolveSigningProgressDemoFailure(rowIndex);
 
+    clearProgressDemoTimers();
+    pendingProgressSuccessFeedback.value = false;
     progressPhase.value = 'signing';
     progressOpen.value = true;
 
     if (demoFailure === 'broadcast-failed') {
-      window.setTimeout(() => {
-        progressPhase.value = 'broadcast-failed';
-      }, SIGNING_PROGRESS_STEP_HOLD_MS);
+      progressDemoTimers.push(
+        window.setTimeout(() => {
+          progressPhase.value = 'broadcast-failed';
+        }, SIGNING_PROGRESS_STEP_HOLD_MS),
+      );
       return;
     }
 
     if (demoFailure === 'mpc-network-error') {
-      window.setTimeout(() => {
-        progressPhase.value = 'sign-failed';
-      }, SIGNING_PROGRESS_STEP_HOLD_MS);
+      progressDemoTimers.push(
+        window.setTimeout(() => {
+          progressPhase.value = 'sign-failed';
+        }, SIGNING_PROGRESS_STEP_HOLD_MS),
+      );
       return;
     }
 
-    window.setTimeout(() => {
-      progressPhase.value = 'broadcasting';
-    }, SIGNING_PROGRESS_STEP_HOLD_MS);
-    window.setTimeout(() => {
-      progressPhase.value = 'on-chain-confirming';
-    }, SIGNING_PROGRESS_STEP_HOLD_MS * 2);
-    window.setTimeout(() => {
-      progressPhase.value = 'broadcast-success';
-    }, SIGNING_PROGRESS_STEP_HOLD_MS * 3);
+    progressDemoTimers.push(
+      window.setTimeout(() => {
+        progressPhase.value = 'broadcasting';
+        if (SIGNING_PROGRESS_BROADCAST_HOLD_MS <= 0) {
+          progressPhase.value = 'on-chain-confirming';
+        }
+        if (
+          SIGNING_PROGRESS_BROADCAST_HOLD_MS <= 0
+          && SIGNING_PROGRESS_ON_CHAIN_HOLD_MS <= 0
+        ) {
+          finishProgressBroadcastSuccess();
+          return;
+        }
+        if (SIGNING_PROGRESS_BROADCAST_HOLD_MS > 0) {
+          progressDemoTimers.push(
+            window.setTimeout(() => {
+              progressPhase.value = 'on-chain-confirming';
+              if (SIGNING_PROGRESS_ON_CHAIN_HOLD_MS <= 0) {
+                finishProgressBroadcastSuccess();
+              }
+            }, SIGNING_PROGRESS_BROADCAST_HOLD_MS),
+          );
+        } else if (SIGNING_PROGRESS_ON_CHAIN_HOLD_MS > 0) {
+          progressDemoTimers.push(
+            window.setTimeout(() => {
+              finishProgressBroadcastSuccess();
+            }, SIGNING_PROGRESS_ON_CHAIN_HOLD_MS),
+          );
+        }
+      }, SIGNING_PROGRESS_SIGN_HOLD_MS),
+    );
+  }
+
+  function clearProgressDemoTimers() {
+    for (const timerId of progressDemoTimers) {
+      window.clearTimeout(timerId);
+    }
+    progressDemoTimers = [];
   }
 
   function retryProgressAfterSignFailed() {
@@ -425,83 +478,32 @@ export function useSigningFlow(options: {
     remark.value = '';
     pendingAction.value = null;
 
-    const exitingBatch = batchMode.value;
-    const singleCurrentId = exitingBatch ? null : currentSigningId.value;
-    const singleNextId =
-      singleCurrentId != null
-        ? (() => {
-            const index = pendingIds.value.indexOf(singleCurrentId);
-            return index >= 0 ? pendingIds.value[index + 1] : undefined;
-          })()
-        : undefined;
-
-    if (exitingBatch) {
+    if (batchMode.value) {
       batchMode.value = false;
       batchSelectedIds.value = [];
       options.onExitBatchMode();
-      closeDetail();
     }
 
+    closeDetail();
     options.showSuccess(SIGNING_SUCCESS_MESSAGE);
     options.onRefreshList();
     syncPendingIds();
-
-    if (exitingBatch || !singleCurrentId || !detailOpen.value) {
-      return;
-    }
-
-    if (singleNextId) {
-      const rowIndex = parseRowIndexFromSigningId(singleNextId);
-      if (checkSigningPending(singleNextId, rowIndex)) {
-        pendingAutoAdvanceId.value = singleNextId;
-        return;
-      }
-    }
-
-    closeDetail();
-  }
-
-  function onDetailShellOpened() {
-    const nextId = pendingAutoAdvanceId.value;
-    if (!nextId) return;
-    pendingAutoAdvanceId.value = null;
-    const rowIndex = parseRowIndexFromSigningId(nextId);
-    if (checkSigningPending(nextId, rowIndex) || nextId === currentSigningId.value) {
-      loadDetail(nextId);
-      return;
-    }
-    closeDetail();
-  }
-
-  function captureDetailAdvanceBeforeProgress() {
-    if (!currentSigningId.value || !detailOpen.value || batchMode.value) {
-      pendingDetailAdvanceAfterProgress.value = null;
-      return;
-    }
-    const currentId = currentSigningId.value;
-    const index = pendingIds.value.indexOf(currentId);
-    const nextId = index >= 0 ? pendingIds.value[index + 1] : undefined;
-    pendingDetailAdvanceAfterProgress.value = nextId ?? currentId;
-  }
-
-  function scheduleDetailResumeAfterProgress() {
-    if (!currentSigningId.value || !detailOpen.value) {
-      pendingDetailAdvanceAfterProgress.value = null;
-      return;
-    }
-    const targetId = pendingDetailAdvanceAfterProgress.value ?? currentSigningId.value;
-    pendingDetailAdvanceAfterProgress.value = null;
-    pendingAutoAdvanceId.value = targetId;
   }
 
   function onProgressClosed() {
+    const showSuccessFeedback = pendingProgressSuccessFeedback.value;
+    pendingProgressSuccessFeedback.value = false;
+    clearProgressDemoTimers();
     progressOpen.value = false;
     remark.value = '';
     pendingAction.value = null;
     selectedMinerFeeDisplay.value = null;
     options.onRefreshList();
     syncPendingIds();
-    scheduleDetailResumeAfterProgress();
+    if (showSuccessFeedback) {
+      closeDetail();
+      options.showSuccess(SIGNING_SUCCESS_MESSAGE);
+    }
   }
 
   function onMultiSignClosed() {
@@ -513,7 +515,6 @@ export function useSigningFlow(options: {
     pendingAction.value = null;
     options.onRefreshList();
     syncPendingIds();
-    pendingDetailAdvanceAfterProgress.value = null;
   }
 
   let multiSignClosingForProgress = ref(false);
@@ -604,8 +605,6 @@ export function useSigningFlow(options: {
       return;
     }
 
-    captureDetailAdvanceBeforeProgress();
-
     if (isMultiSignSigningDetail(detail.value)) {
       startMultiSignRoom();
       return;
@@ -681,6 +680,8 @@ export function useSigningFlow(options: {
         detail.value = null;
         verifyOpen.value = false;
         viewMoreOpen.value = false;
+        clearProgressDemoTimers();
+        pendingProgressSuccessFeedback.value = false;
         progressOpen.value = false;
         pendingJoinInvitation.value = null;
         clearMultiSignJoinTimers();
@@ -715,7 +716,6 @@ export function useSigningFlow(options: {
     openDetailForRow,
     closeDetail,
     onDetailPopupClosed,
-    onDetailShellOpened,
     navigateRelative,
     onDetailPassConfirm,
     onDetailRejectConfirm,

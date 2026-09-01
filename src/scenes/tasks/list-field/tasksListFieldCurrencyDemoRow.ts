@@ -1,9 +1,11 @@
 import { MAX_CURRENCY_SIDE_ADDRESSES, currencyAddressTagsEnabledKey } from './listFieldCurrencyShared';
 import {
   CURRENCY_CUSTOM_TAG_DEFAULT_COUNT,
+  CURRENCY_DEMO_ROW_TON_AML_TAG_INDEX,
   CURRENCY_DEMO_ROW_WITH_TAGS_INDEX,
   currencyAddressCustomTagOverrides,
   currencyAddressRiskTagOverrides,
+  currencyTagShowKey,
 } from './listFieldCurrencyTagCustomize';
 import {
   resolveSampleAddressForSymbol,
@@ -64,7 +66,7 @@ function buildDemoSideAddressOverrides(
   return entries;
 }
 
-/** 第 3 条演示行：发送方 23 笔订单（单地址）；接收方 Danger + 5 自定义 Tag。 */
+/** 第 3 条演示行：发送方 23 笔订单（单地址）；接收方 Blacklist + 5 自定义 Tag。 */
 export function applyCurrencyDemoRowOverrides(
   customize: Record<string, unknown>,
   rowIndex: number,
@@ -73,6 +75,17 @@ export function applyCurrencyDemoRowOverrides(
     return {
       ...customize,
       toAlias1: 'Alex Mah.',
+    };
+  }
+
+  /** 第 2 条（TON）：接收方单地址 + AML 危险 tag。 */
+  if (rowIndex === CURRENCY_DEMO_ROW_TON_AML_TAG_INDEX) {
+    return {
+      ...customize,
+      [currencyAddressTagsEnabledKey('from', 1)]: false,
+      [currencyAddressTagsEnabledKey('to', 1)]: true,
+      [currencyTagShowKey('to', 1, 'custom')]: false,
+      ...currencyAddressRiskTagOverrides('to', 1, 1, true),
     };
   }
 

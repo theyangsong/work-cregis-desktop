@@ -55,6 +55,7 @@ const { ui } = useAppI18n();
         <DetailApprovalProgressMemberRows
           :members="step.members"
           :list-key="step.key"
+          :presentation="step.memberPresentation ?? 'acted-rows'"
         />
       </div>
     </li>

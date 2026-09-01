@@ -109,6 +109,7 @@ import {
 } from './approval/useApprovalFlow';
 import { registerSigningFlow } from './signing/signingFlowContext';
 import {
+  SIGNING_SUCCESS_MESSAGE,
   useSigningFlow,
 } from './signing/useSigningFlow';
 import { useDataListSelectAllShortcut } from './shared/useDataListSelectAllShortcut';
@@ -410,7 +411,7 @@ const signingBatchFlow = useSigningBatchFlow({
     dataListRemountKey.value += 1;
   },
   showError: (message) => showListError(message),
-  showSuccess: () => showListSuccess(),
+  showSuccess: () => showListSuccess(SIGNING_SUCCESS_MESSAGE),
 });
 
 const signingFlow = useSigningFlow({
@@ -712,13 +713,18 @@ const signingBatchUsesNetworkFlotation = computed(() =>
   isSigningMenu.value && signingBatchFlow.shouldUseNetworkPickerFlotation(),
 );
 
+/** 批处理多选进行中：工具栏批处理钮禁用（退出走 Batch Bar / Esc，勿再点工具栏切换）。 */
+const isBatchToolbarDisabled = computed(
+  () =>
+    skidContentLocked.value
+    || batchButton.value.disabled
+    || customize.selectMode,
+);
+
 function onToolbarBatchClick() {
+  if (isBatchToolbarDisabled.value) return;
   if (isSigningMenu.value) {
     signingBatchFlow.onBatchButtonClick();
-    return;
-  }
-  if (customize.selectMode) {
-    requestCloseDataListSelectMode();
     return;
   }
   requestOpenDataListSelectMode();
@@ -788,12 +794,12 @@ const displayStatisticsItems = computed(() =>
 const displayBatchActions = computed(() => {
   const actions = isApprovalMenu.value
     ? [
-        { key: 'reject', label: 'Reject', danger: true, popover: true, popoverTitle: 'Batch Rejection' },
-        { key: 'pass', label: 'Pass', popover: true, popoverTitle: 'Batch Approve' },
+        { key: 'reject', label: 'Reject', danger: true, popover: true, popoverTitle: 'Batch Reject' },
+        { key: 'pass', label: 'Pass', popover: true, popoverTitle: 'Batch Approved' },
       ]
     : isSigningMenu.value
       ? [
-          { key: 'reject', label: 'Reject', danger: true, popover: true, popoverTitle: 'Batch Rejection' },
+          { key: 'reject', label: 'Reject', danger: true, popover: true, popoverTitle: 'Batch Reject' },
           { key: 'pass', label: 'Sign' },
         ]
       : dataListBatchActions;
@@ -833,7 +839,7 @@ const displayBatchActions = computed(() => {
               boundary-selector=".app-preview"
               flip
               close-on-scroll
-              :disabled="skidContentLocked || batchButton.disabled"
+              :disabled="isBatchToolbarDisabled"
             >
               <template #trigger="{ expanded }">
                 <!--
@@ -844,7 +850,7 @@ const displayBatchActions = computed(() => {
                 <span
                   :class="[
                     pageStyles.batchProTriggerRoot,
-                    (skidContentLocked || batchButton.disabled) && pageStyles.batchProTriggerDisabled,
+                    (isBatchToolbarDisabled) && pageStyles.batchProTriggerDisabled,
                     expanded && pageStyles.batchFlotationTriggerExpanded,
                   ]"
                 >
@@ -858,7 +864,7 @@ const displayBatchActions = computed(() => {
                       shape="rectangular"
                       size="sm"
                       :label="ui(batchButton.label)"
-                      :disabled="skidContentLocked || batchButton.disabled"
+                      :disabled="isBatchToolbarDisabled"
                     >
                       <EgIcon :name="batchButton.icon" size="sm" />
                     </EgIconButton>
@@ -900,7 +906,7 @@ const displayBatchActions = computed(() => {
               :badge="batchButton.badge"
               :show-badge="batchButton.showBadge"
               :show-reddot="batchButton.showReddot"
-              :disabled="skidContentLocked || batchButton.disabled"
+              :disabled="isBatchToolbarDisabled"
               @click="onToolbarBatchClick"
             >
               <EgIcon :name="batchButton.icon" size="sm" />
@@ -990,7 +996,7 @@ const displayBatchActions = computed(() => {
               v-if="isApprovalMenu"
               :selected-count="selectedCount"
               :remark="approvalFlow.remark.value"
-              placeholder-key="Please enter remark"
+              placeholder-key="Please enter"
               @update:remark="approvalFlow.remark.value = $event"
               @confirm="confirm"
               @cancel="close"
@@ -999,7 +1005,7 @@ const displayBatchActions = computed(() => {
               v-else
               :selected-count="selectedCount"
               :remark="signingBatchFlow.remark.value"
-              placeholder-key="Please enter remark"
+              placeholder-key="Please enter"
               @update:remark="signingBatchFlow.remark.value = $event"
               @confirm="confirm"
               @cancel="close"

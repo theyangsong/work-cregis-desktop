@@ -11,6 +11,7 @@ import {
   inspectPinnedRect,
 } from './developerInspectSession';
 
+import { isShellDebugUiElement } from '../shellDebugUiScope';
 import { isInspectFloatLayerElement } from './inspectFloatLayerScope';
 
 const PREVIEW_SELECTOR = '.app-preview';
@@ -23,19 +24,10 @@ function resolvePreview(): Element | null {
 }
 
 function isInspectOverlayTarget(target: Element): boolean {
-  return Boolean(
-    target.closest(
-      '[data-dev-inspect-overlay], [data-shell-debug-ui], [data-app-client-float-host], [data-float-interactive]',
-    ),
+  return (
+    isShellDebugUiElement(target)
+    || Boolean(target.closest('[data-app-client-float-host], [data-float-interactive]'))
   );
-}
-
-function isShellDebugUiTarget(target: Element): boolean {
-  return Boolean(target.closest('[data-shell-debug-ui]'));
-}
-
-function isInspectPanelTarget(target: Element): boolean {
-  return Boolean(target.closest('[data-dev-inspect-panel]'));
 }
 
 function isInspectableTarget(target: Element, preview: Element): boolean {
@@ -47,7 +39,9 @@ function elementFromPreviewPoint(x: number, y: number, preview: Element): Elemen
   const stack = document.elementsFromPoint(x, y);
   for (const node of stack) {
     if (!(node instanceof Element)) continue;
-    if (node.closest('[data-shell-debug-ui], [data-dev-inspect-overlay], [data-app-client-float-host]')) continue;
+    if (isShellDebugUiElement(node) || node.closest('[data-app-client-float-host]')) {
+      continue;
+    }
     if (preview.contains(node) || isInspectFloatLayerElement(node)) return node;
   }
   return null;
@@ -182,7 +176,7 @@ function onPointerMove(event: PointerEvent) {
   if (!developerInspectActive.value) return;
 
   const eventTarget = event.target;
-  if (eventTarget instanceof Element && (isShellDebugUiTarget(eventTarget) || isInspectPanelTarget(eventTarget))) {
+  if (eventTarget instanceof Element && isShellDebugUiElement(eventTarget)) {
     clearHoverSelection();
     return;
   }
@@ -198,7 +192,10 @@ function onPointerDown(event: PointerEvent) {
   if (!developerInspectActive.value) return;
 
   const eventTarget = event.target;
-  if (eventTarget instanceof Element && (isShellDebugUiTarget(eventTarget) || isInspectPanelTarget(eventTarget))) {
+  if (eventTarget instanceof Element && isShellDebugUiElement(eventTarget)) {
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
     return;
   }
 

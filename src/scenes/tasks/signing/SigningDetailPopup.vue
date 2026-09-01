@@ -18,17 +18,18 @@ import { resolveDetailHeadlineStatus } from '../shared/resolveDetailHeadlineStat
 import { usePopupShellLifecycle } from '../shared/usePopupShellLifecycle';
 import { useDetailToolbarPageMotion } from '../shared/useDetailToolbarPageMotion';
 import { buildSigningDetailSections } from './buildSigningDetailSections';
+import { addressEntriesIncludeBlacklist } from '../shared/hasBlacklistAddressTags';
 import {
   resolveMinerFeeProfileFromDetail,
 } from '../shared/minerFeeProfile';
 import type { MinerFeeSelection } from '../shared/minerFeeProfile';
 import { isMultiSignSigningDetail } from './signingStore';
 import type { SigningDetail } from './types';
-import DetailHeadlineEyebrowPortal from '../shared/DetailHeadlineEyebrowPortal.vue';
+import DetailHeadlineGroupPortal from '../shared/DetailHeadlineGroupPortal.vue';
 import detailChromeStyles from '../shared/detailPopupChrome.module.css';
 import DetailToolbarSlot from '../shared/DetailToolbarSlot.vue';
+import DetailToolbarRemarkTrigger from '../shared/DetailToolbarRemarkTrigger.vue';
 import ExpiryCountdown from '../shared/ExpiryCountdown.vue';
-import { useTasksDetailToolbarGuide } from '../shared/useTasksDetailToolbarGuide';
 import ApprovalRemarkPopover from '../approval/ApprovalRemarkPopover.vue';
 import remarkTriggerStyles from '../shared/remarkPopoverTrigger.module.css';
 
@@ -41,7 +42,6 @@ const props = withDefaults(
     totalCount: number;
     prevDisabled: boolean;
     nextDisabled: boolean;
-    remark?: string;
     readOnly?: boolean;
     listStatusLabel?: string;
     listStatusKind?: TagStatus;
@@ -49,14 +49,12 @@ const props = withDefaults(
   }>(),
   {
     shellSuspended: false,
-    remark: '',
     readOnly: false,
   },
 );
 
 const emit = defineEmits<{
   'update:open': [value: boolean];
-  'update:remark': [value: string];
   'popup-closed': [];
   'shell-opened': [];
   prev: [];
@@ -67,7 +65,6 @@ const emit = defineEmits<{
 }>();
 
 const { ui, locale } = useAppI18n();
-const { shouldShowGuide, markGuideSeen } = useTasksDetailToolbarGuide();
 
 const { popupMounted, popupOpen, onPopupClosed } = usePopupShellLifecycle({
   open: toRef(props, 'open'),
@@ -79,30 +76,11 @@ const { popupMounted, popupOpen, onPopupClosed } = usePopupShellLifecycle({
   },
 });
 
-const guideActive = computed(
-  () => popupOpen.value && shouldShowGuide.value && Boolean(props.detail),
-);
-
 const detailId = computed(() => props.detail?.id);
-const {
-  detailToolbarPageKey,
-  toolbarNavPulse,
-  toolbarNavDirection,
-  pulseToolbarNav,
-} = useDetailToolbarPageMotion({
+const { detailToolbarPageKey } = useDetailToolbarPageMotion({
   detailId,
   currentIndex: computed(() => props.currentIndex),
 });
-
-function onToolbarPrev() {
-  pulseToolbarNav('prev');
-  emit('prev');
-}
-
-function onToolbarNext() {
-  pulseToolbarNav('next');
-  emit('next');
-}
 
 const headline = computed(() =>
   formatGroupedAmountText(props.detail?.amountHeadline ?? ''),
@@ -112,6 +90,10 @@ const signingThresholdDisplay = computed(() =>
   formatGroupedThresholdString(props.detail?.signingThreshold ?? ''),
 );
 const isMultiSign = computed(() => isMultiSignSigningDetail(props.detail));
+const showDetailToolbar = computed(() => !props.readOnly);
+const signingBlockedByBlacklist = computed(() =>
+  props.detail ? addressEntriesIncludeBlacklist(props.detail.receivers, ui) : false,
+);
 
 const detailHostRef = ref<HTMLElement | null>(null);
 const expandedAddressKeys = ref(new Set<string>());
@@ -171,9 +153,28 @@ const minerFeeProfile = computed(() =>
 );
 
 async function onMultiSignPassClick() {
+  if (signingBlockedByBlacklist.value) return;
   try {
     await props.onRemarkBeforeOpen?.();
-    emit('update:remark', '');
+    emit('passConfirm', null);
+  } catch {
+    // prepareDetailRemarkOpen rejected (processed / disabled).
+  }
+}
+
+async function onRejectClick() {
+  try {
+    await props.onRemarkBeforeOpen?.();
+    emit('rejectConfirm');
+  } catch {
+    // prepareDetailRemarkOpen rejected (processed / disabled).
+  }
+}
+
+async function onPassClick() {
+  if (signingBlockedByBlacklist.value) return;
+  try {
+    await props.onRemarkBeforeOpen?.();
     emit('passConfirm', null);
   } catch {
     // prepareDetailRemarkOpen rejected (processed / disabled).
@@ -183,15 +184,10 @@ async function onMultiSignPassClick() {
 async function onMultiSignRejectClick() {
   try {
     await props.onRemarkBeforeOpen?.();
-    emit('update:remark', '');
     emit('rejectConfirm');
   } catch {
     // prepareDetailRemarkOpen rejected (processed / disabled).
   }
-}
-
-function onRemarkDismiss() {
-  emit('update:remark', '');
 }
 
 function onDetailClose() {
@@ -210,8 +206,6 @@ function onDetailClose() {
     <EgDetail
       v-if="detail"
       :toolbar-page-key="detailToolbarPageKey"
-      :toolbar-nav-pulse="toolbarNavPulse"
-      :toolbar-nav-direction="toolbarNavDirection"
       :headline="headline"
       :show-eyebrow="false"
       :show-status-tag="showStatusTag"
@@ -220,34 +214,22 @@ function onDetailClose() {
       :status-tag-status="statusTagStatus"
       :show-tabs="false"
       :sections="sections"
-      show-toolbar
-      show-toolbar-nav
+      :show-toolbar="showDetailToolbar"
+      :show-toolbar-nav="false"
       toolbar-divider-pinned
       :value-copy-label="ui('Copy')"
       :value-address-book-label="ui('Add to address book')"
       :value-aml-search-label="ui('AML Search')"
       :value-browser-label="ui('Block explorer')"
-      :toolbar-current="currentIndex"
-      :toolbar-total="totalCount"
-      :toolbar-prev-disabled="prevDisabled"
-      :toolbar-next-disabled="nextDisabled"
       toolbar-tone="decor"
       @close="onDetailClose"
-      @toolbar-prev="onToolbarPrev"
-      @toolbar-next="onToolbarNext"
       @item-value-link-click="onItemValueLinkClick"
     >
-      <template #toolbar>
-        <DetailToolbarSlot
-          :toolbar-current="currentIndex"
-          :toolbar-total="totalCount"
-          :toolbar-prev-disabled="prevDisabled"
-          :toolbar-next-disabled="nextDisabled"
-          :guide-active="guideActive"
-          @toolbar-prev="onToolbarPrev"
-          @toolbar-next="onToolbarNext"
-          @guide-dismiss="markGuideSeen"
-        >
+      <template v-if="showDetailToolbar" #toolbar>
+        <DetailToolbarSlot :show-toolbar-nav="false" toolbar-divider-pinned>
+          <template v-if="!readOnly" #leading>
+            <DetailToolbarRemarkTrigger :page-key="detail?.id" />
+          </template>
           <template v-if="!readOnly" #actions>
             <EgButton
               v-if="isMultiSign"
@@ -258,56 +240,36 @@ function onDetailClose() {
             >
               {{ ui('Reject') }}
             </EgButton>
-            <ApprovalRemarkPopover
+            <EgButton
               v-else
-              boundary-selector=".eds-popup"
-              :title="ui('Remark')"
-              :remark="remark"
-              :on-before-open="onRemarkBeforeOpen"
-              @update:remark="emit('update:remark', $event)"
-              @confirm="emit('rejectConfirm')"
-              @dismiss="onRemarkDismiss"
+              tone="danger"
+              variant="text"
+              size="md"
+              @click="onRejectClick"
             >
-              <template #trigger="{ active, onClick }">
-                <span
-                  :class="[
-                    remarkTriggerStyles.remarkTrigger,
-                    active && remarkTriggerStyles.remarkTriggerRejectPressed,
-                  ]"
-                >
-                  <EgButton
-                    tone="danger"
-                    variant="text"
-                    size="md"
-                    :aria-expanded="active"
-                    @click.stop="onClick"
-                  >
-                    {{ ui('Reject') }}
-                  </EgButton>
-                </span>
-              </template>
-            </ApprovalRemarkPopover>
+              {{ ui('Reject') }}
+            </EgButton>
 
             <EgButton
               v-if="isMultiSign"
               tone="decor"
               variant="solid"
               size="md"
+              :disabled="signingBlockedByBlacklist"
               @click="onMultiSignPassClick"
             >
               {{ ui('Sign') }}
             </EgButton>
 
             <ApprovalRemarkPopover
-              v-else
+              v-else-if="minerFeeProfile"
+              skip-remark-step
               boundary-selector=".eds-popup"
-              :title="ui('Remark')"
-              :remark="remark"
-              :miner-fee-profile="minerFeeProfile ?? undefined"
+              :title="ui('Miner Fee')"
+              remark=""
+              :miner-fee-profile="minerFeeProfile"
               :on-before-open="onRemarkBeforeOpen"
-              @update:remark="emit('update:remark', $event)"
               @confirm="emit('passConfirm', $event)"
-              @dismiss="onRemarkDismiss"
             >
               <template #trigger="{ active, onClick }">
                 <span
@@ -320,6 +282,7 @@ function onDetailClose() {
                     tone="decor"
                     variant="solid"
                     size="md"
+                    :disabled="signingBlockedByBlacklist"
                     :aria-expanded="active"
                     @click.stop="onClick"
                   >
@@ -328,6 +291,17 @@ function onDetailClose() {
                 </span>
               </template>
             </ApprovalRemarkPopover>
+
+            <EgButton
+              v-else
+              tone="decor"
+              variant="solid"
+              size="md"
+              :disabled="signingBlockedByBlacklist"
+              @click="onPassClick"
+            >
+              {{ ui('Sign') }}
+            </EgButton>
           </template>
         </DetailToolbarSlot>
       </template>
@@ -350,11 +324,12 @@ function onDetailClose() {
         <DetailApprovalProgressAppend :steps="progressSteps" />
       </template>
     </EgDetail>
-    <DetailHeadlineEyebrowPortal
+    <DetailHeadlineGroupPortal
       v-if="detail"
       :host-ref="detailHostRef"
       :business-type-key="detail.businessType"
       :page-key="detail.id"
+      :show-quota-streamer="!readOnly"
     />
     </div>
   </EgPopup>

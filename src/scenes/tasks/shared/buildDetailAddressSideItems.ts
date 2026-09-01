@@ -3,6 +3,11 @@ import {
   type CryptoAddressSideTags,
   type DetailItemData,
 } from '@eds/desktop-components';
+import { localizeCurrencyAddressTags } from '../list-field/listFieldCurrencyTagCustomize';
+import {
+  addressEntryHasBlacklist,
+  RECEIVER_BLACKLIST_FEEDBACK_UI_KEY,
+} from './hasBlacklistAddressTags';
 
 export type DetailAddressSideKey = 'sender' | 'receiver';
 
@@ -26,9 +31,13 @@ function hasAddressSideTags(tags: CryptoAddressSideTags): boolean {
   );
 }
 
-function resolveAddressSideTags(tags?: CryptoAddressSideTags): CryptoAddressSideTags | undefined {
+function resolveAddressSideTags(
+  tags?: CryptoAddressSideTags,
+  translate?: (text: string) => string,
+): CryptoAddressSideTags | undefined {
   if (!tags || !hasAddressSideTags(tags)) return undefined;
-  return tags;
+  if (!translate) return tags;
+  return localizeCurrencyAddressTags(tags, translate);
 }
 
 /** createDetailApplyItemRow 仅覆盖 !== undefined 的字段；sender 变体 catalog 默认 tag 为演示别名，无 alias 时须传 '' 清掉。 */
@@ -39,15 +48,25 @@ function resolveAddressTag(_variantId: DetailAddressSideKey, alias?: string): st
 function buildAddressValueEntries(
   entries: AddressEntry[],
   variantId: DetailAddressSideKey,
+  translate: (text: string) => string,
   options?: { dashed?: boolean },
 ) {
   return entries.map((entry, index) => ({
     value: entry.address,
     tag: resolveAddressTag(variantId, entry.alias),
     tagBeforeValue: true as const,
-    valueAddressSideTags: resolveAddressSideTags(entry.addressTags),
+    valueAddressSideTags: resolveAddressSideTags(entry.addressTags, translate),
     valueAddressSideTagsRevealAll: true as const,
     valueAddressSideTagsBelow: true as const,
+    ...(variantId === 'receiver' && addressEntryHasBlacklist(entry, translate)
+      ? {
+          valueAddressSideFeedback: {
+            type: 'danger' as const,
+            text: translate(RECEIVER_BLACKLIST_FEEDBACK_UI_KEY),
+            showLink: false,
+          },
+        }
+      : {}),
     ...(options?.dashed && index < entries.length - 1 ? { dashed: true as const } : {}),
   }));
 }
@@ -57,9 +76,10 @@ function withAddressSideTags(
   primary: AddressEntry | undefined,
   entries: AddressEntry[],
   variantId: DetailAddressSideKey,
+  translate: (text: string) => string,
 ): DetailItemData {
-  const valueEntries = buildAddressValueEntries(entries, variantId);
-  const primaryTags = resolveAddressSideTags(primary?.addressTags);
+  const valueEntries = buildAddressValueEntries(entries, variantId, translate);
+  const primaryTags = resolveAddressSideTags(primary?.addressTags, translate);
 
   if (!primaryTags && valueEntries.every((entry) => !entry.valueAddressSideTags)) {
     return item;
@@ -85,8 +105,10 @@ export function buildDetailAddressSideItem(
     entries: AddressEntry[];
     expandLabel: string;
     ordersLabel: string;
+    translate?: (key: string) => string;
   },
 ): DetailItemData {
+  const translate = options.translate ?? ((key) => key);
   const address = options.primary?.address ?? options.summary;
   const orderCount = options.orderCount ?? 0;
 
@@ -102,12 +124,14 @@ export function buildDetailAddressSideItem(
         valueEntries: buildAddressValueEntries(
           options.entries.slice(0, 1),
           variantId,
+          translate,
         ),
         addressViewMoreLabel: options.ordersLabel,
       }),
       options.primary,
       options.entries.slice(0, 1),
       variantId,
+      translate,
     );
   }
 
@@ -120,12 +144,13 @@ export function buildDetailAddressSideItem(
         tag: resolveAddressTag(variantId, options.primary?.alias),
         addressLayout: 'multi-collapsed',
         addressCount: options.count,
-        valueEntries: buildAddressValueEntries(options.entries, variantId),
+        valueEntries: buildAddressValueEntries(options.entries, variantId, translate),
         addressViewMoreLabel: options.expandLabel,
       }),
       options.primary,
       options.entries,
       variantId,
+      translate,
     );
   }
 
@@ -139,5 +164,6 @@ export function buildDetailAddressSideItem(
     options.primary,
     options.entries,
     variantId,
+    translate,
   );
 }

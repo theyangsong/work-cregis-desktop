@@ -73,6 +73,36 @@ export function resolveMinerFeePopoverTitleKey(_profile: MinerFeeProfile): strin
   return MINER_FEE_POPOVER_TITLE_KEY;
 }
 
+const MINER_FEE_BATCH_STUB_SYMBOLS = new Set(['BTC', 'ADA', 'FIL']);
+
+/** 批量签名（>1 笔）且为 BTC / ADA / FIL / TRON：仅展示说明文案 + 确定，无费率档位。 */
+export function isMinerFeeBatchStubProfile(
+  profile: MinerFeeProfile,
+  transactionCount: number,
+): boolean {
+  if (!Number.isFinite(transactionCount) || transactionCount <= 1) {
+    return false;
+  }
+  if (profile.kind === 'tron') {
+    return true;
+  }
+  return MINER_FEE_BATCH_STUB_SYMBOLS.has(profile.symbol.trim().toUpperCase());
+}
+
+/**
+ * 批签确认弹窗矿工费笔数：优先可签名笔数；用户多选但仅 1 笔可签时仍按多选笔数走 batch stub。
+ */
+export function resolveMinerFeeBatchTransactionCount(
+  signableCount: number,
+  pendingCount: number,
+): number {
+  const signable = Number.isFinite(signableCount) ? Math.max(0, signableCount) : 0;
+  const pending = Number.isFinite(pendingCount) ? Math.max(0, pendingCount) : 0;
+  if (signable > 1) return signable;
+  if (pending > 1) return pending;
+  return Math.max(signable, pending, 1);
+}
+
 export function buildStubMinerFeeDisplay(profile: MinerFeeProfile): string {
   if (profile.kind === 'ton-xrp') {
     return buildTonLikeMinerFeeDisplay(profile.symbol);

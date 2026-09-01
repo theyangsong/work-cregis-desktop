@@ -44,8 +44,6 @@ export function useApprovalFlow(options: {
   const viewMoreText = ref('');
 
   const detail = shallowRef<ApprovalDetail | null>(null);
-  /** 验证成功后暂存下一项 id，待 Detail shell 恢复后再 loadDetail（保留 motion-page 翻页）。 */
-  const pendingAutoAdvanceId = ref<string | null>(null);
 
   watch(
     () => options.selectMode.value,
@@ -155,56 +153,16 @@ export function useApprovalFlow(options: {
     remark.value = '';
     pendingAction.value = null;
 
-    const exitingBatch = batchMode.value;
-    const singleCurrentId = exitingBatch ? null : currentApprovalId.value;
-    const singleNextId =
-      singleCurrentId != null
-        ? (() => {
-            const index = pendingIds.value.indexOf(singleCurrentId);
-            return index >= 0 ? pendingIds.value[index + 1] : undefined;
-          })()
-        : undefined;
-
-    if (exitingBatch) {
+    if (batchMode.value) {
       batchMode.value = false;
       batchSelectedIds.value = [];
       options.onExitBatchMode();
-      closeDetail();
     }
 
+    closeDetail();
     options.showSuccess(APPROVAL_SUCCESS_MESSAGE);
     options.onRefreshList();
     syncPendingIds();
-
-    if (exitingBatch) {
-      return;
-    }
-
-    if (!singleCurrentId || !detailOpen.value) {
-      return;
-    }
-
-    if (singleNextId) {
-      const rowIndex = parseRowIndexFromApprovalId(singleNextId);
-      if (checkApprovalPending(singleNextId, rowIndex)) {
-        pendingAutoAdvanceId.value = singleNextId;
-        return;
-      }
-    }
-
-    closeDetail();
-  }
-
-  function onDetailShellOpened() {
-    const nextId = pendingAutoAdvanceId.value;
-    if (!nextId) return;
-    pendingAutoAdvanceId.value = null;
-    const rowIndex = parseRowIndexFromApprovalId(nextId);
-    if (checkApprovalPending(nextId, rowIndex)) {
-      loadDetail(nextId);
-      return;
-    }
-    closeDetail();
   }
 
   function onVerifyConfirm(password: string): boolean {
@@ -326,7 +284,6 @@ export function useApprovalFlow(options: {
     openDetailForRow,
     closeDetail,
     onDetailPopupClosed,
-    onDetailShellOpened,
     navigateRelative,
     onDetailPassConfirm,
     onDetailRejectConfirm,

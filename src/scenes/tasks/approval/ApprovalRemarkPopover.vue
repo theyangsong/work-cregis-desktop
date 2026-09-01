@@ -36,16 +36,19 @@ const props = withDefaults(
     confirmTone?: ButtonTone;
     /** 矿工费 Popover 内「确定」按钮 tone。 */
     minerFeeConfirmTone?: ButtonTone;
+    /** 有矿工费时跳过备注步，点击触发器直接进入矿工费（详情签名等）。 */
+    skipRemarkStep?: boolean;
   }>(),
   {
     selectedCount: 1,
     showMinerFee: false,
     boundarySelector: '.eds-data-list',
-    placeholderKey: 'Please Enter',
-    feedbackKey: 'Optional, up to 256 characters.',
+    placeholderKey: 'Please enter remark',
+    feedbackKey: 'Optional, Max. 256 characters',
     requireMinerFee: false,
     confirmTone: 'decor',
     minerFeeConfirmTone: 'decor',
+    skipRemarkStep: false,
   },
 );
 
@@ -61,6 +64,7 @@ const remarkPanelRef = ref<{ resetRemark: () => void } | null>(null);
 const minerFeePanelRef = ref<InstanceType<typeof ApprovalRemarkPopoverPanel> | null>(null);
 const minerFeeAnchoredRef = ref<{ close: () => void; openPanel: () => void } | null>(null);
 const minerFeeScreen = ref<MinerFeeScreen>('list');
+const minerFeeExpanded = ref(false);
 
 const resolvedMinerFeeProfile = computed<MinerFeeProfile | null>(() => {
   if (props.minerFeeProfile) {
@@ -130,11 +134,81 @@ function onMinerFeePopoverTopToolClose() {
 function onMinerFeePopoverDismiss() {
   resetMinerFeeFlow();
 }
+
+async function onDirectMinerFeeTriggerClick() {
+  if (minerFeeExpanded.value) return;
+  if (props.onBeforeOpen) {
+    try {
+      await props.onBeforeOpen();
+    } catch {
+      return;
+    }
+  }
+  minerFeeAnchoredRef.value?.openPanel();
+}
+
+function onDirectMinerFeeTooltipClose() {
+  minerFeeExpanded.value = false;
+  resetMinerFeeFlow();
+  emit('dismiss');
+}
+
+function onDirectMinerFeeTooltipOpen() {
+  minerFeeExpanded.value = true;
+}
 </script>
 
 <template>
   <EgAnchoredTooltip
-    v-if="hasMinerFeeStep"
+    v-if="hasMinerFeeStep && skipRemarkStep"
+    ref="minerFeeAnchoredRef"
+    placement="top"
+    align="center"
+    trigger="click"
+    :click-toggle="false"
+    :wrap-tooltip="false"
+    :boundary-selector="boundarySelector"
+    teleport-to=".app-preview"
+    token-scope-class="desktopTokens"
+    @open="onDirectMinerFeeTooltipOpen"
+    @close="onDirectMinerFeeTooltipClose"
+  >
+    <slot
+      name="trigger"
+      :active="minerFeeExpanded"
+      :on-click="onDirectMinerFeeTriggerClick"
+    />
+    <template #content>
+      <EgPopover
+        placement="top"
+        align="center"
+        top-tool
+        :top-tool-title="minerFeeTopToolTitle"
+        top-tool-closable
+        width-mode="fixed"
+        :width="POPOVER_PRESET_WIDTH_BASE"
+        @top-tool-close="onMinerFeePopoverTopToolClose"
+      >
+        <ApprovalRemarkPopoverPanel
+          ref="minerFeePanelRef"
+          :selected-count="selectedCount"
+          :remark="remark"
+          :miner-fee-profile="resolvedMinerFeeProfile"
+          :require-miner-fee="requireMinerFee"
+          :placeholder-key="placeholderKey"
+          :feedback-key="feedbackKey"
+          :confirm-tone="minerFeeConfirmTone"
+          :reset-remark-on-mount="false"
+          @update:remark="emit('update:remark', $event)"
+          @miner-fee-screen-change="onMinerFeeScreenChange"
+          @confirm="onMinerFeeStepConfirm"
+        />
+      </EgPopover>
+    </template>
+  </EgAnchoredTooltip>
+
+  <EgAnchoredTooltip
+    v-else-if="hasMinerFeeStep"
     ref="minerFeeAnchoredRef"
     placement="top"
     align="center"
@@ -166,7 +240,7 @@ function onMinerFeePopoverDismiss() {
           ref="remarkPanelRef"
           v-model="remarkModel"
           :label="ui('Remark')"
-          :placeholder="ui(placeholderKey)"
+          :placeholder-key="placeholderKey"
           :feedback-text="feedbackKey"
           :confirm-label="ui('Confirm')"
           :confirm-tone="confirmTone"

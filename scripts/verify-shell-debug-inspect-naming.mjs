@@ -17,6 +17,7 @@
  * I10 任意 DS 包组件根都有自己的名字（未入 catalog 也不得退化成继承祖先名）
  * I11 同组件多 Figma 角色走 catalog resolveDisplayName hook，不写 resolver 特判
  * I12 「祖先」只作属性面板首行，禁止回流进命名
+ * I13 Dev Inspect 不得读取壳外 Shell Debug UI（见 shellDebugUiScope.ts）
  */
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { join, dirname, relative } from 'node:path';
@@ -394,11 +395,31 @@ if (prependCalls < 3) {
   );
 }
 
+// ------------------------------------------------- I13 壳外 Shell Debug UI 不得被 Dev Inspect 读取
+
+const shellDebugUiScopePath = join(repoRoot, 'src/dev/shell-debug/shellDebugUiScope.ts');
+if (!existsSync(shellDebugUiScopePath)) {
+  fail('I13', '缺少 shellDebugUiScope.ts');
+}
+
+const pickerSource = readFileSync(join(inspectDir, 'useElementPicker.ts'), 'utf8');
+const floatScopeSource = readFileSync(join(inspectDir, 'inspectFloatLayerScope.ts'), 'utf8');
+
+if (!/isShellDebugUiElement/.test(pickerSource)) {
+  fail('I13', 'useElementPicker 须用 isShellDebugUiElement 排除壳外工具');
+}
+if (!/isShellDebugUiElement\(element\)/.test(infoSource)) {
+  fail('I13', 'buildElementInspectInfo 须用 isShellDebugUiElement 拒绝壳外工具');
+}
+if (!/isShellDebugUiElement\(element\)/.test(floatScopeSource)) {
+  fail('I13', 'isInspectFloatLayerElement 须排除 isShellDebugUiElement');
+}
+
 // ---------------------------------------------------------------- report
 
 if (errors.length === 0) {
   console.log(
-    `verify-shell-debug-inspect-naming: OK — ${EXPECTED_ORDER.length} 条规则 / ${regionSpecs.length} 个具名区域 / 12 项不变量`,
+    `verify-shell-debug-inspect-naming: OK — ${EXPECTED_ORDER.length} 条规则 / ${regionSpecs.length} 个具名区域 / 13 项不变量`,
   );
   process.exit(0);
 }

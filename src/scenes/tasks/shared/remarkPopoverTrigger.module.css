@@ -2,6 +2,14 @@
   display: inline-flex;
 }
 
+/** Popover 展开：Detail 工具栏 subtle outline 备注钮，对齐 Flotation triggerStyleOutline.triggerExpanded。 */
+.remarkTriggerSubtleOutlinePressed :global(.eds-button:not(:disabled)) {
+  background-color: var(--event-focus);
+  border-color: transparent;
+  outline: none;
+  color: var(--text-base-secondary);
+}
+
 /** Popover 展开时保持 EgButton 点按态（同 :active；非 active 展开态 / event-focus）。 */
 .remarkTriggerRejectPressed :global(.eds-button:not(:disabled)) {
   color: var(--event-active-danger);

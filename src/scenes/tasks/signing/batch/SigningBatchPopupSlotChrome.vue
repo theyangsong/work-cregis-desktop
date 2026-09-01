@@ -294,6 +294,9 @@ defineExpose({
           @toolbar-cancel="emit('toolbar-cancel')"
           @toolbar-confirm="emit('toolbar-confirm')"
         >
+          <template v-if="$slots['toolbar-leading']" #toolbar-leading>
+            <slot name="toolbar-leading" />
+          </template>
           <template v-if="$slots['toolbar-confirm']" #toolbar-confirm>
             <slot name="toolbar-confirm" />
           </template>

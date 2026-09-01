@@ -107,8 +107,8 @@ const countdownListText = computed(() =>
 );
 
 const countdownStaticTime = computed(() => formatExpiryCountdownHms(countdownStaticTotal.value));
-const primaryDisplayText = computed(() => value.value);
-const avatarDisplayName = computed(() => resolveInitiatorDisplayName(value.value));
+const primaryDisplayText = computed(() => resolveInitiatorDisplayName(value.value));
+const avatarDisplayName = primaryDisplayText;
 const avatarColorSeed = computed(() =>
   String(props.customize.avatarColorSeed ?? avatarDisplayName.value),
 );

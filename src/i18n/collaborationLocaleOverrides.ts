@@ -27,6 +27,7 @@ export const COLLABORATION_LOCALE_OVERRIDES: Record<string, readonly [string, st
   'Insufficient Withdrawal Limit': ['提币额度不足', '提幣額度不足'],
   'Total Signing Amount': ['签名总金额', '簽名總金額'],
   'Blacklisted Address': ['黑名单地址', '黑名單地址'],
+  Blacklist: ['黑名单', '黑名單'],
   'Signable Transactions': ['可签名交易', '可簽名交易'],
   'Non-signable Transactions': ['不可签名交易', '不可簽名交易'],
   'View Reason': ['查看原因', '查看原因'],

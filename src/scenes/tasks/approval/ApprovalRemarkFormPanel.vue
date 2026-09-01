@@ -16,7 +16,7 @@ const props = withDefaults(
     modelValue?: string;
     maxLength?: number;
     label?: string;
-    placeholder?: string;
+    placeholderKey?: string;
     feedbackText?: string;
     hideLabel?: boolean;
     hideConfirm?: boolean;
@@ -29,8 +29,8 @@ const props = withDefaults(
     modelValue: '',
     maxLength: REMARK_POPOVER_MAX_LENGTH,
     label: 'Remark',
-    placeholder: 'Please Enter',
-    feedbackText: 'Optional, up to 256 characters.',
+    placeholderKey: 'Please enter remark',
+    feedbackText: 'Optional, Max. 256 characters',
     hideLabel: true,
     hideConfirm: false,
     confirmLabel: 'Confirm',
@@ -52,6 +52,8 @@ const remarkModel = computed({
   get: () => props.modelValue,
   set: (value: string) => emit('update:modelValue', value.slice(0, props.maxLength)),
 });
+
+const resolvedPlaceholder = computed(() => ui(props.placeholderKey));
 
 function getRemarkControlElement() {
   return remarkFieldRef.value?.querySelector('input, textarea') as
@@ -109,11 +111,11 @@ defineExpose({
         v-model="remarkModel"
         feedback
         :label="ui(label)"
-        :placeholder="ui(placeholder)"
+        :placeholder="resolvedPlaceholder"
       >
         <EgTextarea
           v-model="remarkModel"
-          :placeholder="ui(placeholder)"
+          :placeholder="resolvedPlaceholder"
           width-mode="full"
           :paste-label="ui('Paste')"
           :clear-label="ui('Clear')"

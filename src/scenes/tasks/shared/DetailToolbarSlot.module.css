@@ -6,6 +6,10 @@
   min-width: 0;
 }
 
+.toolbarPageAlignEnd {
+  align-items: flex-end;
+}
+
 .toolbarBar {
   position: relative;
   display: flex;
@@ -18,15 +22,23 @@
   box-sizing: border-box;
 }
 
-.toolbarBarActionsOnly {
-  justify-content: flex-end;
+.toolbarLeading {
+  display: flex;
+  flex: 0 1 30%;
+  max-width: 30%;
+  align-items: center;
+  min-width: 0;
 }
 
 .toolbarStart {
+  position: absolute;
+  left: 50%;
   display: flex;
-  flex: 1 1 auto;
   align-items: center;
+  justify-content: center;
   min-width: 0;
+  pointer-events: none;
+  transform: translateX(-50%);
 }
 
 .toolbarNav {
@@ -34,21 +46,18 @@
   flex-shrink: 0;
   align-items: center;
   gap: var(--spacing-2);
+  pointer-events: auto;
 }
 
 .toolbarCounter {
-  position: absolute;
-  left: 50%;
   display: inline-flex;
   align-items: center;
   gap: var(--spacing-1);
   min-width: 0;
-  max-width: calc(100% - var(--spacing-4) * 2);
+  max-width: 100%;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  pointer-events: none;
-  transform: translateX(-50%);
 }
 
 .toolbarCounterCurrent {
@@ -71,6 +80,10 @@
   display: flex;
   flex-shrink: 0;
   align-items: center;
-  gap: var(--spacing-1);
+  gap: var(--spacing-2);
+}
+
+.toolbarActionsRight {
   justify-content: flex-end;
+  margin-left: auto;
 }

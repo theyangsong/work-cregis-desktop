@@ -115,7 +115,7 @@ body > [id^='eds-tooltip-v-'],
   max-height: 100%;
   border-radius: inherit;
   background: transparent;
-  overflow: hidden;
+  overflow: clip;
 }
 
 .app-preview > .eds-tooltip-panel > * {
@@ -135,10 +135,12 @@ body > [id^='eds-tooltip-v-'],
   width: auto;
   height: auto;
   max-height: none;
+  border-radius: inherit;
+  overflow: clip;
   pointer-events: none;
 }
 
-.app-preview > .eds-tooltip-panel > .app-popup-overlay-host {
+.app-preview > .eds-tooltip-panel > .app-popup-overlay-root > .app-popup-overlay-host {
   position: absolute;
   inset: 0;
   z-index: 20;
@@ -146,6 +148,8 @@ body > [id^='eds-tooltip-v-'],
   width: auto;
   height: auto;
   max-height: none;
+  border-radius: inherit;
+  overflow: clip;
   pointer-events: none;
 }
 
@@ -158,6 +162,8 @@ body > [id^='eds-tooltip-v-'],
 .app-popup-overlay-root .eds-popup,
 .app-popup-overlay-host .eds-popup {
   pointer-events: auto;
+  border-radius: inherit;
+  overflow: clip;
 }
 
 /*
@@ -185,8 +191,16 @@ body > [id^='eds-tooltip-v-'],
   pointer-events: auto;
 }
 
+/*
+ * EgPopup 打开时 EgDataList BatchBar 降至 shell 之下（operationBar 默认 z-index: 30；
+ * app-popup-overlay 为 20）。仅调层级，不改 selectMode 交互。
+ */
+.app-preview:has(.app-popup-overlay-host .eds-popup) .eds-data-list [class*='operationBar'] {
+  z-index: 15;
+}
+
 #app > .app-preview {
-  overflow: visible;
+  overflow: clip;
 }
 
 /* teleport 到 .app-preview 的 AnchoredTooltip 浮层（多签邀请、详情引导等） */

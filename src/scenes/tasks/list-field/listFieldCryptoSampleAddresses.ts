@@ -49,6 +49,8 @@ const FAMILY_BY_SYMBOL: Record<string, CryptoAddressFamily> = {
   TON: 'ton',
   DEEP: 'sui',
   SUI: 'sui',
+  ADA: 'evm',
+  FIL: 'evm',
   BCH: 'btc',
   CBBTC: 'btc',
   CBXRP: 'xrp',
@@ -73,6 +75,8 @@ const FAMILY_BY_CRYPTO_NAME: Record<string, CryptoAddressFamily> = {
   dogecoin: 'doge',
   ton: 'ton',
   sui: 'sui',
+  cardano: 'evm',
+  filecoin: 'evm',
 };
 
 /** 首列 preset 行固定真实地址（0-based rowIndex）。 */

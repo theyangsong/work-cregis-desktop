@@ -14,11 +14,7 @@ import {
   EgButton,
   EgAnchoredTooltip,
   EgPopover,
-  EgComboTextareaItem,
-  EgFormSubmission,
-  EgTextarea,
   POPOVER_PRESET_WIDTH_BASE,
-  REMARK_POPOVER_MAX_LENGTH,
   MOTION_LAYOUT_DEFORM_CONTENT,
   MOTION_LAYOUT_DEFORM_CONTENT_ENTERING,
   MOTION_LAYOUT_DEFORM_CONTENT_EXITING,
@@ -29,6 +25,8 @@ import { useAppI18n } from '@/composables/useAppI18n';
 import { formatGroupedNumber } from '@/utils/formatGroupedDisplay';
 import { usePopupShellLifecycle } from '../../shared/usePopupShellLifecycle';
 import ApprovalRemarkPopoverPanel from '../../approval/ApprovalRemarkPopoverPanel.vue';
+import DetailToolbarRemarkTrigger from '../../shared/DetailToolbarRemarkTrigger.vue';
+import remarkTriggerStyles from '../../shared/remarkPopoverTrigger.module.css';
 import {
   type MinerFeeProfile,
   type MinerFeeSelection,
@@ -36,6 +34,7 @@ import {
 } from '../../shared/minerFeeProfile';
 import { formatBreakdownLine, buildBatchSummary } from './buildBatchSummary';
 import { splitDetailAmountHeadline } from '../../shared/splitDetailAmountHeadline';
+import { buildWithdrawalQuotaNoticeText } from '../buildWithdrawalQuotaNoticeText';
 import detailChromeStyles from '../../shared/detailPopupChrome.module.css';
 import { DATA_LIST_FIGMA_PAGE_SIZE_OPTIONS } from '../../tasksDataListPageData';
 import { sortIneligibleByReasonOrder } from './evaluateBatchEligibility';
@@ -44,7 +43,6 @@ import type { BatchEligibilityResult, BatchSummaryBreakdown, SigningBatchRowMode
 import {
   BATCH_SIGN_CONFIRM_POPUP_HEIGHT,
   BATCH_SIGN_CONFIRM_POPUP_WIDTH,
-  MOCK_WITHDRAWAL_QUOTA_USD,
 } from './batchSigning.constants';
 import SigningBatchDataListPaginerBar from './SigningBatchDataListPaginerBar.vue';
 import SigningBatchPopupSlotChrome from './SigningBatchPopupSlotChrome.vue';
@@ -64,6 +62,7 @@ const props = defineProps<{
   summary: BatchSummaryBreakdown;
   remark: string;
   minerFeeProfile: MinerFeeProfile | null;
+  pendingTransactionCount?: number;
 }>();
 
 const emit = defineEmits<{
@@ -87,7 +86,12 @@ const { ui } = useAppI18n();
 const summaryContentRef = ref<HTMLElement | null>(null);
 const slotChromeRef = ref<InstanceType<typeof SigningBatchPopupSlotChrome> | null>(null);
 const minerFeePanelRef = ref<InstanceType<typeof ApprovalRemarkPopoverPanel> | null>(null);
-const minerFeeAnchoredRef = ref<{ close: () => void } | null>(null);
+const minerFeeAnchoredRef = ref<{
+  close: () => void;
+  openPanel: () => void;
+  getTriggerElement: () => HTMLElement | null;
+} | null>(null);
+const minerFeePopoverOpen = ref(false);
 
 const pageSpecs = reactive<Record<ConfirmPage, MotionLayoutDeformPageSpec>>({
   summary: { shellHeight: 360 },
@@ -136,20 +140,9 @@ watch(reasonsFilter, () => {
 });
 
 const hasSignable = computed(() => props.eligibility.signable.length > 0);
-const showRemarkSection = computed(
-  () => hasSignable.value && props.minerFeeProfile != null,
-);
-
-const remarkModel = computed({
-  get: () => props.remark,
-  set: (value: string) => emit('update:remark', value.slice(0, REMARK_POPOVER_MAX_LENGTH)),
-});
 
 const showToolbarConfirm = computed(() => true);
-const quotaNoticeText = computed(() =>
-  ui('Team withdrawal quota remaining: ${amount}. Upgrade to increase quota or enjoy unlimited withdrawal.')
-    .replace('${amount}', formatGroupedNumber(MOCK_WITHDRAWAL_QUOTA_USD)),
-);
+const quotaNoticeText = computed(() => buildWithdrawalQuotaNoticeText(ui));
 const breakdownSummary = computed(() => {
   if (hasSignable.value) {
     return props.summary;
@@ -188,31 +181,7 @@ const subPageTitle = computed(() => {
 
 const showSystemBarClose = computed(() => isSummaryPage.value);
 
-function readPanelConfirmDisabled(
-  disabled: boolean | { value: boolean } | undefined,
-): boolean {
-  if (typeof disabled === 'boolean') {
-    return disabled;
-  }
-  return disabled?.value ?? true;
-}
-
-const toolbarConfirmDisabled = computed(() => {
-  if (!hasSignable.value) {
-    return true;
-  }
-
-  if (!props.minerFeeProfile) {
-    return false;
-  }
-
-  const panel = minerFeePanelRef.value;
-  if (!panel) {
-    return false;
-  }
-
-  return readPanelConfirmDisabled(panel.confirmDisabled);
-});
+const toolbarConfirmDisabled = computed(() => !hasSignable.value);
 
 function measureSummaryShellHeight() {
   const measured = summaryContentRef.value?.scrollHeight ?? 0;
@@ -288,7 +257,7 @@ watch(
 );
 
 watch(
-  () => [props.open, showRemarkSection.value, props.eligibility.signable.length] as const,
+  () => [props.open, props.eligibility.signable.length] as const,
   ([open]) => {
     if (open && isSummaryPage.value) {
       void syncShellHeightForPage('summary');
@@ -345,6 +314,25 @@ function onMinerFeePopoverTopToolClose() {
   minerFeeAnchoredRef.value?.close();
 }
 
+function onMinerFeePopoverOpen() {
+  minerFeePopoverOpen.value = true;
+  void nextTick(() => {
+    minerFeeAnchoredRef.value?.getTriggerElement()?.blur();
+  });
+}
+
+function onMinerFeePopoverClose() {
+  minerFeePopoverOpen.value = false;
+}
+
+function onMinerFeeConfirmTriggerClick(event: MouseEvent) {
+  event.stopPropagation();
+  if (minerFeePopoverOpen.value || toolbarConfirmDisabled.value) {
+    return;
+  }
+  minerFeeAnchoredRef.value?.openPanel();
+}
+
 function onMinerFeePanelConfirm(selection: MinerFeeSelection | null) {
   if (!selection) {
     return;
@@ -390,24 +378,42 @@ useBatchSignConfirmEscape({
       @close="onClose"
       @toolbar-confirm="onToolbarConfirm"
     >
+      <template v-if="hasSignable" #toolbar-leading>
+        <DetailToolbarRemarkTrigger
+          :model-value="remark"
+          @update:model-value="emit('update:remark', $event)"
+        />
+      </template>
       <template v-if="minerFeeProfile" #toolbar-confirm>
         <EgAnchoredTooltip
           ref="minerFeeAnchoredRef"
           placement="top"
           align="center"
           trigger="click"
+          :click-toggle="false"
           :wrap-tooltip="false"
           boundary-selector=".eds-popup"
           token-scope-class="desktopTokens"
+          @open="onMinerFeePopoverOpen"
+          @close="onMinerFeePopoverClose"
         >
-          <EgButton
-            tone="decor"
-            variant="solid"
-            size="md"
-            :disabled="toolbarConfirmDisabled"
+          <span
+            :class="[
+              remarkTriggerStyles.remarkTrigger,
+              minerFeePopoverOpen && remarkTriggerStyles.remarkTriggerPassPressed,
+            ]"
           >
-            {{ ui('Confirm') }}
-          </EgButton>
+            <EgButton
+              tone="decor"
+              variant="solid"
+              size="md"
+              :disabled="toolbarConfirmDisabled"
+              :aria-expanded="minerFeePopoverOpen"
+              @click.stop="onMinerFeeConfirmTriggerClick"
+            >
+              {{ ui('Confirm') }}
+            </EgButton>
+          </span>
           <template #content>
             <EgPopover
               placement="top"
@@ -422,6 +428,7 @@ useBatchSignConfirmEscape({
               <ApprovalRemarkPopoverPanel
                 ref="minerFeePanelRef"
                 :selected-count="eligibility.signable.length"
+                :pending-transaction-count="pendingTransactionCount ?? 0"
                 :remark="remark"
                 :miner-fee-profile="minerFeeProfile"
                 :reset-remark-on-mount="false"
@@ -552,43 +559,7 @@ useBatchSignConfirmEscape({
                     </div>
                   </div>
                 </section>
-
-                <div
-                  v-if="showRemarkSection"
-                  :class="styles.batchPopupSectionDivider"
-                  role="separator"
-                  aria-orientation="horizontal"
-                />
               </div>
-
-              <section v-if="showRemarkSection" :class="styles.minerFeeSection">
-                <h3 :class="styles.minerFeeSectionTitle">
-                  {{ ui('Remark') }}
-                </h3>
-                <div :class="styles.batchRemarkField">
-                  <EgComboTextareaItem
-                    v-model="remarkModel"
-                    feedback
-                    :label="ui('Remark')"
-                    :placeholder="ui('Please Enter')"
-                  >
-                    <EgTextarea
-                      v-model="remarkModel"
-                      :placeholder="ui('Please Enter')"
-                      width-mode="full"
-                      :paste-label="ui('Paste')"
-                      :clear-label="ui('Clear')"
-                    />
-                    <template #feedback>
-                      <EgFormSubmission
-                        type="notes"
-                        :text="ui('Optional, up to 256 characters.')"
-                        :show-link="false"
-                      />
-                    </template>
-                  </EgComboTextareaItem>
-                </div>
-              </section>
             </div>
 
             <SigningBatchSignSubPageShell

@@ -1,5 +1,6 @@
 import type { InspectPropertyItem } from './buildElementInspectInfo';
 import type { InspectCodeSection } from './buildIconInspect';
+import { isShellDebugUiElement } from '../shellDebugUiScope';
 import {
   collectDeclaredCssValues,
   formatAuthoredInspectValue,
@@ -208,7 +209,7 @@ function resolveFullInspectTextContent(element: Element): string | null {
 
 /** 选中 typography 叶子时返回 Text；td/div/button 等容器走 DS 组件或元素属性。 */
 export function canInspectAsText(element: Element): boolean {
-  if (element.closest('[data-shell-debug-ui], [data-dev-inspect-overlay]')) {
+  if (isShellDebugUiElement(element)) {
     return false;
   }
   if (element.closest('.eds-avatar')) {

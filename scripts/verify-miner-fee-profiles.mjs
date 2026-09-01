@@ -7,7 +7,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const ROOT = process.cwd();
-const ROW_COUNT = 128;
+const ROW_COUNT = 134;
 
 const REQUIRED_SOURCE_MARKERS = [
   {
@@ -37,7 +37,7 @@ const REQUIRED_SOURCE_MARKERS = [
       'EgMinerFeeTonPanel',
       "resolvedProfile.kind === 'ton-xrp'",
       'EgMinerFeeTronPanel',
-      ':transaction-count="selectedCount"',
+      ':transaction-count="minerFeeTransactionCount"',
     ],
   },
   {

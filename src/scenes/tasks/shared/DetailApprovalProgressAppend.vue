@@ -14,7 +14,7 @@ const { ui } = useAppI18n();
 
 <template>
   <div :class="detailChromeStyles.appendSection">
-    <EgDivider type="page" :class="detailChromeStyles.sectionDivider" />
+    <EgDivider type="page" direction="horizontal" :class="detailChromeStyles.sectionDivider" />
     <div :class="detailChromeStyles.sectionContent">
       <div :class="detailChromeStyles.sectionTitleRow">
         <span :class="detailChromeStyles.sectionTitle">{{ ui('Approval Progress') }}</span>

@@ -60,7 +60,16 @@
 }
 
 .hashLikeComboSecondaryRow .secondaryRowCountdown {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.hashLikeComboSecondaryRow .secondaryRowCountdown :global(.eds-anchored-tooltip) {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .hashLikeComboSecondaryRow > :global(.eds-divider) {
@@ -136,14 +145,14 @@
 }
 
 .secondaryRowCountdown {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
   min-width: 0;
   max-width: 100%;
   overflow: hidden;
 }
 
 .secondaryRowCountdown :global(.eds-anchored-tooltip) {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
   min-width: 0;
   max-width: 100%;
 }

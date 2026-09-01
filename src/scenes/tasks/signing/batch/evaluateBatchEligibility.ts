@@ -1,6 +1,7 @@
 import { resolveAddressFamily } from '../../list-field/listFieldCryptoSampleAddresses';
 import { resolveCurrencyRowPreset } from '../../list-field/tasksListFieldCurrencyRowData';
 import { buildBatchSigningRowModel } from './buildBatchSigningRowModel';
+import { isSigningBatchMinerFeeStubDemoRow } from './signingBatchDemoRowDistribution';
 import type { BatchEligibilityResult, BatchIneligibleReason, SigningBatchRowModel } from './types';
 
 function seededFraction(rowIndex: number, salt: number): number {
@@ -54,7 +55,9 @@ export function evaluateBatchEligibility(
   const deferredBySender = new Map<string, SigningBatchRowModel[]>();
 
   for (const row of rows) {
-    const mockReason = mockReasonForRow(row.rowIndex);
+    const mockReason = isSigningBatchMinerFeeStubDemoRow(row.rowIndex)
+      ? null
+      : mockReasonForRow(row.rowIndex);
     if (mockReason) {
       ineligible.push({ row, reason: mockReason });
       continue;
@@ -84,7 +87,10 @@ export function evaluateBatchEligibility(
 
     const sample = senderRows[0]!;
     const tron = isTronFamily(sample.symbol, sample.rowIndex);
-    const maxMinerFeeRows = tron
+    const minerFeeStubDemoBatch = senderRows.every((row) =>
+      isSigningBatchMinerFeeStubDemoRow(row.rowIndex),
+    );
+    const maxMinerFeeRows = tron || minerFeeStubDemoBatch
       ? senderRows.length
       : Math.max(1, Math.floor(seededFraction(sample.rowIndex, 53) * senderRows.length) + 1);
 

@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { buildCurrencyAddressTags } from './listFieldCurrencyTagCustomize';
+import {
+  buildCurrencyAddressTags,
+  localizeCurrencyAddressTags,
+} from './listFieldCurrencyTagCustomize';
+import { useAppI18n } from '@/composables/useAppI18n';
 import TasksListFieldAddressLine from './TasksListFieldAddressLine.vue';
 import styles from './TasksListFieldReceiver.module.css';
 
@@ -9,6 +13,8 @@ const props = defineProps<{
   alignEnd?: boolean;
 }>();
 
+const { ui } = useAppI18n();
+
 function parsePreviewMinWidth(customize: Record<string, unknown>): number | undefined {
   const raw = String(customize.minWidth ?? '').trim();
   if (!raw) return undefined;
@@ -16,7 +22,9 @@ function parsePreviewMinWidth(customize: Record<string, unknown>): number | unde
   return parsed > 0 ? parsed : undefined;
 }
 
-const receiverTags = computed(() => buildCurrencyAddressTags('to', 1, props.customize));
+const receiverTags = computed(() =>
+  localizeCurrencyAddressTags(buildCurrencyAddressTags('to', 1, props.customize), ui),
+);
 const addressTooltipTrigger = computed(
   () => String(props.customize.addressTooltipTrigger ?? 'hover') as 'hover' | 'focus',
 );

@@ -87,6 +87,9 @@ const CURRENCY_ROW_PRESET_OVERRIDES: Partial<Record<number, CurrencyRowPreset>> 
 export const CURRENCY_PRESET_SYMBOLS = new Set([
   ...CURRENCY_ROW_PRESETS.map((preset) => preset.symbol),
   ...Object.values(CURRENCY_ROW_PRESET_OVERRIDES).map((preset) => preset!.symbol),
+  'ADA',
+  'FIL',
+  'TRX',
 ]);
 
 export function getCurrencyRowPreset(rowIndex: number): CurrencyRowPreset | undefined {

@@ -51,6 +51,7 @@ export function buildSenderItem(
     entries: detail.senders,
     expandLabel: translate('Expand {count}'),
     ordersLabel: translate('{count} Orders'),
+    translate,
   });
 }
 
@@ -69,6 +70,7 @@ export function buildReceiverItem(
     entries: detail.receivers,
     expandLabel: translate('Expand {count}'),
     ordersLabel: translate('{count} Orders'),
+    translate,
   });
 }
 

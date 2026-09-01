@@ -208,6 +208,16 @@ export const UI_TEXT_ZH_CN: Record<string, string> = {
   'Estimated total miner fee': '预计总矿工费',
   'Miner fee batch total suffix': '共',
   'Miner fee batch transaction suffix': '笔交易',
+  'Miner fee batch stub btc':
+    'BTC 网络的矿工费与交易实际占用的链上空间及网络费率有关，批量签名包含多笔交易，无法准确计算总矿工费，具体费用以实际链上执行结果为准。',
+  'Miner fee batch stub ada':
+    'ADA 网络的矿工费与交易实际数据及交易大小有关，批量签名包含多笔交易，无法准确计算总矿工费，具体费用以实际链上执行结果为准。',
+  'Miner fee batch stub fil':
+    'FIL 网络的矿工费与交易实际执行情况及网络参数有关，批量签名包含多笔交易，无法准确计算总矿工费，具体费用以实际链上执行结果为准。',
+  'Miner fee batch stub tron':
+    '为保证交易成功，系统将按以下顺序自动支付矿工费：\n\n1.消耗地址资源\n如果地址可用资源充足，将优先消耗地址资源（能量/带宽）。\n\n2.能量模式（推荐）\n地址资源不足时，由Cregis 提供交易所需资源，费用将从团队账户余额中扣除。\n\n3.燃烧TRX\n团队账户余额不足时，将燃烧地址TRX，抵扣交易所需资源。',
+  'Miner fee batch stub tron streamer':
+    '为避免产生额外矿工费支出，请确保团队账户余额充足，以便正常触发能量模式。',
   'Miner fee speed slow': '较慢',
   'Miner fee speed normal': '正常',
   'Miner fee speed fast': '快速',
@@ -316,6 +326,9 @@ export const UI_TEXT_ZH_CN: Record<string, string> = {
   'Expires in xx:xx': '后超时',
   Me: '我',
   Tag: '标签',
+  Blacklist: '黑名单',
+  'This address has been blacklisted. Transactions to this address are prohibited. We recommend rejecting this application.':
+    '请注意，该地址已被列入黑名单,禁止向该地址发送交易，建议驳回申请。',
   Danger: '危险',
   Custom: '自定义',
   Edit: '编辑',

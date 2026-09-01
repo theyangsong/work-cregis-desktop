@@ -17,14 +17,13 @@ import DetailApprovalProgressAppend from '../shared/DetailApprovalProgressAppend
 import { resolveDetailHeadlineStatus } from '../shared/resolveDetailHeadlineStatus';
 import { usePopupShellLifecycle } from '../shared/usePopupShellLifecycle';
 import { useDetailToolbarPageMotion } from '../shared/useDetailToolbarPageMotion';
-import { parseRowIndexFromApprovalId } from './approvalStore';
 import { buildApprovalDetailSections } from './buildApprovalDetailSections';
 import type { ApprovalDetail } from './types';
-import DetailHeadlineEyebrowPortal from '../shared/DetailHeadlineEyebrowPortal.vue';
+import DetailHeadlineGroupPortal from '../shared/DetailHeadlineGroupPortal.vue';
 import detailChromeStyles from '../shared/detailPopupChrome.module.css';
 import DetailToolbarSlot from '../shared/DetailToolbarSlot.vue';
+import DetailToolbarRemarkTrigger from '../shared/DetailToolbarRemarkTrigger.vue';
 import ExpiryCountdown from '../shared/ExpiryCountdown.vue';
-import { useTasksDetailToolbarGuide } from '../shared/useTasksDetailToolbarGuide';
 import ApprovalRemarkPopover from './ApprovalRemarkPopover.vue';
 import remarkTriggerStyles from '../shared/remarkPopoverTrigger.module.css';
 
@@ -37,7 +36,6 @@ const props = withDefaults(
   totalCount: number;
   prevDisabled: boolean;
   nextDisabled: boolean;
-  remark?: string;
   readOnly?: boolean;
   listStatusLabel?: string;
   listStatusKind?: TagStatus;
@@ -46,7 +44,6 @@ const props = withDefaults(
   }>(),
   {
     shellSuspended: false,
-    remark: '',
     readOnly: false,
     showWithdrawAction: false,
   },
@@ -54,7 +51,6 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   'update:open': [value: boolean];
-  'update:remark': [value: string];
   'popup-closed': [];
   'shell-opened': [];
   prev: [];
@@ -66,7 +62,6 @@ const emit = defineEmits<{
 }>();
 
 const { ui, locale } = useAppI18n();
-const { shouldShowGuide, markGuideSeen } = useTasksDetailToolbarGuide();
 
 const { popupMounted, popupOpen, onPopupClosed } = usePopupShellLifecycle({
   open: toRef(props, 'open'),
@@ -78,30 +73,11 @@ const { popupMounted, popupOpen, onPopupClosed } = usePopupShellLifecycle({
   },
 });
 
-const guideActive = computed(
-  () => popupOpen.value && shouldShowGuide.value && Boolean(props.detail),
-);
-
 const detailId = computed(() => props.detail?.id);
-const {
-  detailToolbarPageKey,
-  toolbarNavPulse,
-  toolbarNavDirection,
-  pulseToolbarNav,
-} = useDetailToolbarPageMotion({
+const { detailToolbarPageKey } = useDetailToolbarPageMotion({
   detailId,
   currentIndex: computed(() => props.currentIndex),
 });
-
-function onToolbarPrev() {
-  pulseToolbarNav('prev');
-  emit('prev');
-}
-
-function onToolbarNext() {
-  pulseToolbarNav('next');
-  emit('next');
-}
 
 const headline = computed(() =>
   formatGroupedAmountText(props.detail?.amountHeadline ?? ''),
@@ -139,10 +115,7 @@ const progressSteps = computed(() => {
     thresholdSubtitle,
     viewMode: props.readOnly ? 'record' : 'workflow',
     listStatusLabel: props.readOnly ? props.listStatusLabel : undefined,
-    rowIndex:
-      !props.readOnly && props.detail
-        ? parseRowIndexFromApprovalId(props.detail.id)
-        : undefined,
+    applyFirstApprovalNodePendingDemo: !props.readOnly,
   });
 });
 
@@ -157,6 +130,9 @@ const headlineStatus = computed(() => {
 const showStatusTag = computed(() => headlineStatus.value != null);
 const statusTag = computed(() => headlineStatus.value?.label ?? '');
 const statusTagStatus = computed(() => headlineStatus.value?.status ?? 'ready');
+const showDetailToolbar = computed(
+  () => !props.readOnly || props.showWithdrawAction,
+);
 
 function onItemValueLinkClick(key: string) {
   const item = findDetailItemByKey(sections.value, key);
@@ -169,8 +145,22 @@ function onItemValueLinkClick(key: string) {
   }
 }
 
-function onRemarkDismiss() {
-  emit('update:remark', '');
+async function onRejectClick() {
+  try {
+    await props.onRemarkBeforeOpen?.();
+    emit('rejectConfirm');
+  } catch {
+    // prepareDetailRemarkOpen rejected (processed / disabled).
+  }
+}
+
+async function onPassClick() {
+  try {
+    await props.onRemarkBeforeOpen?.();
+    emit('passConfirm');
+  } catch {
+    // prepareDetailRemarkOpen rejected (processed / disabled).
+  }
 }
 
 const withdrawRemark = ref('');
@@ -200,8 +190,6 @@ function onDetailClose() {
     <EgDetail
       v-if="detail"
       :toolbar-page-key="detailToolbarPageKey"
-      :toolbar-nav-pulse="toolbarNavPulse"
-      :toolbar-nav-direction="toolbarNavDirection"
       :headline="headline"
       :show-eyebrow="false"
       :show-status-tag="showStatusTag"
@@ -210,41 +198,28 @@ function onDetailClose() {
       :status-tag-status="statusTagStatus"
       :show-tabs="false"
       :sections="sections"
-      show-toolbar
-      show-toolbar-nav
+      :show-toolbar="showDetailToolbar"
+      :show-toolbar-nav="false"
       toolbar-divider-pinned
       :value-copy-label="ui('Copy')"
       :value-address-book-label="ui('Add to address book')"
       :value-aml-search-label="ui('AML Search')"
       :value-browser-label="ui('Block explorer')"
-      :toolbar-current="currentIndex"
-      :toolbar-total="totalCount"
-      :toolbar-prev-disabled="prevDisabled"
-      :toolbar-next-disabled="nextDisabled"
       toolbar-tone="decor"
       @close="onDetailClose"
-      @toolbar-prev="onToolbarPrev"
-      @toolbar-next="onToolbarNext"
       @item-value-link-click="onItemValueLinkClick"
     >
-      <template #toolbar>
-        <DetailToolbarSlot
-          :toolbar-current="currentIndex"
-          :toolbar-total="totalCount"
-          :toolbar-prev-disabled="prevDisabled"
-          :toolbar-next-disabled="nextDisabled"
-          :guide-active="guideActive"
-          @toolbar-prev="onToolbarPrev"
-          @toolbar-next="onToolbarNext"
-          @guide-dismiss="markGuideSeen"
-        >
+      <template v-if="showDetailToolbar" #toolbar>
+        <DetailToolbarSlot :show-toolbar-nav="false" toolbar-divider-pinned>
+          <template v-if="!readOnly && !showWithdrawAction" #leading>
+            <DetailToolbarRemarkTrigger :page-key="detail?.id" />
+          </template>
           <template #actions>
             <template v-if="showWithdrawAction">
               <ApprovalRemarkPopover
                 boundary-selector=".eds-popup"
                 :title="ui('Remark')"
                 :remark="withdrawRemark"
-                placeholder-key="Please enter remark"
                 @update:remark="withdrawRemark = $event"
                 @confirm="onWithdrawConfirm"
                 @dismiss="onWithdrawDismiss"
@@ -270,63 +245,23 @@ function onDetailClose() {
               </ApprovalRemarkPopover>
             </template>
             <template v-else-if="!readOnly">
-            <ApprovalRemarkPopover
-              boundary-selector=".eds-popup"
-              :title="ui('Remark')"
-              :remark="remark"
-              :on-before-open="onRemarkBeforeOpen"
-              @update:remark="emit('update:remark', $event)"
-              @confirm="emit('rejectConfirm')"
-              @dismiss="onRemarkDismiss"
-            >
-              <template #trigger="{ active, onClick }">
-                <span
-                  :class="[
-                    remarkTriggerStyles.remarkTrigger,
-                    active && remarkTriggerStyles.remarkTriggerRejectPressed,
-                  ]"
-                >
-                  <EgButton
-                    tone="danger"
-                    variant="text"
-                    size="md"
-                    :aria-expanded="active"
-                    @click.stop="onClick"
-                  >
-                    {{ ui('Reject') }}
-                  </EgButton>
-                </span>
-              </template>
-            </ApprovalRemarkPopover>
+              <EgButton
+                tone="danger"
+                variant="text"
+                size="md"
+                @click="onRejectClick"
+              >
+                {{ ui('Reject') }}
+              </EgButton>
 
-            <ApprovalRemarkPopover
-              boundary-selector=".eds-popup"
-              :title="ui('Remark')"
-              :remark="remark"
-              :on-before-open="onRemarkBeforeOpen"
-              @update:remark="emit('update:remark', $event)"
-              @confirm="emit('passConfirm')"
-              @dismiss="onRemarkDismiss"
-            >
-              <template #trigger="{ active, onClick }">
-                <span
-                  :class="[
-                    remarkTriggerStyles.remarkTrigger,
-                    active && remarkTriggerStyles.remarkTriggerPassPressed,
-                  ]"
-                >
-                  <EgButton
-                    tone="decor"
-                    variant="solid"
-                    size="md"
-                    :aria-expanded="active"
-                    @click.stop="onClick"
-                  >
-                    {{ ui('Pass') }}
-                  </EgButton>
-                </span>
-              </template>
-            </ApprovalRemarkPopover>
+              <EgButton
+                tone="decor"
+                variant="solid"
+                size="md"
+                @click="onPassClick"
+              >
+                {{ ui('Pass') }}
+              </EgButton>
             </template>
           </template>
         </DetailToolbarSlot>
@@ -350,7 +285,7 @@ function onDetailClose() {
         <DetailApprovalProgressAppend :steps="progressSteps" />
       </template>
     </EgDetail>
-    <DetailHeadlineEyebrowPortal
+    <DetailHeadlineGroupPortal
       v-if="detail"
       :host-ref="detailHostRef"
       :business-type-key="detail.businessType"

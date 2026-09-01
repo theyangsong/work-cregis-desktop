@@ -12,6 +12,7 @@ import {
 } from './resolveInspectStyleTarget';
 import { buildInspectCodeSections } from './buildInspectCodeSections';
 import { formatDomTagInspectLabel } from './buildTextInspect';
+import { isShellDebugUiElement } from '../shellDebugUiScope';
 import { isInspectFloatLayerElement, resolveInspectScopeRoot } from './inspectFloatLayerScope';
 import { resolveInspectTarget, type InspectTargetResolution } from './resolveEdsComponentInspect';
 import { resolveInspectAncestorName } from './resolveInspectAncestorName';
@@ -223,7 +224,7 @@ export function buildElementInspectInfo(
   options: BuildElementInspectInfoOptions = {},
 ): ElementInspectInfo | null {
   if (!preview.contains(element) && !isInspectFloatLayerElement(element)) return null;
-  if (element.closest('[data-shell-debug-ui]')) return null;
+  if (isShellDebugUiElement(element)) return null;
 
   const style = getComputedStyle(element);
   const rect = element.getBoundingClientRect();

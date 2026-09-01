@@ -2,12 +2,7 @@ import {
   isShellDebugUiInteractionPending,
   markShellDebugUiInteraction,
 } from './shellDebugFloatInteraction';
-
-const SHELL_DEBUG_TARGET_SELECTOR =
-  '[data-shell-debug-ui], [data-dev-inspect-panel], [data-dev-inspect-overlay]';
-
-const SHELL_DEBUG_FLOAT_CONTENT_SELECTOR =
-  '.shell-debug-popover-content, .shell-debug-dev-inspect-hint, .shell-debug-model-popover-content';
+import { isShellDebugUiElement } from './shellDebugUiScope';
 
 let installed = false;
 
@@ -18,12 +13,7 @@ function isCapture(options?: boolean | AddEventListenerOptions): boolean {
 }
 
 function nodeInShellDebugUi(node: EventTarget | null): boolean {
-  if (!(node instanceof Element)) return false;
-  if (node.closest(SHELL_DEBUG_TARGET_SELECTOR)) return true;
-
-  const floating = node.closest('[class*="floating"]');
-  if (!(floating instanceof HTMLElement)) return false;
-  return floating.querySelector(SHELL_DEBUG_FLOAT_CONTENT_SELECTOR) !== null;
+  return node instanceof Element && isShellDebugUiElement(node);
 }
 
 function isShellDebugFloatInteraction(event: Event): boolean {

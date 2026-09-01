@@ -1,11 +1,7 @@
+import { truncateAddressMiddle } from '@eds/desktop-components/molecules/crypto-combo/cryptoAddressUtils';
 import { buildCurrencySideAddressData } from './listFieldCurrencyAddressCustomize';
 
-/** 中间省略：与 DS cryptoAddressUtils 一致。 */
-export function truncateAddressMiddle(value: string, head = 6, tail = 6): string {
-  if (!value || value.includes('...')) return value;
-  if (value.length <= head + tail + 3) return value;
-  return `${value.slice(0, head)}...${value.slice(-tail)}`;
-}
+export { truncateAddressMiddle };
 
 export type ListFieldAddressLineModel = {
   address: string;
@@ -23,7 +19,7 @@ export function resolveListFieldAddressLineModel(
   const side = buildCurrencySideAddressData(prefix, customize);
   const address = side.address;
   const alias = side.alias.trim();
-  const primaryText = alias || truncateAddressMiddle(address, 6, 6);
+  const primaryText = alias || truncateAddressMiddle(address);
 
   return {
     address,
@@ -42,7 +38,7 @@ export function resolveAddressSideDisplayLabel(
   const alias = entry?.alias?.trim();
   if (alias) return alias;
   const address = entry?.address?.trim() || fallbackAddress.trim();
-  return truncateAddressMiddle(address, 6, 6);
+  return truncateAddressMiddle(address);
 }
 
 /** 侧栏完整展示：别名优先，否则完整地址（不截断）。 */

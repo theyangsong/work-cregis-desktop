@@ -11,7 +11,7 @@ import {
 import {
   EgButton,
   EgIcon,
-  EgSegmentedControl,
+  EgSegmented,
   MOTION_LAYOUT_DEFORM_CONTENT,
   MOTION_LAYOUT_DEFORM_CONTENT_ENTERING,
   MOTION_LAYOUT_DEFORM_CONTENT_EXITING,
@@ -254,7 +254,7 @@ async function applyScenario(id: string, apply: () => void | Promise<void>) {
   >
     <Teleport v-if="topToolHeadTarget" :to="topToolHeadTarget">
       <div :class="styles.scopeControl">
-        <EgSegmentedControl
+        <EgSegmented
           v-model="segmentedIndex"
           size="md"
           item-width-mode="fixed"

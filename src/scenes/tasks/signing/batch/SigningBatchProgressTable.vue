@@ -36,7 +36,7 @@ import type { BatchSigningFailReason, BatchSigningTaskRow } from './types';
 import styles from './batchSigning.shared.module.css';
 
 const PROGRESS_AMOUNT_COLUMN_MIN_WIDTH = '160px';
-const PROGRESS_RECEIVER_TX_COLUMN_MIN_WIDTH = '160px';
+const PROGRESS_RECEIVER_TX_COLUMN_MIN_WIDTH = BATCH_RECEIVER_COLUMN_MIN_WIDTH;
 const PROGRESS_CREATED_TIME_COLUMN_MIN_WIDTH = '130px';
 const PROGRESS_STATUS_COLUMN_MIN_WIDTH = '150px';
 

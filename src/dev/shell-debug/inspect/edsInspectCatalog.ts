@@ -537,11 +537,15 @@ export const EDS_INSPECT_CATALOG: EdsInspectCatalogEntry[] = [
     ],
   },
   {
-    displayName: 'SegmentedControl',
+    displayName: 'Segmented',
     priority: 40,
-    vueNames: ['SegmentedControl', 'EgSegmentedControl'],
-    domClass: 'eds-segmented-control',
-    props: [{ key: 'size', label: '尺寸', defaultValue: 'md' }],
+    vueNames: ['Segmented', 'EgSegmented'],
+    domClass: 'eds-segmented',
+    props: [
+      { key: 'size', label: '尺寸', defaultValue: 'md' },
+      { key: 'shape', label: '形状', defaultValue: 'circle' },
+      { key: 'itemWidthMode', label: 'Item 宽度', defaultValue: 'adaptive' },
+    ],
   },
   {
     displayName: 'TabItem',

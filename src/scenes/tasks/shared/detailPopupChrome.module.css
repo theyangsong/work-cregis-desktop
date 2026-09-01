@@ -14,10 +14,60 @@
   line-height: var(--eds-body-small-line-height);
 }
 
-.detailHost :global([data-detail-headline-eyebrow]) {
+.detailHeadlineGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch;
+  gap: var(--spacing-1-5);
+  width: 100%;
+  min-width: 0;
+  margin-bottom: var(--spacing-4);
+  box-sizing: border-box;
+}
+
+.detailHeadlineTitleGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch;
+  gap: var(--spacing-1);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.detailHeadlineGroup :global([class*='headlineRow']) {
+  align-self: stretch;
+  padding-bottom: 0;
+}
+
+.detailHeadlineGroup :global([data-detail-headline-eyebrow]) {
   display: block;
   min-width: 0;
   max-width: 100%;
+}
+
+.detailHeadlineGroup :global([data-detail-headline-quota-streamer]) {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.detailHeadlineQuotaStreamer {
+  align-self: stretch;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+}
+
+.detailHeadlineQuotaStreamer:global(.eds-streamer) {
+  height: auto;
+}
+
+.detailHeadlineQuotaStreamer :global(.eds-streamer__text) {
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .detailEyebrowRow {
@@ -66,10 +116,9 @@
 
 .sectionDivider {
   flex-shrink: 0;
-  width: 100%;
-  padding-inline: var(--spacing-3);
+  width: calc(100% - 2 * var(--spacing-3));
+  margin-inline: var(--spacing-3);
   box-sizing: border-box;
-  background-clip: content-box;
 }
 
 .sectionContent {

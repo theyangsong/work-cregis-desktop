@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { EgAnchoredTooltip, EgIcon, EgIconButton } from '@eds/desktop-components';
+import { copyToClipboard } from '@eds/desktop-components/utils/copyToClipboard';
 import { useAppI18n } from '@/composables/useAppI18n';
 import type { DetailProgressMemberDeviceInfo } from './detailProgressMemberDeviceInfo.types';
 import styles from './DetailProgressMemberDeviceInfoTrigger.module.css';
@@ -27,16 +28,14 @@ async function onCopyRow(
 ) {
   event?.stopPropagation();
   event?.preventDefault();
-  try {
-    await navigator.clipboard.writeText(value);
-    copiedRowKey.value = rowKey;
-    if (copiedResetTimer) clearTimeout(copiedResetTimer);
-    copiedResetTimer = setTimeout(() => {
-      if (copiedRowKey.value === rowKey) copiedRowKey.value = null;
-    }, 2000);
-  } catch {
-    /* ignore */
-  }
+  const copied = await copyToClipboard(value);
+  if (!copied) return;
+
+  copiedRowKey.value = rowKey;
+  if (copiedResetTimer) clearTimeout(copiedResetTimer);
+  copiedResetTimer = setTimeout(() => {
+    if (copiedRowKey.value === rowKey) copiedRowKey.value = null;
+  }, 2000);
 }
 </script>
 
@@ -65,7 +64,7 @@ async function onCopyRow(
     </EgIconButton>
 
     <template #content>
-      <div :class="styles.rows">
+      <div :class="styles.rows" data-detail-device-info-copy>
         <div
           v-for="row in rows"
           :key="row.key"

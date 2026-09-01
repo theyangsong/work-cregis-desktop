@@ -16,10 +16,12 @@ const props = withDefaults(
   defineProps<{
     disabled?: boolean;
     guideActive?: boolean;
+    visualActive?: boolean;
   }>(),
   {
     disabled: false,
     guideActive: false,
+    visualActive: false,
   },
 );
 
@@ -92,6 +94,7 @@ onBeforeUnmount(() => {
       kind="borderArrow"
       :label="ui('Previous item')"
       :disabled="disabled"
+      :visual-active="visualActive"
       @click="emit('click')"
     >
       <EgIcon name="eds-arrow-left" fit />

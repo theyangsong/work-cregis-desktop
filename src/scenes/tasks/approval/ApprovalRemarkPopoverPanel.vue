@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import {
+  EgMinerFeeBatchStubPanel,
   EgMinerFeeBitcoinPanel,
   EgMinerFeeEthereumPanel,
   EgMinerFeeTonPanel,
@@ -11,6 +12,10 @@ import {
 } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
 import type { MinerFeeProfile, MinerFeeSelection } from '../shared/minerFeeProfile';
+import {
+  isMinerFeeBatchStubProfile,
+  resolveMinerFeeBatchTransactionCount,
+} from '../shared/minerFeeProfile';
 import ApprovalRemarkFormPanel from './ApprovalRemarkFormPanel.vue';
 import styles from './ApprovalRemarkPopoverPanel.module.css';
 
@@ -33,14 +38,17 @@ const props = withDefaults(
     resetRemarkOnMount?: boolean;
     /** Popover 内「确定」按钮 tone。 */
     confirmTone?: ButtonTone;
+    /** 批签：用户多选笔数（可签名笔数不足时仍用于 batch stub 判定）。 */
+    pendingTransactionCount?: number;
   }>(),
   {
-    placeholderKey: 'Please Enter',
-    feedbackKey: 'Optional, up to 256 characters.',
+    placeholderKey: 'Please enter remark',
+    feedbackKey: 'Optional, Max. 256 characters',
     requireMinerFee: false,
     hideInlineConfirm: false,
     resetRemarkOnMount: true,
     confirmTone: 'decor',
+    pendingTransactionCount: 0,
   },
 );
 
@@ -69,6 +77,7 @@ const evmPanelRef = ref<MinerFeeEvmPanelExpose | null>(null);
 const bitcoinPanelRef = ref<MinerFeeEvmPanelExpose | null>(null);
 const tonPanelRef = ref<MinerFeeSimplePanelExpose | null>(null);
 const tronPanelRef = ref<MinerFeeSimplePanelExpose | null>(null);
+const batchStubPanelRef = ref<MinerFeeSimplePanelExpose | null>(null);
 const minerFeeScreen = ref<MinerFeeScreen>('list');
 
 const resolvedProfile = computed<MinerFeeProfile | null>(() => {
@@ -91,6 +100,21 @@ const isBitcoinProfile = computed(
     resolvedProfile.value?.kind === 'evm'
     && resolvedProfile.value.symbol.trim().toUpperCase() === 'BTC',
 );
+
+const minerFeeTransactionCount = computed(() =>
+  resolveMinerFeeBatchTransactionCount(
+    props.selectedCount,
+    props.pendingTransactionCount,
+  ),
+);
+
+const showBatchStubOnly = computed(() => {
+  const profile = resolvedProfile.value;
+  if (!profile) {
+    return false;
+  }
+  return isMinerFeeBatchStubProfile(profile, minerFeeTransactionCount.value);
+});
 
 const remarkModel = computed({
   get: () => props.remark,
@@ -140,6 +164,10 @@ function attemptSaveCustom() {
 }
 
 function attemptConfirm() {
+  if (showBatchStubOnly.value) {
+    batchStubPanelRef.value?.attemptConfirm();
+    return;
+  }
   if (resolvedProfile.value?.kind === 'evm') {
     activeEvmPanelRef()?.attemptConfirm();
     return;
@@ -192,12 +220,23 @@ defineExpose({
 
 <template>
   <div v-if="resolvedProfile" :class="minerFeeConfirmClass">
+    <EgMinerFeeBatchStubPanel
+      v-if="showBatchStubOnly"
+      ref="batchStubPanelRef"
+      :translate="ui"
+      :symbol="resolvedProfile.symbol"
+      :profile-kind="resolvedProfile.kind"
+      :transaction-count="minerFeeTransactionCount"
+      :hide-inline-confirm="hideInlineConfirm"
+      @confirm="onMinerFeeConfirm"
+    />
+
     <EgMinerFeeBitcoinPanel
-      v-if="isBitcoinProfile"
+      v-else-if="isBitcoinProfile"
       ref="bitcoinPanelRef"
       :translate="ui"
       :hide-inline-confirm="hideInlineConfirm"
-      :transaction-count="selectedCount"
+      :transaction-count="minerFeeTransactionCount"
       @miner-fee-screen-change="onMinerFeeScreenChange"
       @confirm="onMinerFeeConfirm"
     />
@@ -208,7 +247,7 @@ defineExpose({
       :translate="ui"
       :symbol="resolvedProfile.symbol"
       :hide-inline-confirm="hideInlineConfirm"
-      :transaction-count="selectedCount"
+      :transaction-count="minerFeeTransactionCount"
       @miner-fee-screen-change="onMinerFeeScreenChange"
       @confirm="onMinerFeeConfirm"
     />
@@ -219,7 +258,7 @@ defineExpose({
       :translate="ui"
       :symbol="resolvedProfile.symbol"
       :hide-inline-confirm="hideInlineConfirm"
-      :transaction-count="selectedCount"
+      :transaction-count="minerFeeTransactionCount"
       @confirm="onMinerFeeConfirm"
     />
 
@@ -228,7 +267,7 @@ defineExpose({
       ref="tronPanelRef"
       :translate="ui"
       :hide-inline-confirm="hideInlineConfirm"
-      :transaction-count="selectedCount"
+      :transaction-count="minerFeeTransactionCount"
       @confirm="onMinerFeeConfirm"
     />
   </div>
@@ -238,7 +277,7 @@ defineExpose({
     v-model="remarkModel"
     :hide-confirm="hideInlineConfirm"
     :label="ui('Remark')"
-    :placeholder="ui(placeholderKey)"
+    :placeholder-key="placeholderKey"
     :feedback-text="feedbackKey"
     :confirm-label="ui('Confirm')"
     :confirm-tone="confirmTone"

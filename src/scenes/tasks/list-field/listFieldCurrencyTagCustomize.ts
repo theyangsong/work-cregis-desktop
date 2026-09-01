@@ -30,7 +30,7 @@ function capitalizeKey(key: string): string {
 }
 
 function slotLabel(slot: CurrencyTagPanelSlot): string {
-  return slot === 'system' ? 'Danger' : 'Custom';
+  return slot === 'system' ? 'Blacklist' : 'Custom';
 }
 
 export function currencyTagShowKey(
@@ -249,6 +249,37 @@ export function buildCurrencyAddressTags(
   };
 }
 
+function localizeTagSlot(
+  slot: CryptoAddressSideTags['system'],
+  translate: (text: string) => string,
+): CryptoAddressSideTags['system'] {
+  if (!slot) return slot;
+  const list = Array.isArray(slot) ? slot : [slot];
+  return list.map((tag) => ({
+    ...tag,
+    label: tag.label ? translate(tag.label) : tag.label,
+  }));
+}
+
+/** 地址 Tag label 走 ui()；须在 Receiver / Sender 等 UI 层调用。 */
+export function localizeCurrencyAddressTags(
+  tags: CryptoAddressSideTags,
+  translate: (text: string) => string,
+): CryptoAddressSideTags {
+  return {
+    system: localizeTagSlot(tags.system, translate),
+    custom: localizeTagSlot(tags.custom, translate),
+    ...(tags.more
+      ? {
+          more: {
+            ...tags.more,
+            label: tags.more.label ? translate(tags.more.label) : tags.more.label,
+          },
+        }
+      : {}),
+  };
+}
+
 export function buildCurrencySideTagsList(
   side: 'from' | 'to',
   customize: Record<string, unknown>,
@@ -315,14 +346,22 @@ export function currencyAddressSystemTagOverrides(
   return currencyAddressRiskTagOverrides(side, addressIndex, count, enabled);
 }
 
-/** Data List 演示：仅第 3 条（0-based index 2）展示地址 tag。 */
+/** Data List 演示：第 2 条（0-based index 1，TON）接收方 AML 危险 tag。 */
+export const CURRENCY_DEMO_ROW_TON_AML_TAG_INDEX = 1;
+
+/** Data List 演示：第 3 条（0-based index 2）展示完整地址 tag 组合。 */
 export const CURRENCY_DEMO_ROW_WITH_TAGS_INDEX = 2;
+
+const CURRENCY_DEMO_ROWS_WITH_ADDRESS_TAGS = new Set([
+  CURRENCY_DEMO_ROW_TON_AML_TAG_INDEX,
+  CURRENCY_DEMO_ROW_WITH_TAGS_INDEX,
+]);
 
 export function applyCurrencyRowTagVisibility(
   customize: Record<string, unknown>,
   rowIndex: number,
 ): Record<string, unknown> {
-  if (rowIndex === CURRENCY_DEMO_ROW_WITH_TAGS_INDEX) {
+  if (CURRENCY_DEMO_ROWS_WITH_ADDRESS_TAGS.has(rowIndex)) {
     return customize;
   }
 

@@ -7,14 +7,23 @@ import { UI_TEXT_ZH_CN } from '@/i18n/uiTextZhCN';
 import { UI_TEXT_ZH_TW } from '@/i18n/uiTextZhTW';
 import { buildStatusRowValues } from './list-field/tasksListFieldStatusRowData';
 
+/** 发送方列 min-width（含 cell 左右 padding）。 */
+export const SENDER_DATA_LIST_COLUMN_MIN_WIDTH = '170px';
+
 /** 接收方列 min-width（含 cell 左右 padding）。 */
-export const CURRENCY_DATA_LIST_COLUMN_MIN_WIDTH = '160px';
+export const RECEIVER_DATA_LIST_COLUMN_MIN_WIDTH = '180px';
+
+/** @deprecated 使用 SENDER_DATA_LIST_COLUMN_MIN_WIDTH / RECEIVER_DATA_LIST_COLUMN_MIN_WIDTH */
+export const SENDER_RECEIVER_DATA_LIST_COLUMN_MIN_WIDTH = SENDER_DATA_LIST_COLUMN_MIN_WIDTH;
+
+/** 接收方列 min-width（含 cell 左右 padding）。 */
+export const CURRENCY_DATA_LIST_COLUMN_MIN_WIDTH = RECEIVER_DATA_LIST_COLUMN_MIN_WIDTH;
 
 /** 第一列 Submitter：较高 min-width，在 DataList 均分 extra 时占据更多列宽。 */
 export const GENERAL_STRUCTURE_DATA_LIST_COLUMN_MIN_WIDTH = '190px';
 
-/** 第四列发送方 min-width（含 cell 左右 padding）。 */
-export const BUSINESS_TYPE_DATA_LIST_COLUMN_MIN_WIDTH = '170px';
+/** 发送方列 min-width（含 cell 左右 padding）。 */
+export const BUSINESS_TYPE_DATA_LIST_COLUMN_MIN_WIDTH = SENDER_DATA_LIST_COLUMN_MIN_WIDTH;
 
 /** Status 列 min-width（含 cell padding；EgTag lg + truncate 展示 Approved 长文案）。 */
 export const STATUS_DATA_LIST_COLUMN_MIN_WIDTH = '120px';
@@ -42,7 +51,7 @@ export const DATA_LIST_PRIMARY_ACTION_LABEL = 'Process';
 export const DATA_LIST_PRIMARY_ACTION_LABEL_EN = 'Process';
 
 export const DATA_LIST_APPROVAL_ROW_COUNT = 68;
-export const DATA_LIST_SIGNING_ROW_COUNT = 128;
+export const DATA_LIST_SIGNING_ROW_COUNT = 134;
 
 /** Approval 默认条数；其它待办列表未单独配置时同此值。 */
 export const DATA_LIST_FIGMA_ROW_COUNT = DATA_LIST_APPROVAL_ROW_COUNT;
@@ -317,10 +326,10 @@ export const SENT_REQUEST_CREATED_TIME_DATA_LIST_COLUMN_WIDTH =
   SENT_REQUEST_OPERATION_TYPE_DATA_LIST_COLUMN_MIN_WIDTH;
 
 /** Sent Request 发送方列 min-width。 */
-export const SENT_REQUEST_SENDER_DATA_LIST_COLUMN_MIN_WIDTH = '160px';
+export const SENT_REQUEST_SENDER_DATA_LIST_COLUMN_MIN_WIDTH = SENDER_DATA_LIST_COLUMN_MIN_WIDTH;
 
 /** Sent Request 接收方列 min-width。 */
-export const SENT_REQUEST_RECEIVER_DATA_LIST_COLUMN_MIN_WIDTH = '150px';
+export const SENT_REQUEST_RECEIVER_DATA_LIST_COLUMN_MIN_WIDTH = RECEIVER_DATA_LIST_COLUMN_MIN_WIDTH;
 
 /** Sent Request 审批进度列 min-width。 */
 export const SENT_REQUEST_STATUS_DATA_LIST_COLUMN_MIN_WIDTH = '150px';
@@ -584,7 +593,7 @@ function defaultDataListColumnMinWidthForSource(
   }
   if (dataSource === 'amount') return AMOUNT_DATA_LIST_COLUMN_MIN_WIDTH;
   if (dataSource === 'action') return ACTION_DATA_LIST_COLUMN_MIN_WIDTH;
-  return '160px';
+  return SENDER_DATA_LIST_COLUMN_MIN_WIDTH;
 }
 
 export function resolveDataListColumnMinWidthFromDataSource(

@@ -26,6 +26,7 @@ export const I18N_DOC_EN_LABELS: Record<string, string> = {
   'Batch Processing': 'Batch Processing',
   'Batch Reject': 'Batch rejection',
   'Blacklisted Address': 'Blacklisted Address',
+  Blacklist: 'Blacklist',
   Broadcast: 'Broadcast',
   'Broadcast Failed': 'Broadcast Failed',
   'Broadcast failed': 'Broadcast Failed',
@@ -90,6 +91,16 @@ export const I18N_DOC_EN_LABELS: Record<string, string> = {
   'Miner Fee': 'Gas Fee',
   'Miner fee batch total suffix': 'Total',
   'Miner fee batch transaction suffix': 'transactions',
+  'Miner fee batch stub btc':
+    'BTC network fees depend on the actual on-chain space occupied by the transaction and the network fee rate. Since batch signing involves multiple transactions, the total gas fee cannot be accurately calculated. The actual fee is subject to the result of on-chain execution.',
+  'Miner fee batch stub ada':
+    'ADA network fees depend on the actual transaction data and transaction size. Since batch signing involves multiple transactions, the total gas fee cannot be accurately calculated. The actual fee is subject to the result of on-chain execution.',
+  'Miner fee batch stub fil':
+    'FIL network fees depend on the actual transaction execution and network parameters. Since batch signing involves multiple transactions, the total gas fee cannot be accurately calculated. The actual fee is subject to the result of on-chain execution.',
+  'Miner fee batch stub tron':
+    'To ensure the transaction is completed successfully, the system will automatically pay the gas fee in the following order:\n\n1. Use Address Resources\nIf the address has sufficient available resources, the system will prioritize using the address\'s resources (Energy/Bandwidth).\n\n2. Energy Mode (Recommended)\nIf the address does not have sufficient resources, Cregis will provide the resources required for the transaction, and the fee will be deducted from the Team Account balance.\n\n3. Burn TRX\nIf the Team Account balance is insufficient, TRX from the address will be burned to cover the resources required for the transaction.',
+  'Miner fee batch stub tron streamer':
+    'To avoid additional gas fee expenses, please ensure that the Team Account has a sufficient balance so that Energy Mode can be triggered normally.',
   'Miner fee speed fast': 'Fast',
   'Miner fee speed normal': 'Normal',
   'Miner fee speed slow': 'Slow',

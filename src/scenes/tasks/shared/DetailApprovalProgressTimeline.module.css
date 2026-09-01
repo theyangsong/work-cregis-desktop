@@ -194,6 +194,42 @@
   box-sizing: border-box;
 }
 
+.pendingMembers {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-2);
+  min-width: 0;
+  padding: var(--spacing-1-5) var(--spacing-2);
+  border-radius: var(--radius-sm);
+  box-sizing: border-box;
+  composes: motion-ease is-hover from global;
+}
+
+.pendingMembers:hover {
+  background-color: var(--event-hover);
+}
+
+.pendingMember {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  min-width: 0;
+}
+
+.pendingMember :global(.eds-avatar) {
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+}
+
+.pendingMemberSeparator {
+  flex-shrink: 0;
+  color: var(--text-base-quaternary);
+  font-size: var(--eds-body-small-size);
+  font-weight: var(--eds-body-small-weight);
+  line-height: var(--eds-body-small-line-height);
+}
+
 .stepAt {
   flex-shrink: 0;
 }

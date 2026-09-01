@@ -198,6 +198,16 @@ export const UI_TEXT_ZH_TW: Record<string, string> = {
   'Estimated total miner fee': '預計總礦工費',
   'Miner fee batch total suffix': '共',
   'Miner fee batch transaction suffix': '筆交易',
+  'Miner fee batch stub btc':
+    'BTC 網絡的礦工費與交易實際佔用的鏈上空間及網絡費率有關，批量簽名包含多筆交易，無法準確計算總礦工費，具體費用以實際鏈上執行結果為準。',
+  'Miner fee batch stub ada':
+    'ADA 網絡的礦工費與交易實際數據及交易大小有關，批量簽名包含多筆交易，無法準確計算總礦工費，具體費用以實際鏈上執行結果為準。',
+  'Miner fee batch stub fil':
+    'FIL 網絡的礦工費與交易實際執行情況及網絡參數有關，批量簽名包含多筆交易，無法準確計算總礦工費，具體費用以實際鏈上執行結果為準。',
+  'Miner fee batch stub tron':
+    '為保證交易成功，系統將按以下順序自動支付礦工費：\n\n1.消耗地址資源\n如果地址可用資源充足，將優先消耗地址資源（能量/帶寬）。\n\n2.能量模式（推薦）\n地址資源不足時，由Cregis 提供交易所需資源，費用將從團隊賬户餘額中扣除。\n\n3.燃燒TRX\n團隊賬户餘額不足時，將燃燒地址TRX，抵扣交易所需資源。',
+  'Miner fee batch stub tron streamer':
+    '為避免產生額外礦工費支出，請確保團隊賬户餘額充足，以便正常觸發能量模式。',
   'Miner fee speed slow': '較慢',
   'Miner fee speed normal': '正常',
   'Miner fee speed fast': '快速',
@@ -275,6 +285,7 @@ export const UI_TEXT_ZH_TW: Record<string, string> = {
   'Joined Multisig Room': '已加入多簽房間',
   'Non-whitelisted Address': '非白名單地址',
   'Blacklisted Address': '黑名單地址',
+  Blacklist: '黑名單',
   'Insufficient balance': '餘額不足',
   'Insufficient miner fee': '礦工費不足',
   'Increase quota': '提升額度',

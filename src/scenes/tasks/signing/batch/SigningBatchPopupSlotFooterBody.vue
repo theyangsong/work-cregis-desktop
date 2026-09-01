@@ -51,25 +51,30 @@ const slots = useSlots();
     v-else-if="showToolbarRow"
     :class="styles.toolbarBar"
   >
-    <EgButton
-      v-if="showToolbarCancel"
-      :tone="toolbarCancelTone"
-      :variant="toolbarCancelVariant"
-      size="md"
-      @click="emit('toolbar-cancel')"
-    >
-      {{ toolbarCancelLabel }}
-    </EgButton>
-    <EgButton
-      v-if="showToolbarConfirm && !$slots['toolbar-confirm']"
-      :tone="toolbarConfirmTone"
-      variant="solid"
-      size="md"
-      :disabled="toolbarConfirmDisabled"
-      @click="emit('toolbar-confirm')"
-    >
-      {{ toolbarConfirmLabel }}
-    </EgButton>
-    <slot v-else-if="showToolbarConfirm" name="toolbar-confirm" />
+    <div v-if="$slots['toolbar-leading']" :class="styles.toolbarLeading">
+      <slot name="toolbar-leading" />
+    </div>
+    <div :class="styles.toolbarActions">
+      <EgButton
+        v-if="showToolbarCancel"
+        :tone="toolbarCancelTone"
+        :variant="toolbarCancelVariant"
+        size="md"
+        @click="emit('toolbar-cancel')"
+      >
+        {{ toolbarCancelLabel }}
+      </EgButton>
+      <EgButton
+        v-if="showToolbarConfirm && !$slots['toolbar-confirm']"
+        :tone="toolbarConfirmTone"
+        variant="solid"
+        size="md"
+        :disabled="toolbarConfirmDisabled"
+        @click="emit('toolbar-confirm')"
+      >
+        {{ toolbarConfirmLabel }}
+      </EgButton>
+      <slot v-else-if="showToolbarConfirm" name="toolbar-confirm" />
+    </div>
   </div>
 </template>
