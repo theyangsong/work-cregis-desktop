@@ -21,6 +21,7 @@ const props = withDefaults(
 const { ui } = useAppI18n();
 const eyebrowAnchor = ref<HTMLElement | null>(null);
 const streamerAnchor = ref<HTMLElement | null>(null);
+let headlineMainEl: HTMLElement | null = null;
 
 const quotaNoticeText = computed(() => buildWithdrawalQuotaNoticeText(ui));
 
@@ -29,6 +30,8 @@ function unmountStructure() {
   streamerAnchor.value?.remove();
   eyebrowAnchor.value = null;
   streamerAnchor.value = null;
+  headlineMainEl?.removeAttribute('data-detail-headline-with-streamer');
+  headlineMainEl = null;
 }
 
 function mountStructure() {
@@ -45,6 +48,10 @@ function mountStructure() {
   const mountParent =
     headlineMain instanceof HTMLElement ? headlineMain : headline;
 
+  if (headlineMain instanceof HTMLElement) {
+    headlineMainEl = headlineMain;
+  }
+
   const eyebrowEl = document.createElement('div');
   eyebrowEl.setAttribute('data-detail-headline-eyebrow', '');
   eyebrowEl.className = styles.detailHeadlineEyebrowHost;
@@ -52,16 +59,12 @@ function mountStructure() {
   eyebrowAnchor.value = eyebrowEl;
 
   if (props.showQuotaStreamer) {
-    const headlineDivider = headline.querySelector('[class*="headlineDivider"]');
     const streamerEl = document.createElement('div');
     streamerEl.setAttribute('data-detail-headline-quota-streamer', '');
     streamerEl.className = styles.detailHeadlineQuotaStreamerHost;
-    if (headlineDivider instanceof HTMLElement) {
-      headline.insertBefore(streamerEl, headlineDivider);
-    } else {
-      headline.appendChild(streamerEl);
-    }
+    mountParent.appendChild(streamerEl);
     streamerAnchor.value = streamerEl;
+    headlineMainEl?.setAttribute('data-detail-headline-with-streamer', '');
   }
 }
 

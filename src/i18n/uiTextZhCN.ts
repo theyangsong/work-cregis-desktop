@@ -474,7 +474,7 @@ export const UI_TEXT_ZH_CN: Record<string, string> = {
   Payout: '提币',
   Copy: '复制',
   'Copy address': '复制地址',
-  'AML Search': 'AML 搜索',
+  'AML Search': 'AML筛查',
   'Screening in progress': '筛查中...',
   'Block explorer': '区块浏览器',
   'Transaction Information': '交易信息',

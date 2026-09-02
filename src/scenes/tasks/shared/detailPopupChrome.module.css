@@ -22,6 +22,12 @@
   max-width: 100%;
 }
 
+/* eyebrow + 金额 + 额度 Streamer 同组：复用 DS headlineMain 纵向 gap。 */
+.detailHost :global([class*='headlineMain'][data-detail-headline-with-streamer]) {
+  align-self: stretch;
+  width: 100%;
+}
+
 .detailHeadlineQuotaStreamerHost {
   display: block;
   align-self: stretch;

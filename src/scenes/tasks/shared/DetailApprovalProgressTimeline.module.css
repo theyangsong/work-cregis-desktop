@@ -27,8 +27,8 @@
 .markerLine {
   flex: 1 1 auto;
   width: var(--stroke-xl);
-  min-height: var(--spacing-1-5);
-  margin-top: var(--spacing-1);
+  min-height: var(--scale-8);
+  margin-top: var(--spacing-1-5);
   margin-bottom: var(--spacing-1);
   background: var(--stroke-outline-subtle);
 }
@@ -57,7 +57,7 @@
   box-sizing: border-box;
   width: var(--icon-md);
   height: var(--icon-md);
-  margin-top: calc((var(--eds-body-medium-line-height) - var(--icon-md)) / 2);
+  margin-top: var(--spacing-05);
   border-radius: var(--radius-full);
 }
 
