@@ -3,8 +3,8 @@ import {
   CURRENCY_CUSTOM_TAG_DEFAULT_COUNT,
   CURRENCY_DEMO_ROW_TON_AML_TAG_INDEX,
   CURRENCY_DEMO_ROW_WITH_TAGS_INDEX,
+  currencyAddressBlacklistTagOverrides,
   currencyAddressCustomTagOverrides,
-  currencyAddressRiskTagOverrides,
   currencyTagShowKey,
 } from './listFieldCurrencyTagCustomize';
 import {
@@ -78,14 +78,14 @@ export function applyCurrencyDemoRowOverrides(
     };
   }
 
-  /** 第 2 条（TON）：接收方单地址 + AML 危险 tag。 */
+  /** 第 2 条（TON）：接收方单地址 + 黑名单 tag。 */
   if (rowIndex === CURRENCY_DEMO_ROW_TON_AML_TAG_INDEX) {
     return {
       ...customize,
       [currencyAddressTagsEnabledKey('from', 1)]: false,
       [currencyAddressTagsEnabledKey('to', 1)]: true,
       [currencyTagShowKey('to', 1, 'custom')]: false,
-      ...currencyAddressRiskTagOverrides('to', 1, 1, true),
+      ...currencyAddressBlacklistTagOverrides('to', 1, 1, true),
     };
   }
 
@@ -97,7 +97,7 @@ export function applyCurrencyDemoRowOverrides(
       fromAlias1: 'Mr. Wang',
       [currencyAddressTagsEnabledKey('from', 1)]: false,
       [currencyAddressTagsEnabledKey('to', 1)]: true,
-      ...currencyAddressRiskTagOverrides('to', 1, 1, true),
+      ...currencyAddressBlacklistTagOverrides('to', 1, 1, true),
       ...currencyAddressCustomTagOverrides('to', 1, CURRENCY_CUSTOM_TAG_DEFAULT_COUNT, true),
     };
   }

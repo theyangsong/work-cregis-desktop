@@ -9,8 +9,12 @@ import {
 } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
 import { formatGroupedDecimalAmount } from '@/utils/formatGroupedDisplay';
+import {
+  formatExpiryCountdownHms,
+  parseExpiryCountdownTotal,
+} from '../shared/expiryCountdownUtils';
+import { splitBusinessTypeSecondaryKey } from './businessTypeDisplay';
 import { resolveCryptoNameFromSymbol } from './listFieldCryptoResolve';
-import ExpiryCountdown from '../shared/ExpiryCountdown.vue';
 import styles from './TasksListFieldAmount.module.css';
 
 const props = defineProps<{
@@ -44,15 +48,24 @@ const cryptoName = computed((): CryptoName => {
   if (explicit) return explicit as CryptoName;
   return resolveCryptoNameFromSymbol(cryptoSymbol.value) ?? 'eds-btc-bitcoin';
 });
+const { ui } = useAppI18n();
 const secondaryValueRaw = computed(() => String(props.customize.secondaryValue ?? '').trim());
+const businessTypeSecondaryParts = computed(() => {
+  const parts = splitBusinessTypeSecondaryKey(secondaryValueRaw.value);
+  if (!parts) return null;
+  return {
+    source: ui(parts.sourceKey),
+    action: ui(parts.actionKey),
+  };
+});
+const showBusinessTypeSecondary = computed(() => businessTypeSecondaryParts.value != null);
 const useTransferTypeSecondary = computed(() => secondaryValueRaw.value.length > 0);
 const showCountdown = computed(
-  () => useTransferTypeSecondary.value && Boolean(props.customize.showCountdown),
+  () => showBusinessTypeSecondary.value && Boolean(props.customize.showCountdown),
 );
 
 const amountWidthConfigured = computed(() => parsePreviewMinWidth(props.customize) != null);
 const alignEnd = computed(() => Boolean(props.customize.alignEnd));
-const { ui } = useAppI18n();
 /** 申请时间是字段 value，禁止走 ui()；其余副行才是 i18n key。 */
 const secondaryValue = computed(() => {
   const raw = secondaryValueRaw.value;
@@ -66,6 +79,17 @@ const showNetworkTag = computed(() => props.customize.showNetwork !== false);
 const networkTagLabel = computed(() => {
   const label = String(props.customize.networkLabel ?? '').trim();
   return label ? ui(label) : '';
+});
+const countdownSuffixKey = computed(() =>
+  String(props.customize.countdownSuffixKey ?? 'Expires in xx:xx').trim() || 'Expires in xx:xx',
+);
+const countdownListText = computed(() => {
+  const total = parseExpiryCountdownTotal(
+    String(props.customize.countdownMinutes ?? '30'),
+    String(props.customize.countdownSeconds ?? '00'),
+    String(props.customize.countdownHours ?? '0'),
+  );
+  return `${formatExpiryCountdownHms(total)} ${ui(countdownSuffixKey.value)}`;
 });
 
 /** Data List 单元格内：填满可用宽度并启用 tail 省略（同 Showcase amount 列）。 */
@@ -147,19 +171,47 @@ const cellMinWidthStyle = computed(() => {
       </EgTag>
     </div>
     <div v-if="showCountdown" :class="styles.amountSecondaryRow">
-      <EgListFieldOverflowText
-        :text="secondaryValue"
-        variant="secondary"
-        tabular
-        :tooltip-trigger="tooltipTrigger"
-      />
-      <EgDivider type="page" direction="vertical" />
-      <ExpiryCountdown
-        display="list"
-        :hours="String(customize.countdownHours ?? '0')"
-        :minutes="String(customize.countdownMinutes ?? '30')"
-        :seconds="String(customize.countdownSeconds ?? '00')"
-      />
+      <span :class="styles.amountSecondarySource">
+        <EgListFieldOverflowText
+          :text="businessTypeSecondaryParts!.source"
+          variant="secondary"
+          :tooltip-trigger="tooltipTrigger"
+        />
+      </span>
+      <EgDivider type="navigator" direction="vertical" />
+      <span :class="styles.amountSecondaryAction">
+        <EgListFieldOverflowText
+          :text="businessTypeSecondaryParts!.action"
+          variant="secondary"
+          :tooltip-trigger="tooltipTrigger"
+        />
+      </span>
+      <EgDivider type="navigator" direction="vertical" />
+      <span :class="styles.amountSecondaryCountdown">
+        <EgListFieldOverflowText
+          :text="countdownListText"
+          variant="secondary"
+          tabular
+          :tooltip-trigger="tooltipTrigger"
+        />
+      </span>
+    </div>
+    <div v-else-if="showBusinessTypeSecondary" :class="styles.amountSecondaryRow">
+      <span :class="styles.amountSecondarySource">
+        <EgListFieldOverflowText
+          :text="businessTypeSecondaryParts!.source"
+          variant="secondary"
+          :tooltip-trigger="tooltipTrigger"
+        />
+      </span>
+      <EgDivider type="navigator" direction="vertical" />
+      <span :class="styles.amountSecondaryAction">
+        <EgListFieldOverflowText
+          :text="businessTypeSecondaryParts!.action"
+          variant="secondary"
+          :tooltip-trigger="tooltipTrigger"
+        />
+      </span>
     </div>
     <EgListFieldOverflowText
       v-else-if="useTransferTypeSecondary"

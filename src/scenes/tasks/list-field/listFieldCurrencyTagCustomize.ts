@@ -5,6 +5,7 @@ import type {
   TagCustomStyle,
   TagSize,
 } from '@eds/desktop-components';
+import { BLACKLIST_LABEL_KEY } from '../shared/hasBlacklistAddressTags';
 import {
   MAX_CURRENCY_SIDE_ADDRESSES,
   currencyAddressTagsEnabledKey,
@@ -30,7 +31,7 @@ function capitalizeKey(key: string): string {
 }
 
 function slotLabel(slot: CurrencyTagPanelSlot): string {
-  return slot === 'system' ? 'Blacklist' : 'Custom';
+  return slot === 'system' ? 'Danger' : 'Custom';
 }
 
 export function currencyTagShowKey(
@@ -300,6 +301,25 @@ export function currencyAddressRiskTagOverrides(
     [currencyTagShowKey(side, addressIndex, 'system')]: enabled,
     ...createCurrencyTagItemDefaults(side, addressIndex, 'system', 'custom', count, enabled),
   };
+}
+
+/** 接收方「黑名单」演示 Tag（label = Blacklist / 黑名单，非 AML 筛查结果 Danger）。 */
+export function currencyAddressBlacklistTagOverrides(
+  side: 'from' | 'to',
+  addressIndex: number,
+  count = 1,
+  enabled = true,
+): Record<string, unknown> {
+  const entries: Record<string, unknown> = {
+    ...currencyAddressRiskTagOverrides(side, addressIndex, count, enabled),
+  };
+
+  for (let tagIndex = 1; tagIndex <= count; tagIndex += 1) {
+    entries[currencyTagItemKey(side, addressIndex, 'system', 'Label', tagIndex)] =
+      BLACKLIST_LABEL_KEY;
+  }
+
+  return entries;
 }
 
 export function currencyAddressCustomTagOverrides(

@@ -10,7 +10,7 @@ defineProps<{
 
 <template>
   <TasksDataListColumnCell
-    data-source="operation-type"
+    data-source="created-time"
     :column-min-width="columnMinWidth"
     :menu-item="menuItem"
     :row-index="rowIndex"

@@ -2,6 +2,7 @@ const EDITABLE_SELECTOR = 'input, textarea, [contenteditable="true"]';
 const DEV_COPY_SELECTOR = '[data-shell-debug-ui], [data-dev-inspect-copy]';
 const DEVICE_INFO_COPY_SELECTOR = '[data-detail-device-info-copy]';
 const SIGNING_CUSTOM_POPUP_COPY_SELECTOR = '[data-signing-custom-popup-copy]';
+const CRYPTO_ADDRESS_MENU_COPY_SELECTOR = '.eds-crypto-address-tooltip-menu';
 
 function isEditableCopyTarget(target: EventTarget | null): boolean {
   return target instanceof Element && Boolean(target.closest(EDITABLE_SELECTOR));
@@ -19,6 +20,10 @@ function isSigningCustomPopupCopyTarget(target: EventTarget | null): boolean {
   return target instanceof Element && Boolean(target.closest(SIGNING_CUSTOM_POPUP_COPY_SELECTOR));
 }
 
+function isCryptoAddressMenuCopyTarget(target: EventTarget | null): boolean {
+  return target instanceof Element && Boolean(target.closest(CRYPTO_ADDRESS_MENU_COPY_SELECTOR));
+}
+
 /** 业务客户端禁止复制；输入框内编辑与 Dev Inspect 面板除外。 */
 export function installPageCopyGuard(): void {
   const blockClipboard = (event: ClipboardEvent) => {
@@ -26,6 +31,7 @@ export function installPageCopyGuard(): void {
     if (isDevCopyTarget(event.target)) return;
     if (isDeviceInfoCopyTarget(event.target)) return;
     if (isSigningCustomPopupCopyTarget(event.target)) return;
+    if (isCryptoAddressMenuCopyTarget(event.target)) return;
     event.preventDefault();
   };
 

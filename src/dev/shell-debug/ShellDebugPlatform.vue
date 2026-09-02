@@ -40,6 +40,7 @@ const qaPanelTitle = computed(() => `${pageDisplayName.value} QA`);
         icon="eds-coffee"
         :panel-title="qaPanelTitle"
         :show-panel-meta="false"
+        launcher-popover-id="qa"
         trigger-aria-label="Open QA test tools"
       >
         <TestScenarioMode :page-key="effectivePageKey" />

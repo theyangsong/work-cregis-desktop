@@ -77,6 +77,10 @@ export type SigningDetail = {
   signingMode: 'single' | 'multi';
   signingThreshold: string | null;
   signers: SigningProgressMember[];
+  automationSignatureRule?: {
+    name: string;
+    id: string;
+  };
 };
 
 export type SigningActionKind = 'pass' | 'reject';

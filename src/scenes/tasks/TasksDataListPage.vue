@@ -42,9 +42,9 @@ import {
   DATA_LIST_FIGMA_TOOLBAR,
   tasksDataListCustomizeDefaults,
   tasksDataListDefaultRowCount,
-  dataListColumnSettingDefaults,
   migrateDataListColumnSettings,
   syncSentRequestDataListColumnSettings,
+  syncTasksDataListColumnMinWidths,
   resolveTasksDataListMenuItem,
   DATA_LIST_PRIMARY_ACTION_LABEL,
   DATA_LIST_PRIMARY_ACTION_LABEL_EN,
@@ -155,13 +155,12 @@ function applySentRequestDataListColumnRepair() {
   dataListRemountKey.value += 1;
 }
 
-/** HMR / 旧会话：补齐列配置；我发起的勿用通用 defaults 覆盖 preview 列（避免 status 污染第 2 列）。 */
+/** HMR / 旧会话：补齐列配置；切换模块时同步 min-width，避免 dev 分配参数与 EgDataListColumn 不一致。 */
 onMounted(() => {
   migrateDataListColumnSettings(customize);
+  syncTasksDataListColumnMinWidths(customize, menuItem.value, locale.value);
   if (isSentRequestDataListMenu(menuItem.value, locale.value)) {
     applySentRequestDataListColumnRepair();
-  } else {
-    Object.assign(customize, dataListColumnSettingDefaults());
   }
   for (const [key, value] of Object.entries(tasksDataListCustomizeDefaults)) {
     if (customize[key as keyof TasksDataListCustomizeState] === undefined) {
@@ -177,6 +176,7 @@ watch(
     customize.showBatch = tasksDataListShowsBatch(item);
     activeSort.value = null;
     migrateDataListColumnSettings(customize);
+    syncTasksDataListColumnMinWidths(customize, item, locale.value);
     if (isSentRequestDataListMenu(item, locale.value)) {
       applySentRequestDataListColumnRepair();
     }
@@ -247,7 +247,7 @@ const businessTypeColumnSecondaryLabel = computed(() =>
 const businessTypeColumnSecondarySortable = computed(() =>
   tasksDataListBusinessTypeColumnSecondarySortable(menuItem.value),
 );
-/** Sent Request 第 1–4 列（金额 / 业务类型 / 接收方 / 发送方）无固定 width，均分剩余空间。 */
+/** Sent Request 第 1–4 列（金额｜业务类型 / 申请时间 / 接收方 / 发送方）无固定 width，均分剩余空间。 */
 const amountColumnFlexGrow = computed(() =>
   tasksDataListAmountColumnFlexGrow(menuItem.value),
 );
@@ -546,6 +546,7 @@ const {
     return (row: Record<string, unknown>) =>
       !signingBatchFlow.shouldFilterRow(Number(row.id));
   }),
+  menuItem,
 );
 
 const listRegionRef = ref<HTMLElement | null>(null);
@@ -613,9 +614,13 @@ watch(
   { immediate: true },
 );
 
-watch(isRecordMenu, (enabled) => {
-  registerRecordDetailFlow(enabled ? recordDetailFlow : null);
-});
+watch(
+  [isRecordMenu, () => menuItem.value],
+  ([enabled, item]) => {
+    registerRecordDetailFlow(enabled ? recordDetailFlow : null, enabled ? item : undefined);
+  },
+  { immediate: true },
+);
 
 function refreshListFromToolbar() {
   void nextTick(() => {
@@ -646,7 +651,9 @@ onMounted(() => {
     registerSigningFlow(signingFlow);
     registerSigningBatchFlow(signingBatchFlow);
   }
-  if (isRecordMenu.value) registerRecordDetailFlow(recordDetailFlow);
+  if (isRecordMenu.value) {
+    registerRecordDetailFlow(recordDetailFlow, menuItem.value);
+  }
   setBatchSigningListRefreshHandler(refreshListFromToolbar);
 });
 
@@ -713,12 +720,22 @@ const signingBatchUsesNetworkFlotation = computed(() =>
   isSigningMenu.value && signingBatchFlow.shouldUseNetworkPickerFlotation(),
 );
 
+/** 空列表：禁用批处理 / 自动化 / 筛选与表头排序。 */
+const isDataListEmpty = computed(
+  () => Boolean(customize.empty) || totalRowCount.value === 0,
+);
+
 /** 批处理多选进行中：工具栏批处理钮禁用（退出走 Batch Bar / Esc，勿再点工具栏切换）。 */
 const isBatchToolbarDisabled = computed(
   () =>
     skidContentLocked.value
     || batchButton.value.disabled
-    || customize.selectMode,
+    || customize.selectMode
+    || isDataListEmpty.value,
+);
+
+const isHeaderSortDisabled = computed(
+  () => isDataListEmpty.value || Boolean(customize.selectMode),
 );
 
 function onToolbarBatchClick() {
@@ -917,7 +934,7 @@ const displayBatchActions = computed(() => {
               :badge="automationButton.badge"
               :show-badge="automationButton.showBadge"
               :show-reddot="automationButton.showReddot"
-              :disabled="skidContentLocked || automationButton.disabled"
+              :disabled="skidContentLocked || automationButton.disabled || isDataListEmpty"
             >
               <EgIcon :name="automationButton.icon" size="sm" />
             </EgIconButtonPro>
@@ -930,7 +947,11 @@ const displayBatchActions = computed(() => {
               :badge="button.item.badge"
               :show-badge="button.item.showBadge"
               :show-reddot="button.item.showReddot"
-              :disabled="skidContentLocked || button.item.disabled"
+              :disabled="
+                skidContentLocked
+                  || button.item.disabled
+                  || (button.key === 'filter' && isDataListEmpty)
+              "
               @click="onToolbarActionClick(button.key)"
             >
               <EgIcon :name="button.item.icon" size="sm" />
@@ -944,7 +965,11 @@ const displayBatchActions = computed(() => {
               :badge="button.item.badge"
               :show-badge="button.item.showBadge"
               :show-reddot="button.item.showReddot"
-              :disabled="skidContentLocked || button.item.disabled"
+              :disabled="
+                skidContentLocked
+                  || button.item.disabled
+                  || (button.key === 'filter' && isDataListEmpty)
+              "
               @click="onToolbarActionClick(button.key)"
             >
               <EgIcon :name="button.item.icon" size="sm" />
@@ -1036,6 +1061,7 @@ const displayBatchActions = computed(() => {
                     </div>
                     <DataListHeaderSortTrigger
                       label="Amount"
+                      :disabled="isHeaderSortDisabled"
                       :active-order="amountSortOrder"
                       @sort-change="onAmountSort"
                     />
@@ -1047,14 +1073,9 @@ const displayBatchActions = computed(() => {
                         :content-class="pageStyles.comboHeaderSegmentText"
                         context="header"
                       >
-                        {{ ui('Created Time') }}
+                        {{ ui('Operation Type') }}
                       </EgDataListCellOverflow>
                     </div>
-                    <DataListHeaderSortTrigger
-                      label="Created Time"
-                      :active-order="createdTimeSortOrder"
-                      @sort-change="onCreatedTimeSort"
-                    />
                   </div>
                 </div>
               </template>
@@ -1068,15 +1089,15 @@ const displayBatchActions = computed(() => {
             </EgDataListColumn>
 
             <EgDataListColumn
-              key="sent-request-operation-type"
+              key="sent-request-created-time"
               :hidden="!isSentRequestMenu"
-              prop="operationType"
-              :label="ui('Operation Type')"
+              prop="createdTime"
+              :label="ui('Created Time')"
               :min-width="createdTimeColumnMinWidth"
               :flex-grow="true"
               align="left"
               :sortable="false"
-              :display-order="2"
+              :display-order="createdTimeColumnDisplayOrder"
             >
               <template #header>
                 <div :class="pageStyles.comboHeaderSegment">
@@ -1085,9 +1106,15 @@ const displayBatchActions = computed(() => {
                       :content-class="pageStyles.comboHeaderSegmentText"
                       context="header"
                     >
-                      {{ ui('Operation Type') }}
+                      {{ ui('Created Time') }}
                     </EgDataListCellOverflow>
                   </div>
+                  <DataListHeaderSortTrigger
+                    label="Created Time"
+                    :disabled="isHeaderSortDisabled"
+                    :active-order="createdTimeSortOrder"
+                    @sort-change="onCreatedTimeSort"
+                  />
                 </div>
               </template>
               <template #default="{ data }">
@@ -1182,6 +1209,7 @@ const displayBatchActions = computed(() => {
                   <DataListHeaderSortTrigger
                     v-if="previewColumnSettings[0].sortable"
                     :label="previewColumnSettings[0].label"
+                    :disabled="isHeaderSortDisabled"
                   />
                 </div>
                 <EgDivider type="navigator" direction="vertical" />
@@ -1197,6 +1225,7 @@ const displayBatchActions = computed(() => {
                   <DataListHeaderSortTrigger
                     v-if="previewColumnSettings[0].secondarySortable"
                     :label="previewColumnSettings[0].secondaryLabel ?? ''"
+                    :disabled="isHeaderSortDisabled"
                     :active-order="createdTimeSortOrder"
                     @sort-change="onCreatedTimeSort"
                   />
@@ -1240,6 +1269,7 @@ const displayBatchActions = computed(() => {
                   </div>
                   <DataListHeaderSortTrigger
                     :label="previewColumnSettings[1].label"
+                    :disabled="isHeaderSortDisabled"
                     :active-order="amountSortOrder"
                     @sort-change="onAmountSort"
                   />
@@ -1257,6 +1287,7 @@ const displayBatchActions = computed(() => {
                   <DataListHeaderSortTrigger
                     v-if="previewColumnSettings[1].secondarySortable"
                     :label="previewColumnSettings[1].secondaryLabel ?? ''"
+                    :disabled="isHeaderSortDisabled"
                     :active-order="createdTimeSortOrder"
                     @sort-change="onCreatedTimeSort"
                   />
@@ -1330,6 +1361,7 @@ const displayBatchActions = computed(() => {
                   <DataListHeaderSortTrigger
                     v-if="businessTypeColumnSecondarySortable"
                     :label="businessTypeColumnSecondaryLabel"
+                    :disabled="isHeaderSortDisabled"
                     :active-order="createdTimeSortOrder"
                     @sort-change="onCreatedTimeSort"
                   />

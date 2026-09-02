@@ -2,6 +2,7 @@ import type { ApprovalProgressMember } from '../approval/types';
 import type {
   DetailApprovalProgressInput,
   DetailApprovalProgressStep,
+  DetailAutomationSignatureRule,
 } from './detailApprovalProgress.types';
 import { parseSigningThreshold } from '../signing/multiSignWaiting.constants';
 import {
@@ -345,6 +346,26 @@ function clearSignatureStep(step: DetailApprovalProgressStep): void {
   step.completed = false;
   step.members = [];
   step.memberPresentation = 'acted-rows';
+  step.automationSignatureRule = undefined;
+}
+
+function resolveAutomationSignatureRuleForStep(
+  detail: DetailApprovalProgressInput,
+  completed: boolean,
+): DetailAutomationSignatureRule | undefined {
+  if (!completed || detail.signingMode !== 'single') return undefined;
+  return detail.automationSignatureRule;
+}
+
+function applyAutomationSignatureRule(
+  step: DetailApprovalProgressStep,
+  detail: DetailApprovalProgressInput,
+): void {
+  // 自动签名标识（Tag + 规则名）仅单签且签名完成后展示；多签不支持。
+  step.automationSignatureRule = resolveAutomationSignatureRuleForStep(
+    detail,
+    step.completed,
+  );
 }
 
 function setSignatureStepPresentation(
@@ -365,6 +386,7 @@ function setSignatureStepPresentation(
   step.completed = options.completed;
   step.members = options.members ?? [];
   step.memberPresentation = 'acted-rows';
+  applyAutomationSignatureRule(step, detail);
 }
 
 function applyAllApprovalNodesPassed(
@@ -642,6 +664,10 @@ export function buildDetailApprovalProgressSteps(
     members: signatureResolved.members,
     memberPresentation: signatureResolved.memberPresentation,
     subtitle: viewMode === 'record' ? options.thresholdSubtitle : undefined,
+    automationSignatureRule: resolveAutomationSignatureRuleForStep(
+      detail,
+      signatureResolved.completed,
+    ),
   });
 
   if (viewMode === 'workflow') {

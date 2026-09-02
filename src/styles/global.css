@@ -93,6 +93,25 @@ body::after {
   -webkit-user-select: text;
 }
 
+.app-popup-overlay-root > .detail-aml-toast-host {
+  position: absolute;
+  top: var(--spacing-6);
+  left: 50%;
+  z-index: 25;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.app-popup-overlay-root > .detail-aml-toast-host.is-active .motion-flotation {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.app-popup-overlay-root > .detail-aml-toast-host:not(.is-active) .motion-flotation {
+  opacity: 0;
+  transform: translateY(var(--spacing-2)) scale(0.98);
+}
+
 /*
  * EgFlotation / AnchoredTooltip 默认 teleport 到 body，不在 .app-preview 内。
  * 与 shell 一致：浮层文本不可选、不可复制（§1.1 禁止复制）。

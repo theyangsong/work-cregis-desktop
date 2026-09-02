@@ -5,6 +5,7 @@ import {
   attachSigningMeta,
   resolvePassedSignersForRow,
   resolvePendingSignersForRow,
+  resolveSigningModeForRow,
   type SignerSeeds,
 } from './resolveSigningRowFields';
 import { buildDetailTransactionOutcomeFields } from './buildDetailTransactionOutcomeItems';
@@ -236,6 +237,20 @@ function buildRecordFields(
   const pendingSigners = resolvePendingSignersForRow(rowIndex, signerSeeds);
   const passedSigners = resolvePassedSignersForRow(rowIndex, signerSeeds);
 
+  const demoAutomationSignatureRule = {
+    name: 'Automation Rule Name',
+    id: 'ID202610105678',
+  } as const;
+
+  function withAutomationSignatureDemo<T extends Record<string, unknown>>(payload: T): T {
+    if (listStatus.label !== 'Signature Passed') return payload;
+    if (resolveSigningModeForRow(rowIndex) !== 'single') return payload;
+    return {
+      ...payload,
+      automationSignatureRule: demoAutomationSignatureRule,
+    };
+  }
+
   function withTransactionOutcome<T extends Record<string, unknown>>(payload: T): T {
     if (listStatus.label !== 'Signature Passed') return payload;
     if (
@@ -246,10 +261,10 @@ function buildRecordFields(
     ) {
       return payload;
     }
-    return {
+    return withAutomationSignatureDemo({
       ...payload,
       ...buildDetailTransactionOutcomeFields(rowIndex),
-    };
+    });
   }
 
   const base = {

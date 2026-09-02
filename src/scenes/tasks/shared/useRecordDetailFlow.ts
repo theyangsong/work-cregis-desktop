@@ -1,4 +1,6 @@
 import { computed, ref, shallowRef, type Ref } from 'vue';
+import { useAppI18n } from '@/composables/useAppI18n';
+import type { AppLocale } from '@/composables/useAppLocale';
 import {
   approvalIdFromRowIndex,
   getApprovalDetail,
@@ -12,6 +14,7 @@ import {
   buildStatusRowValues,
 } from '../list-field/tasksListFieldStatusRowData';
 import {
+  isSentRequestDataListMenu,
   sentRequestRowShowsWithdrawAction,
 } from '../tasksDataListPageData';
 import {
@@ -38,8 +41,13 @@ function resolveDetailKind(menuItem: string | undefined): RecordDetailKind {
   return menuItem === 'Signed' ? 'signing' : 'approval';
 }
 
-function isRecordMenuItem(menuItem: string | undefined): boolean {
-  return menuItem != null && RECORD_MENU_ITEMS.has(menuItem);
+function isRecordMenuItem(
+  menuItem: string | undefined,
+  locale: AppLocale,
+): boolean {
+  if (!menuItem) return false;
+  if (RECORD_MENU_ITEMS.has(menuItem)) return true;
+  return isSentRequestDataListMenu(menuItem, locale);
 }
 
 export function useRecordDetailFlow(options: {
@@ -47,14 +55,19 @@ export function useRecordDetailFlow(options: {
   allRowIndexes: Ref<number[]>;
   onWithdrawRequest?: () => void;
 }) {
+  const { locale } = useAppI18n();
   const detailOpen = ref(false);
+  /** 打开 Detail 时快照菜单 key，避免 Popup host 与列表页同级导致 menu 上下文丢失。 */
+  const detailMenuItem = ref<string | undefined>(undefined);
   const currentId = ref<string | null>(null);
   const recordIds = ref<string[]>([]);
   const viewMoreOpen = ref(false);
   const viewMoreText = ref('');
 
   const detailKind = computed(() => resolveDetailKind(options.menuItem.value));
-  const isEnabled = computed(() => isRecordMenuItem(options.menuItem.value));
+  const isEnabled = computed(() =>
+    isRecordMenuItem(options.menuItem.value, locale.value),
+  );
 
   const approvalDetail = shallowRef<ApprovalDetail | null>(null);
   const signingDetail = shallowRef<SigningDetail | null>(null);
@@ -87,8 +100,16 @@ export function useRecordDetailFlow(options: {
 
   const statusTagLabel = computed(() => listStatus.value.label);
   const statusTagStatus = computed(() => listStatus.value.status as TasksListFieldStatusKind);
+  const activeRecordMenuItem = computed(
+    () => detailMenuItem.value ?? options.menuItem.value,
+  );
+
   const showWithdrawAction = computed(() =>
-    sentRequestRowShowsWithdrawAction(currentRowIndex.value, options.menuItem.value),
+    sentRequestRowShowsWithdrawAction(
+      currentRowIndex.value,
+      activeRecordMenuItem.value,
+      locale.value,
+    ),
   );
 
   function idFromRowIndex(rowIndex: number): string {
@@ -139,11 +160,13 @@ export function useRecordDetailFlow(options: {
   function openDetailForRow(row: DataListRow) {
     if (!isEnabled.value) return;
     syncRecordIds();
+    detailMenuItem.value = options.menuItem.value;
     loadDetail(idFromRowIndex(rowIndexFromRow(row)));
     detailOpen.value = true;
   }
 
   function onDetailPopupClosed() {
+    detailMenuItem.value = undefined;
     currentId.value = null;
     approvalDetail.value = null;
     signingDetail.value = null;
@@ -178,6 +201,8 @@ export function useRecordDetailFlow(options: {
   return {
     detailOpen,
     detailKind,
+    detailMenuItem,
+    menuItem: options.menuItem,
     isEnabled,
     approvalDetail,
     signingDetail,

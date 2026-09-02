@@ -24,6 +24,7 @@ alwaysApply: true
 | UI 文案 i18n | §5 |
 | Token、千分位、顶底毛玻璃、网络名称 | §6 |
 | EgPopup 生命周期、批处理、多签、钱包列、Shell Debug、DataList 批选动效 | §7 |
+| DataList 列 min-width / flex 分配 | §7.7 |
 | lint、PR 清单 | §8 |
 | 文件索引 | §9 |
 
@@ -554,6 +555,46 @@ usePopupShellLifecycle({
 - [ ] Tooltip/overflow 在 settle 后重新测量，无动画中闪烁；
 - [ ] `pnpm --filter @eds/desktop-components typecheck` 与消费 App `pnpm typecheck` 通过。
 
+### 7.7 DataList 列宽与 min-width【定稿】
+
+**适用范围**：所有 `EgDataList` / `EgDataListColumn` 列表（含 Tasks 各模块菜单、我发起的、批处理进度表等）。  
+**DS 真源**：`../eds-desktop/packages/components/src/organisms/data-list/DataList.vue`、`DataList.module.css`、`useResponsiveColumns.ts`。  
+**业务 min-width 绑定**：`tasksDataListPageData.ts`（`DATA_LIST_FIGMA_COLUMNS`、`*_DATA_LIST_COLUMN_MIN_WIDTH`、`resolveTasksDataListPreviewColumnMinWidth`、`syncTasksDataListColumnMinWidths`）→ `TasksDataListPage.vue` 的 `:min-width` / `:flex-grow`。
+
+#### 7.7.1 min-width 语义（硬下限）
+
+**【必须】** `EgDataListColumn` 的 `min-width` 决定该列**至少**能展示多少内容；布局算法与 `<col width>` **不得低于**此值。  
+**【禁止】** 为 flex 列写 CSS `max-width`（含历史 `max-width: 0` 压列 hack）；数据列省略只靠 `overflow: hidden` + `text-overflow: ellipsis` + `<col width>`。  
+**【禁止】** 在 `src/**` 用业务 CSS 覆盖 `<col>` / `th` / `td` 宽度或写 `max-width` 压列。
+
+#### 7.7.2 flex 分配
+
+| 列类型 | 行为 |
+|--------|------|
+| **flex 列**（无固定 `width`、且非「尾列 + flexGrow」） | 先取 `min-width`；容器有余量时在 min 之上**均分** extra |
+| **固定尾列**（如 Action，或显式 `width`） | 不参与 flex 均分，保持 `width` / `min-width` |
+| **Σ flex min > 可用预算** | 各列仍保持 min，**不压窄**；表格 `min-width = Σ列宽 + 勾选列`，`.tableContent` 横向滚动 |
+
+可用预算：`DataList 容器宽 − 尾列固定宽 − DATA_LIST_FLEX_RESERVE_PX（80px）`。
+
+#### 7.7.3 批选与 responsive 隐藏
+
+- **批选**：勾选列独占 `40px`；**已可见数据列宽度与 idle 相同**（不因批选压缩低于 min）。容纳不下的列仍由 `display-order` / `getVisibleColumnSlotIndices` **隐藏**（`<col width>` → `0`），不是把可见列压到 min 以下。
+- **窄屏 / Skid**：优先按 `display-order` 隐藏整列；**禁止**用 `max-width` 或低于 min 的 `<col width>` 硬挤可见列。
+
+#### 7.7.4 业务接入
+
+- **【必须】** 列 min-width 只通过 `EgDataListColumn :min-width`（及模块 helper）传入；Dev Inspect「DataList 适配」仅展示该 **prop 声明值**与是否 `（flex）`，**不展示**运行时 `<col>` 实测宽。
+- **【必须】** 切模块菜单时调用 `syncTasksDataListColumnMinWidths`，保证 Shell Debug / Dev 适配参数与页面 `:min-width` 一致（见 `tasksDataListPageData.ts`）。
+- **【禁止】** 只改 Dev 适配展示或 Inspect 读 DOM 宽度来代替 min-width 契约。
+
+#### 7.7.5 验收
+
+- [ ] Pin Inspect 某数据列：适配行仅为 `min-width: Npx` 或 `min-width: Npx（flex）`，无「实际 col」后缀。
+- [ ] 容器变窄时可见列 `<col width>` ≥ 对应 `min-width`；必要时出现横向滚动，而非列宽低于 min。
+- [ ] 容器变宽时 flex 列同步变宽（min 之上均分 extra）。
+- [ ] 批选入场/离场：可见数据列宽不低于 min；仅勾选列 0↔40px 过渡。
+
 ---
 
 ## 8. 校验与 PR
@@ -571,6 +612,7 @@ usePopupShellLifecycle({
 - [ ] Skid / `useScrollChromeScrim`（§6.3）
 - [ ] 网络 Tag 链全名（§6.4）
 - [ ] DataList 批选列常驻 + CSS `<col>` 过渡，无 rAF 响应式逐帧 / 普通退出 remount（§7.6）
+- [ ] DataList 列宽不低于 `min-width`、无列 `max-width` 压窄、窄容器横滚（§7.7）
 - [ ] dev HMR 已目测（§2.3）
 - [ ] `listFieldCryptoSampleAddresses.ts` 业务扩展仍在
 - [ ] 若本次含 DS 改动：远程 eds-desktop 已含对应提交；CI pin 与该 SHA 一致（§2.5）
@@ -590,6 +632,7 @@ usePopupShellLifecycle({
 | i18n 运行时 | `src/i18n/translateUiText.ts` |
 | 批处理 | `src/scenes/tasks/signing/batch/useSigningBatchFlow.ts` |
 | DataList 批选宽度动效 | `../eds-desktop/packages/components/src/organisms/data-list/DataList.vue`、`DataList.module.css` |
+| DataList 列 min-width / flex | §7.7；`DataList.vue`、`tasksDataListPageData.ts` |
 | DataList 动效 EDS 交接包 | `docs/eds-data-list-selection-layout-motion-handoff.md` |
 | list-field 校验 | `scripts/verify-list-field-crypto.mjs` |
 | Shell Debug | `src/dev/shell-debug/AGENTS.md` |
@@ -601,12 +644,13 @@ usePopupShellLifecycle({
 
 | 字段 | 值 |
 |------|-----|
-| 文档版本 | 2.3 |
+| 文档版本 | 2.4 |
 | 合并 `i18n.mdc` + `top&botton-mask.mdc` + 历史分散规则 → 单文件 | 2026-08-18 |
 | 增补 §2.5 Git 推送 / Pages pin | 2026-08-19 |
 | 增补 §2.5 4173/4174 双端口 parity（发包前一致） | 2026-08-21 |
 | 增补文首 Agent 工作思路（先思考再动手） | 2026-08-21 |
 | 增补 §7.6 DataList 批选宽度 / 出入场动效定稿 | 2026-09-01 |
+| 增补 §7.7 DataList 列 min-width / flex 分配 | 2026-09-02 |
 | 维护 | EDS Desktop 维护者 |
 
 **本规范为业务项目强制约束。违反项须在 PR 修正或取得维护者书面例外。**

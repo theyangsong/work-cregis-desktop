@@ -18,14 +18,17 @@ import { resolveDetailHeadlineStatus } from '../shared/resolveDetailHeadlineStat
 import { usePopupShellLifecycle } from '../shared/usePopupShellLifecycle';
 import { useDetailToolbarPageMotion } from '../shared/useDetailToolbarPageMotion';
 import { buildApprovalDetailSections } from './buildApprovalDetailSections';
+import { parseRowIndexFromApprovalId } from './approvalStore';
 import type { ApprovalDetail } from './types';
 import DetailHeadlineGroupPortal from '../shared/DetailHeadlineGroupPortal.vue';
 import detailChromeStyles from '../shared/detailPopupChrome.module.css';
 import DetailToolbarSlot from '../shared/DetailToolbarSlot.vue';
 import DetailToolbarRemarkTrigger from '../shared/DetailToolbarRemarkTrigger.vue';
 import ExpiryCountdown from '../shared/ExpiryCountdown.vue';
-import ApprovalRemarkPopover from './ApprovalRemarkPopover.vue';
-import remarkTriggerStyles from '../shared/remarkPopoverTrigger.module.css';
+import { useDetailAmlSearchFlow } from '../shared/useDetailAmlSearchFlow';
+import { applyDetailAmlSearchSectionOverlay } from '../shared/applyDetailAmlSearchSectionOverlay';
+import DetailAmlSearchToastHost from '../shared/DetailAmlSearchToastHost.vue';
+import { sentRequestDetailShowsWithdrawToolbar } from '../tasksDataListPageData';
 
 const props = withDefaults(
   defineProps<{
@@ -39,6 +42,7 @@ const props = withDefaults(
   readOnly?: boolean;
   listStatusLabel?: string;
   listStatusKind?: TagStatus;
+  recordMenuItem?: string;
   showWithdrawAction?: boolean;
   onRemarkBeforeOpen?: () => void | Promise<void>;
   }>(),
@@ -90,6 +94,18 @@ const signingThresholdDisplay = computed(() =>
 const detailHostRef = ref<HTMLElement | null>(null);
 const expandedAddressKeys = ref(new Set<string>());
 
+const {
+  amlSearchActiveItemKey,
+  amlSearchResultsByKey,
+  amlToastText,
+  amlToastKeepMounted,
+  amlToastMotionActive,
+  onItemValueAmlSearchClick,
+} = useDetailAmlSearchFlow({
+  detailId: computed(() => props.detail?.id),
+  ui,
+});
+
 watch(
   () => props.detail?.id,
   () => {
@@ -102,7 +118,11 @@ const sections = computed(() => {
   const base = props.detail
     ? buildApprovalDetailSections(props.detail, ui, locale.value)
     : [];
-  return applyDetailAddressExpand(base, expandedAddressKeys.value);
+  const expanded = applyDetailAddressExpand(base, expandedAddressKeys.value);
+  return applyDetailAmlSearchSectionOverlay(expanded, {
+    resultsByKey: amlSearchResultsByKey.value,
+    translate: ui,
+  });
 });
 const progressSteps = computed(() => {
   if (!props.detail) return [];
@@ -130,8 +150,25 @@ const headlineStatus = computed(() => {
 const showStatusTag = computed(() => headlineStatus.value != null);
 const statusTag = computed(() => headlineStatus.value?.label ?? '');
 const statusTagStatus = computed(() => headlineStatus.value?.status ?? 'ready');
+
+const resolvedShowWithdrawAction = computed(() => {
+  if (!props.readOnly) return props.showWithdrawAction;
+  if (props.showWithdrawAction) return true;
+
+  const rowIndex = props.detail?.id
+    ? parseRowIndexFromApprovalId(props.detail.id)
+    : undefined;
+
+  return sentRequestDetailShowsWithdrawToolbar({
+    menuItem: props.recordMenuItem,
+    listStatusLabel: props.listStatusLabel,
+    rowIndex,
+    locale: locale.value,
+  });
+});
+
 const showDetailToolbar = computed(
-  () => !props.readOnly || props.showWithdrawAction,
+  () => !props.readOnly || resolvedShowWithdrawAction.value,
 );
 
 function onItemValueLinkClick(key: string) {
@@ -163,15 +200,8 @@ async function onPassClick() {
   }
 }
 
-const withdrawRemark = ref('');
-
-function onWithdrawDismiss() {
-  withdrawRemark.value = '';
-}
-
-function onWithdrawConfirm() {
+function onWithdrawClick() {
   emit('withdrawRequest');
-  withdrawRemark.value = '';
 }
 
 function onDetailClose() {
@@ -205,45 +235,27 @@ function onDetailClose() {
       :value-address-book-label="ui('Add to address book')"
       :value-aml-search-label="ui('AML Search')"
       :value-browser-label="ui('Block explorer')"
+      :aml-search-active-item-key="amlSearchActiveItemKey"
       toolbar-tone="decor"
       @close="onDetailClose"
       @item-value-link-click="onItemValueLinkClick"
+      @item-value-aml-search-click="onItemValueAmlSearchClick"
     >
       <template v-if="showDetailToolbar" #toolbar>
         <DetailToolbarSlot :show-toolbar-nav="false" toolbar-divider-pinned>
-          <template v-if="!readOnly && !showWithdrawAction" #leading>
+          <template v-if="resolvedShowWithdrawAction || !readOnly" #leading>
             <DetailToolbarRemarkTrigger :page-key="detail?.id" />
           </template>
           <template #actions>
-            <template v-if="showWithdrawAction">
-              <ApprovalRemarkPopover
-                boundary-selector=".eds-popup"
-                :title="ui('Remark')"
-                :remark="withdrawRemark"
-                @update:remark="withdrawRemark = $event"
-                @confirm="onWithdrawConfirm"
-                @dismiss="onWithdrawDismiss"
-              >
-                <template #trigger="{ active, onClick }">
-                  <span
-                    :class="[
-                      remarkTriggerStyles.remarkTrigger,
-                      active && remarkTriggerStyles.remarkTriggerWithdrawPressed,
-                    ]"
-                  >
-                    <EgButton
-                      tone="danger"
-                      variant="solid"
-                      size="md"
-                      :aria-expanded="active"
-                      @click.stop="onClick"
-                    >
-                      {{ ui('Withdraw Application') }}
-                    </EgButton>
-                  </span>
-                </template>
-              </ApprovalRemarkPopover>
-            </template>
+            <EgButton
+              v-if="resolvedShowWithdrawAction"
+              tone="danger"
+              variant="solid"
+              size="md"
+              @click="onWithdrawClick"
+            >
+              {{ ui('Withdraw Application') }}
+            </EgButton>
             <template v-else-if="!readOnly">
               <EgButton
                 tone="danger"
@@ -290,6 +302,11 @@ function onDetailClose() {
       :host-ref="detailHostRef"
       :business-type-key="detail.businessType"
       :page-key="detail.id"
+    />
+    <DetailAmlSearchToastHost
+      :keep-mounted="amlToastKeepMounted"
+      :motion-active="amlToastMotionActive"
+      :text="amlToastText"
     />
     </div>
   </EgPopup>

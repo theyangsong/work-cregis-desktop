@@ -283,7 +283,7 @@ export function tasksDataListShowsActionColumn(menuItem: string | undefined): bo
 export const SENT_REQUEST_WITHDRAW_ACTION_LABEL = 'Withdraw Application';
 
 /** 我发起的 · 「待审批」「待签名」行展示撤回申请。 */
-const SENT_REQUEST_WITHDRAWABLE_STATUS_LABELS = new Set([
+export const SENT_REQUEST_WITHDRAWABLE_STATUS_LABELS = new Set([
   'Pending Approval',
   'Waiting for signature',
 ]);
@@ -291,13 +291,41 @@ const SENT_REQUEST_WITHDRAWABLE_STATUS_LABELS = new Set([
 export function sentRequestRowShowsWithdrawAction(
   rowIndex: number,
   menuItem?: string,
+  locale: AppLocale = 'en',
 ): boolean {
-  if (!isSentRequestDataListMenu(menuItem)) {
+  if (!isSentRequestDataListMenu(menuItem, locale)) {
     return false;
   }
   return SENT_REQUEST_WITHDRAWABLE_STATUS_LABELS.has(
     buildStatusRowValues(rowIndex, menuItem).label,
   );
+}
+
+/** 我发起的 Detail 底部是否展示撤回（menu + 列表行 status label / rowIndex）。 */
+export function sentRequestDetailShowsWithdrawToolbar(options: {
+  menuItem?: string;
+  listStatusLabel?: string;
+  rowIndex?: number;
+  locale?: AppLocale;
+}): boolean {
+  const locale = options.locale ?? 'en';
+  if (!isSentRequestDataListMenu(options.menuItem, locale)) {
+    return false;
+  }
+  if (
+    options.listStatusLabel
+    && SENT_REQUEST_WITHDRAWABLE_STATUS_LABELS.has(options.listStatusLabel)
+  ) {
+    return true;
+  }
+  if (options.rowIndex !== undefined) {
+    return sentRequestRowShowsWithdrawAction(
+      options.rowIndex,
+      options.menuItem,
+      locale,
+    );
+  }
+  return false;
 }
 
 /** 待办类菜单保留 Batch；已办 / 记录类不展示。 */
@@ -313,13 +341,13 @@ export function tasksDataListShowsAutomation(menuItem: string | undefined): bool
 /** Sent Request 金额列 min-width。 */
 export const SENT_REQUEST_AMOUNT_DATA_LIST_COLUMN_MIN_WIDTH = '200px';
 
-/** Sent Request 操作类型列 min-width（空间不足时优先隐藏/缩窄）。 */
-export const SENT_REQUEST_OPERATION_TYPE_DATA_LIST_COLUMN_MIN_WIDTH =
+/** Sent Request 申请时间列 min-width（第二列；空间不足时优先隐藏/缩窄）。 */
+export const SENT_REQUEST_CREATED_TIME_DATA_LIST_COLUMN_MIN_WIDTH =
   GENERAL_STRUCTURE_DATA_LIST_COLUMN_MIN_WIDTH;
 
-/** @deprecated 别名；Sent Request 第二列已改为操作类型。 */
-export const SENT_REQUEST_CREATED_TIME_DATA_LIST_COLUMN_MIN_WIDTH =
-  SENT_REQUEST_OPERATION_TYPE_DATA_LIST_COLUMN_MIN_WIDTH;
+/** @deprecated 别名；Sent Request 业务类型已合并至金额组合列副行。 */
+export const SENT_REQUEST_OPERATION_TYPE_DATA_LIST_COLUMN_MIN_WIDTH =
+  SENT_REQUEST_CREATED_TIME_DATA_LIST_COLUMN_MIN_WIDTH;
 
 /** @deprecated 别名；Sent Request 操作类型列不再固定 width。 */
 export const SENT_REQUEST_CREATED_TIME_DATA_LIST_COLUMN_WIDTH =
@@ -390,7 +418,7 @@ export function tasksDataListReceiverColumnMinWidth(
 export function tasksDataListCreatedTimeColumnMinWidth(
   menuItem: string | undefined,
 ): string | undefined {
-  if (isSentRequestDataListMenu(menuItem)) return SENT_REQUEST_OPERATION_TYPE_DATA_LIST_COLUMN_MIN_WIDTH;
+  if (isSentRequestDataListMenu(menuItem)) return SENT_REQUEST_CREATED_TIME_DATA_LIST_COLUMN_MIN_WIDTH;
   return undefined;
 }
 
@@ -453,7 +481,7 @@ export function tasksDataListActionColumnDisplayOrder(
   return undefined;
 }
 
-/** Sent Request 第二列：业务类型（独立列，位于金额之后、接收方之前）。 */
+/** Sent Request 第二列：申请时间（独立列；业务类型在金额组合列副行）。 */
 export function tasksDataListShowsCreatedTimeColumn(menuItem: string | undefined): boolean {
   return isSentRequestDataListMenu(menuItem);
 }
@@ -477,7 +505,7 @@ export function tasksDataListBusinessTypeColumnSecondarySortable(
   return false;
 }
 
-/** Sent Request 第 1–4 列（金额 / 业务类型 / 接收方 / 发送方）无固定 width，均分剩余空间。 */
+/** Sent Request 第 1–4 列（金额｜业务类型 / 申请时间 / 接收方 / 发送方）无固定 width，均分剩余空间。 */
 export function tasksDataListAmountColumnFlexGrow(menuItem: string | undefined): boolean {
   return isSentRequestDataListMenu(menuItem);
 }
@@ -603,6 +631,79 @@ export function resolveDataListColumnMinWidthFromDataSource(
   return defaultDataListColumnMinWidthForSource(dataSource);
 }
 
+/** 按模块菜单解析 preview 列 min-width，与 EgDataListColumn 绑定值一致。 */
+export function resolveTasksDataListPreviewColumnMinWidth(
+  dataSource: DataListColumnDataSource,
+  menuItem: string | undefined,
+  storedMinWidth = '',
+): string {
+  const fallback = storedMinWidth.trim() || defaultDataListColumnMinWidthForSource(dataSource);
+
+  if (dataSource === 'general-structure') {
+    return tasksDataListGeneralStructureColumnMinWidth(menuItem);
+  }
+  if (dataSource === 'amount') {
+    return tasksDataListAmountColumnMinWidth(menuItem);
+  }
+  if (dataSource === 'receiver') {
+    return tasksDataListReceiverColumnMinWidth(menuItem, fallback);
+  }
+  if (dataSource === 'business-type') {
+    return tasksDataListBusinessTypeColumnMinWidth(menuItem, fallback);
+  }
+  if (dataSource === 'status') {
+    return tasksDataListStatusColumnMinWidth(menuItem);
+  }
+  if (dataSource === 'operation-type') {
+    return tasksDataListCreatedTimeColumnMinWidth(menuItem) ?? fallback;
+  }
+  if (dataSource === 'action') {
+    return ACTION_DATA_LIST_COLUMN_MIN_WIDTH;
+  }
+
+  return fallback;
+}
+
+/** 切换模块时同步 customize.columnMinWidth*，避免 dev 分配参数与 EgDataListColumn 实际 prop 不一致。 */
+export function syncTasksDataListColumnMinWidths(
+  state: Record<string, unknown>,
+  menuItem: string | undefined,
+  locale: AppLocale = 'en',
+): void {
+  if (isSentRequestDataListMenu(menuItem, locale)) {
+    syncSentRequestDataListColumnSettings(state);
+    return;
+  }
+
+  for (let index = 1; index <= DATA_LIST_PREVIEW_COLUMN_COUNT; index += 1) {
+    const dataSourceRaw = String(state[`columnDataSource${index}`] ?? defaultDataListColumnDataSource(index));
+    const dataSource: DataListColumnDataSource =
+      dataSourceRaw === 'currency'
+        ? 'currency'
+        : dataSourceRaw === 'general-structure'
+          ? 'general-structure'
+          : dataSourceRaw === 'operation-type'
+            ? 'operation-type'
+            : dataSourceRaw === 'business-type'
+              ? 'business-type'
+              : dataSourceRaw === 'status'
+                ? 'status'
+                : dataSourceRaw === 'amount'
+                  ? 'amount'
+                  : dataSourceRaw === 'receiver'
+                    ? 'receiver'
+                    : dataSourceRaw === 'action'
+                      ? 'action'
+                      : 'placeholder';
+
+    state[`columnMinWidth${index}`] = resolveTasksDataListPreviewColumnMinWidth(
+      dataSource,
+      menuItem,
+      String(state[`columnMinWidth${index}`] ?? ''),
+    );
+  }
+}
+
 function defaultDataListColumnMinWidth(index: number): string {
   return defaultDataListColumnMinWidthForSource(defaultDataListColumnDataSource(index));
 }
@@ -660,7 +761,7 @@ function swapDataListColumnSettings(
   }
 }
 
-/** 我发起的：强制 preview 列 2–4 为金额 / 接收方 / 发送方（业务类型、审批进度为独立列）。 */
+/** 我发起的：强制 preview 列 2–4 为金额 / 接收方 / 发送方（申请时间、审批进度为独立列）。 */
 export function syncSentRequestDataListColumnSettings(state: Record<string, unknown>): void {
   for (let index = 2; index <= 4; index += 1) {
     const expectedSource = defaultDataListColumnDataSource(index);
@@ -715,6 +816,14 @@ export function migrateDataListColumnSettings(state: Record<string, unknown>): b
 
   const secondaryLabel1 = String(state.columnSecondaryLabel1 ?? '');
   const secondaryLabel2 = String(state.columnSecondaryLabel2 ?? '');
+  if (secondaryLabel1 === 'Created Time' && secondaryLabel2 === 'Operation Type') {
+    state.columnSecondaryLabel1 = 'Operation Type';
+    state.columnSecondaryLabel2 = 'Created Time';
+    state.columnSecondarySortable1 = false;
+    state.columnSecondarySortable2 = true;
+    return true;
+  }
+
   if (secondaryLabel1 === 'Created Time' && secondaryLabel2 === 'Type of Business') {
     state.columnSecondaryLabel1 = 'Operation Type';
     state.columnSecondaryLabel2 = 'Created Time';
@@ -811,14 +920,11 @@ export type TasksDataListCustomizeState = typeof tasksDataListCustomizeDefaults;
 
 export function readDataListColumnSettings(
   state: Record<string, unknown>,
+  menuItem?: string,
 ): DataListPreviewColumnSetting[] {
   return Array.from({ length: DATA_LIST_PREVIEW_COLUMN_COUNT }, (_, offset) => {
     const index = offset + 1;
-    const minWidthRaw = String(state[`columnMinWidth${index}`] ?? defaultDataListColumnMinWidth(index)).trim();
-    const alignRaw = String(state[`columnAlign${index}`] ?? defaultDataListColumnAlign(index));
-    const align: DataListColumnAlign =
-      alignRaw === 'left' || alignRaw === 'right' ? alignRaw : 'center';
-    const dataSourceRaw = String(state[`columnDataSource${index}`] ?? 'placeholder');
+    const dataSourceRaw = String(state[`columnDataSource${index}`] ?? defaultDataListColumnDataSource(index));
     const dataSource: DataListColumnDataSource =
       dataSourceRaw === 'currency'
         ? 'currency'
@@ -837,6 +943,14 @@ export function readDataListColumnSettings(
                     : dataSourceRaw === 'action'
                       ? 'action'
                       : 'placeholder';
+    const minWidthRaw = resolveTasksDataListPreviewColumnMinWidth(
+      dataSource,
+      menuItem,
+      String(state[`columnMinWidth${index}`] ?? defaultDataListColumnMinWidth(index)).trim(),
+    ).trim();
+    const alignRaw = String(state[`columnAlign${index}`] ?? defaultDataListColumnAlign(index));
+    const align: DataListColumnAlign =
+      alignRaw === 'left' || alignRaw === 'right' ? alignRaw : 'center';
     const labelRaw = String(
       state[`columnLabel${index}`] ?? defaultDataListColumnLabelForSource(dataSource),
     ).trim();

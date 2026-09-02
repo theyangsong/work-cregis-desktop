@@ -1,6 +1,12 @@
 import { buildAmountRowValues } from './tasksListFieldAmountRowData';
+import { buildTransferTypeRowValues } from './tasksListFieldBusinessTypeRowData';
 import { resolveCurrencyRowPreset } from './tasksListFieldCurrencyRowData';
-import { buildListApplicationTimeSecondaryValue } from './tasksListFieldGeneralStructureDefaults';
+import { buildBusinessTypeSecondaryLabel } from './businessTypeDisplay';
+import {
+  buildListApplicationTimeSecondaryValue,
+  shouldShowListBusinessTypeCountdown,
+} from './tasksListFieldGeneralStructureDefaults';
+import { isSentRequestDataListMenu } from '../tasksDataListPageData';
 
 /** Showcase list-field-amount customizeDefaults — Data List 金额列。 */
 export const tasksListFieldAmountDefaults: Record<string, unknown> = {
@@ -40,8 +46,25 @@ export function buildTasksListFieldAmountCustomize(
     customize.fiatValue = rowAmount.fiatValue;
     customize.showNetwork = currencyPreset.showNetwork;
     customize.networkLabel = currencyPreset.networkLabel ?? '';
-    customize.secondaryValue = buildListApplicationTimeSecondaryValue(rowIndex);
     customize.showCountdown = false;
+
+    if (isSentRequestDataListMenu(menuItem)) {
+      customize.secondaryValue = buildBusinessTypeSecondaryLabel(rowIndex);
+      const transferType = buildTransferTypeRowValues(rowIndex);
+      if (
+        transferType.showCountdown
+        && shouldShowListBusinessTypeCountdown(rowIndex, menuItem)
+      ) {
+        customize.showCountdown = true;
+        customize.countdownHours = transferType.countdownHours;
+        customize.countdownMinutes = transferType.countdownMinutes;
+        customize.countdownSeconds = transferType.countdownSeconds;
+        customize.countdownAlign = transferType.countdownAlign ?? 'left';
+        customize.countdownSuffixKey = 'Expires in xx:xx';
+      }
+    } else {
+      customize.secondaryValue = buildListApplicationTimeSecondaryValue(rowIndex);
+    }
   }
   return customize;
 }

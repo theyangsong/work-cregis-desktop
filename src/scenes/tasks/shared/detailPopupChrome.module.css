@@ -1,4 +1,5 @@
 .detailHost {
+  position: relative;
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -14,44 +15,19 @@
   line-height: var(--eds-body-small-line-height);
 }
 
-.detailHeadlineGroup {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  align-self: stretch;
-  gap: var(--spacing-1-5);
-  width: 100%;
-  min-width: 0;
-  margin-bottom: var(--spacing-4);
-  box-sizing: border-box;
-}
-
-.detailHeadlineTitleGroup {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  align-self: stretch;
-  gap: var(--spacing-1);
-  width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-}
-
-.detailHeadlineGroup :global([class*='headlineRow']) {
-  align-self: stretch;
-  padding-bottom: 0;
-}
-
-.detailHeadlineGroup :global([data-detail-headline-eyebrow]) {
+/** EgDetail headlineMain 内 eyebrow 插槽：对齐 DS `.eyebrow` 排版，不额外包一层 group。 */
+.detailHeadlineEyebrowHost {
   display: block;
   min-width: 0;
   max-width: 100%;
 }
 
-.detailHeadlineGroup :global([data-detail-headline-quota-streamer]) {
+.detailHeadlineQuotaStreamerHost {
   display: block;
+  align-self: stretch;
   width: 100%;
   min-width: 0;
+  box-sizing: border-box;
 }
 
 .detailHeadlineQuotaStreamer {
@@ -78,6 +54,7 @@
   font-size: var(--eds-body-small-strong-size);
   font-weight: var(--eds-body-small-strong-weight);
   line-height: var(--eds-body-small-strong-line-height);
+  text-align: left;
 }
 
 .detailEyebrowDivider {

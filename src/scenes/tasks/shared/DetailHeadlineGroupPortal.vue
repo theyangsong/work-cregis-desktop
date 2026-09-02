@@ -21,23 +21,14 @@ const props = withDefaults(
 const { ui } = useAppI18n();
 const eyebrowAnchor = ref<HTMLElement | null>(null);
 const streamerAnchor = ref<HTMLElement | null>(null);
-const groupAnchor = ref<HTMLElement | null>(null);
 
 const quotaNoticeText = computed(() => buildWithdrawalQuotaNoticeText(ui));
 
 function unmountStructure() {
-  const group = groupAnchor.value;
-  const headlineRow = group?.querySelector('[class*="headlineRow"]');
-  const headline = group?.closest('header[class*="headline"]');
-
-  if (group instanceof HTMLElement && headline instanceof HTMLElement && headlineRow instanceof HTMLElement) {
-    headline.insertBefore(headlineRow, group);
-    group.remove();
-  }
-
+  eyebrowAnchor.value?.remove();
+  streamerAnchor.value?.remove();
   eyebrowAnchor.value = null;
   streamerAnchor.value = null;
-  groupAnchor.value = null;
 }
 
 function mountStructure() {
@@ -47,46 +38,46 @@ function mountStructure() {
   if (!host) return;
 
   const headline = host.querySelector('header[class*="headline"]');
+  const headlineMain = headline?.querySelector('[class*="headlineMain"]');
   const headlineRow = headline?.querySelector('[class*="headlineRow"]');
   if (!(headline instanceof HTMLElement) || !(headlineRow instanceof HTMLElement)) return;
 
-  const group = document.createElement('div');
-  group.setAttribute('data-detail-headline-group', '');
-  group.className = styles.detailHeadlineGroup;
-
-  const titleGroup = document.createElement('div');
-  titleGroup.setAttribute('data-detail-headline-title-group', '');
-  titleGroup.className = styles.detailHeadlineTitleGroup;
+  const mountParent =
+    headlineMain instanceof HTMLElement ? headlineMain : headline;
 
   const eyebrowEl = document.createElement('div');
   eyebrowEl.setAttribute('data-detail-headline-eyebrow', '');
+  eyebrowEl.className = styles.detailHeadlineEyebrowHost;
+  mountParent.insertBefore(eyebrowEl, headlineRow);
+  eyebrowAnchor.value = eyebrowEl;
 
-  const streamerEl = document.createElement('div');
-  streamerEl.setAttribute('data-detail-headline-quota-streamer', '');
-
-  headline.insertBefore(group, headlineRow);
-  group.appendChild(titleGroup);
-  titleGroup.appendChild(eyebrowEl);
-  titleGroup.appendChild(headlineRow);
   if (props.showQuotaStreamer) {
-    group.appendChild(streamerEl);
+    const headlineDivider = headline.querySelector('[class*="headlineDivider"]');
+    const streamerEl = document.createElement('div');
+    streamerEl.setAttribute('data-detail-headline-quota-streamer', '');
+    streamerEl.className = styles.detailHeadlineQuotaStreamerHost;
+    if (headlineDivider instanceof HTMLElement) {
+      headline.insertBefore(streamerEl, headlineDivider);
+    } else {
+      headline.appendChild(streamerEl);
+    }
     streamerAnchor.value = streamerEl;
   }
+}
 
-  groupAnchor.value = group;
-  eyebrowAnchor.value = eyebrowEl;
+function scheduleMount() {
+  void nextTick(() => {
+    mountStructure();
+    requestAnimationFrame(mountStructure);
+  });
 }
 
 watch(
   () => [props.hostRef, props.pageKey, props.businessTypeKey, props.showQuotaStreamer] as const,
-  () => {
-    void nextTick(mountStructure);
-  },
+  scheduleMount,
 );
 
-onMounted(() => {
-  void nextTick(mountStructure);
-});
+onMounted(scheduleMount);
 
 onBeforeUnmount(unmountStructure);
 </script>

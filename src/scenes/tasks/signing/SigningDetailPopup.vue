@@ -18,7 +18,7 @@ import { resolveDetailHeadlineStatus } from '../shared/resolveDetailHeadlineStat
 import { usePopupShellLifecycle } from '../shared/usePopupShellLifecycle';
 import { useDetailToolbarPageMotion } from '../shared/useDetailToolbarPageMotion';
 import { buildSigningDetailSections } from './buildSigningDetailSections';
-import { addressEntriesIncludeBlacklist } from '../shared/hasBlacklistAddressTags';
+import { addressEntriesIncludeAddressRisk } from '../shared/hasBlacklistAddressTags';
 import {
   resolveMinerFeeProfileFromDetail,
 } from '../shared/minerFeeProfile';
@@ -32,6 +32,9 @@ import DetailToolbarRemarkTrigger from '../shared/DetailToolbarRemarkTrigger.vue
 import ExpiryCountdown from '../shared/ExpiryCountdown.vue';
 import ApprovalRemarkPopover from '../approval/ApprovalRemarkPopover.vue';
 import remarkTriggerStyles from '../shared/remarkPopoverTrigger.module.css';
+import { useDetailAmlSearchFlow } from '../shared/useDetailAmlSearchFlow';
+import { applyDetailAmlSearchSectionOverlay } from '../shared/applyDetailAmlSearchSectionOverlay';
+import DetailAmlSearchToastHost from '../shared/DetailAmlSearchToastHost.vue';
 
 const props = withDefaults(
   defineProps<{
@@ -92,11 +95,23 @@ const signingThresholdDisplay = computed(() =>
 const isMultiSign = computed(() => isMultiSignSigningDetail(props.detail));
 const showDetailToolbar = computed(() => !props.readOnly);
 const signingBlockedByBlacklist = computed(() =>
-  props.detail ? addressEntriesIncludeBlacklist(props.detail.receivers, ui) : false,
+  props.detail ? addressEntriesIncludeAddressRisk(props.detail.receivers, ui) : false,
 );
 
 const detailHostRef = ref<HTMLElement | null>(null);
 const expandedAddressKeys = ref(new Set<string>());
+
+const {
+  amlSearchActiveItemKey,
+  amlSearchResultsByKey,
+  amlToastText,
+  amlToastKeepMounted,
+  amlToastMotionActive,
+  onItemValueAmlSearchClick,
+} = useDetailAmlSearchFlow({
+  detailId: computed(() => props.detail?.id),
+  ui,
+});
 
 watch(
   () => props.detail?.id,
@@ -110,7 +125,11 @@ const sections = computed(() => {
   const base = props.detail
     ? buildSigningDetailSections(props.detail, ui, locale.value)
     : [];
-  return applyDetailAddressExpand(base, expandedAddressKeys.value);
+  const expanded = applyDetailAddressExpand(base, expandedAddressKeys.value);
+  return applyDetailAmlSearchSectionOverlay(expanded, {
+    resultsByKey: amlSearchResultsByKey.value,
+    translate: ui,
+  });
 });
 const progressSteps = computed(() => {
   if (!props.detail) return [];
@@ -221,9 +240,11 @@ function onDetailClose() {
       :value-address-book-label="ui('Add to address book')"
       :value-aml-search-label="ui('AML Search')"
       :value-browser-label="ui('Block explorer')"
+      :aml-search-active-item-key="amlSearchActiveItemKey"
       toolbar-tone="decor"
       @close="onDetailClose"
       @item-value-link-click="onItemValueLinkClick"
+      @item-value-aml-search-click="onItemValueAmlSearchClick"
     >
       <template v-if="showDetailToolbar" #toolbar>
         <DetailToolbarSlot :show-toolbar-nav="false" toolbar-divider-pinned>
@@ -330,6 +351,11 @@ function onDetailClose() {
       :business-type-key="detail.businessType"
       :page-key="detail.id"
       :show-quota-streamer="!readOnly"
+    />
+    <DetailAmlSearchToastHost
+      :keep-mounted="amlToastKeepMounted"
+      :motion-active="amlToastMotionActive"
+      :text="amlToastText"
     />
     </div>
   </EgPopup>

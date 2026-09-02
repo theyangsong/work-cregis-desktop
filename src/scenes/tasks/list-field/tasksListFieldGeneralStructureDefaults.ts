@@ -12,7 +12,7 @@ const COUNTDOWN_SUPPRESSED_STATUS_LABELS = new Set([
   'Signature Reject',
 ]);
 
-function shouldShowListBusinessTypeCountdown(rowIndex: number, menuItem?: string): boolean {
+export function shouldShowListBusinessTypeCountdown(rowIndex: number, menuItem?: string): boolean {
   const status = buildStatusRowValues(rowIndex, menuItem);
   return !COUNTDOWN_SUPPRESSED_STATUS_LABELS.has(status.label);
 }

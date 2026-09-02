@@ -156,6 +156,7 @@ DS 组件识别用 dev 下 plugin-vue 注入的 `__file`（含 `eds-desktop/pack
 - 位于 `.app-preview` 右侧；Popover `320×360–530` adaptive；`teleport-to="body"`。
 - Dev / QA 各自独立 Popover；QA 不受 Dev Inspect 拦截影响（`data-shell-debug-ui` 排除）。
 - **Dev 进入点选时保留业务浮层**：Dev 启动器使用 `EgAnchoredTooltip` + `openPanel()`（绕过 `EgAnchoredPopover` 的 `closeAllAnchoredTooltips`）；`installShellDebugFloatLayerGuard` 使点击壳层 UI 不触发业务 click Popover 的外部关闭。
+- **Dev 进入时关闭其它壳层 Popover**：点击 Dev 进入点选须 `closeShellDebugLauncherPopovers()`（Model / Wnd / QA 的 `EgAnchoredPopover`）；**不**调用 `closeAllAnchoredTooltips`，业务浮层保持打开。
 
 **Catalog 覆盖**：`node scripts/verify-shell-debug-inspect-catalog.mjs` 对照 `../eds-desktop` 组件根 `eds-*` 与 `edsInspectCatalog.ts`；缺条目时补 catalog，勿再开 CSS Module 借名后门。
 

@@ -48,42 +48,46 @@
 
 /*
  * EgTextOverflowTooltip measureRef 叠加 DS _measure_*（nowrap + ellipsis）。
- * 须用更高 specificity 覆盖：地址收缩省略，Tag 独立 truncate。
+ * 地址单独作为 Flotation trigger；Tag 在 walletMetaRow 内与之并列。
  */
 .walletAliasHost .walletMetaMeasureHost {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-1);
-  width: 100%;
+  display: inline-block;
   max-width: 100%;
   min-width: 0;
   overflow: hidden;
-  white-space: normal;
+  white-space: nowrap;
   text-overflow: unset;
   vertical-align: top;
 }
 
-.walletAliasHost .walletMetaMeasureHost .walletMetaAddress {
-  flex: 0 0 auto;
-  flex-shrink: 0;
-  overflow: visible;
-  white-space: nowrap;
-}
-
-.walletAliasHost .walletMetaMeasureHost .walletMetaTags {
-  flex: 0 1 auto;
-  min-width: 0;
-  overflow: hidden;
-}
-
 .walletAliasHost .walletMetaMeasureHostAlignEnd {
-  justify-content: flex-end;
+  margin-left: auto;
 }
 
 .walletAliasHost .walletMetaRow :global(.eds-hover-tooltip-trigger__target--secondary) {
   overflow: visible;
   white-space: nowrap;
   text-overflow: unset;
+}
+
+/** Flotation trigger 仅包裹地址；不收缩，避免 Tag 挤占前8后6 地址宽度。 */
+.walletAliasHost .walletMetaRow .addressTooltipHost {
+  flex: 0 0 auto;
+  width: auto;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.walletAliasHost .walletMetaRow .addressTooltipHost :global(.eds-hover-tooltip-trigger) {
+  display: inline-flex;
+  width: auto;
+  max-width: 100%;
+}
+
+.walletAliasHost .walletMetaRow .addressTooltipHost :global(.eds-hover-tooltip-trigger > span) {
+  width: auto;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .tooltipTriggerBody {
@@ -157,7 +161,34 @@
 
 .walletAliasHost .aliasPrimaryRow {
   display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.walletPrimaryText {
+  display: flex;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.walletPrimaryText > :global(span) {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.walletPrimaryText :global(.hostFlex) {
+  width: 100%;
+  max-width: 100%;
 }
 
 /** 批处理 selectMode：发送方钱包主行 + 副行地址右对齐（勿用 width:100% 撑满整列）。 */
@@ -264,27 +295,10 @@
   gap: var(--spacing-1);
   min-width: 0;
   max-width: 100%;
-  overflow: hidden;
-}
-
-.walletPrimaryText {
-  display: flex;
-  flex: 0 1 auto;
-  flex-grow: 0;
-  min-width: 0;
-  max-width: 100%;
-  overflow: hidden;
-}
-
-.walletPrimaryText > :global(span) {
-  display: inline-flex;
-  flex: 0 1 auto;
-  min-width: 0;
-  max-width: 100%;
 }
 
 .walletAliasHost .aliasPrimaryRow :global(.eds-anchored-tooltip) {
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   min-width: 0;
   max-width: 100%;
 }
@@ -319,10 +333,18 @@
 
 .walletMetaTags {
   display: inline-flex;
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   align-items: center;
   gap: var(--spacing-1);
   min-width: 0;
+  overflow: hidden;
+}
+
+.walletMetaTags > :global(span) {
+  display: inline-flex;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
   overflow: hidden;
 }
 
@@ -331,6 +353,7 @@
   flex-shrink: 1;
   min-width: 0;
   max-width: var(--scale-16);
+  overflow: hidden;
 }
 
 /** 发送方副行地址：Footnote 角色；中间省略由 JS 完成，禁止 CSS 二次 ellipsis。 */
@@ -353,20 +376,26 @@
   color: var(--text-base-secondary);
 }
 
-.rowTag {
-  flex: 0 0 auto;
-  min-width: 0;
-  max-width: var(--scale-16);
-}
-
-.rowTag :global(.eds-tag) {
-  max-width: 100%;
-}
-
 .metaRow {
   display: inline-flex;
   align-items: center;
   gap: var(--spacing-1);
   min-width: 0;
   max-width: 100%;
+}
+
+.metaRow :global(.eds-tag) {
+  flex: 0 1 auto;
+  flex-shrink: 1;
+  min-width: 0;
+  max-width: var(--scale-16);
+}
+
+.metaRowInteractive {
+  composes: motion-ease is-hover from global;
+  cursor: default;
+}
+
+.metaRowInteractive :global(.eds-tag) {
+  pointer-events: auto;
 }

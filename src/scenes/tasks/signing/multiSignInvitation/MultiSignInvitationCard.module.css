@@ -108,7 +108,6 @@
 }
 
 .detailListRowAddress:hover .walletName,
-.detailListRowAddress:hover .addressOverflow :global([class*='textSecondary']),
 .detailListRowAddress:hover .amountPrimary {
   color: var(--text-base-primary);
 }
@@ -144,14 +143,31 @@
   max-width: 100%;
 }
 
-.addressOverflow {
+.addressOverflowHost {
   flex: 1 1 auto;
   min-width: 0;
   max-width: 100%;
 }
 
-.addressOverflow :global([class*='measure']) {
-  text-align: left;
+.addressTextMeasure {
+  composes: typography-footnote from global;
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  color: var(--text-base-secondary);
+}
+
+.addressHoverTarget {
+  composes: typography-footnote motion-ease is-hover from global;
+  overflow: visible;
+  white-space: nowrap;
+  text-overflow: unset;
+}
+
+.addressAliasTag {
+  flex-shrink: 0;
 }
 
 .walletName {
@@ -159,14 +175,6 @@
   font-size: var(--eds-footnote-size);
   font-weight: var(--eds-footnote-strong-weight);
   line-height: var(--eds-footnote-strong-line-height);
-  color: var(--text-base-secondary);
-}
-
-.addressAliasTag {
-  flex-shrink: 0;
-}
-
-.addressOverflow :global([class*='textSecondary']) {
   color: var(--text-base-secondary);
 }
 

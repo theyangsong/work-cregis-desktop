@@ -1,0 +1,16 @@
+/**
+ * 主行右侧 Tag（Multi-Sign / 多签）。
+ * flex: 0 0 auto — 完整展示，不被列宽挤缩；列宽不足时由左侧钱包名 ellipsis。
+ */
+.rowTagHost {
+  display: inline-flex;
+  flex: 0 0 auto;
+  flex-shrink: 0;
+  align-items: center;
+  pointer-events: auto;
+}
+
+.rowTagHost :global(.eds-tag) {
+  flex: 0 0 auto;
+  flex-shrink: 0;
+}

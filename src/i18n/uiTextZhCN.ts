@@ -92,6 +92,7 @@ export const UI_TEXT_ZH_CN: Record<string, string> = {
   Item: '项',
   'Batch Processing': '批处理',
   Automation: '自动化',
+  'Auto Signature': '自动签名',
   Selected: '已选中',
   '{ num } Selected': '已选中',
   Filter: '筛选',
@@ -330,6 +331,9 @@ export const UI_TEXT_ZH_CN: Record<string, string> = {
   'This address has been blacklisted. Transactions to this address are prohibited. We recommend rejecting this application.':
     '请注意，该地址已被列入黑名单,禁止向该地址发送交易，建议驳回申请。',
   Danger: '危险',
+  Safe: '安全',
+  Suspicious: '可疑',
+  'No result': '无结果',
   Custom: '自定义',
   Edit: '编辑',
 
@@ -471,6 +475,7 @@ export const UI_TEXT_ZH_CN: Record<string, string> = {
   Copy: '复制',
   'Copy address': '复制地址',
   'AML Search': 'AML 搜索',
+  'Screening in progress': '筛查中...',
   'Block explorer': '区块浏览器',
   'Transaction Information': '交易信息',
   'Transaction Status': '交易状态',

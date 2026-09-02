@@ -32,7 +32,12 @@ function parsePreviewMinWidth(customize: Record<string, unknown>): number | unde
 const value = computed(() => String(props.customize.value ?? ''));
 const { ui } = useAppI18n();
 const secondaryValueRaw = computed(() => String(props.customize.secondaryValue ?? '').trim());
-const secondaryValue = computed(() => ui(secondaryValueRaw.value));
+/** 申请时间是字段 value，禁止走 ui()；其余副行才是 i18n key。 */
+const secondaryValue = computed(() => {
+  const raw = secondaryValueRaw.value;
+  if (/^\d{4}-\d{2}-\d{2}/.test(raw)) return raw;
+  return ui(raw);
+});
 const businessTypeSecondaryParts = computed(() => {
   const parts = splitBusinessTypeSecondaryKey(secondaryValueRaw.value);
   if (!parts) return null;
@@ -108,6 +113,17 @@ const countdownListText = computed(() =>
 
 const countdownStaticTime = computed(() => formatExpiryCountdownHms(countdownStaticTotal.value));
 const primaryDisplayText = computed(() => resolveInitiatorDisplayName(value.value));
+const showInitiatorEmailTooltip = computed(() => {
+  if (!showAvatar.value) return false;
+  const raw = value.value.trim();
+  return raw.includes('(') && raw.includes('@');
+});
+const initiatorPrimaryTooltipText = computed(() =>
+  showInitiatorEmailTooltip.value ? value.value : primaryDisplayText.value,
+);
+const initiatorPrimaryDisplayText = computed(() =>
+  showInitiatorEmailTooltip.value ? primaryDisplayText.value : undefined,
+);
 const avatarDisplayName = primaryDisplayText;
 const avatarColorSeed = computed(() =>
   String(props.customize.avatarColorSeed ?? avatarDisplayName.value),
@@ -212,7 +228,8 @@ const hashLikeMinWidthStyle = computed(() => {
           />
           <div :class="styles.titleTextSlot">
             <EgListFieldOverflowText
-              :text="primaryDisplayText"
+              :text="initiatorPrimaryTooltipText"
+              :display-text="initiatorPrimaryDisplayText"
               variant="primary"
               :tooltip-trigger="tooltipTrigger"
             />
@@ -301,7 +318,8 @@ const hashLikeMinWidthStyle = computed(() => {
         />
         <div :class="styles.titleTextSlot">
           <EgListFieldOverflowText
-            :text="primaryDisplayText"
+            :text="initiatorPrimaryTooltipText"
+            :display-text="initiatorPrimaryDisplayText"
             variant="primary"
             :tooltip-trigger="tooltipTrigger"
           />
@@ -334,7 +352,8 @@ const hashLikeMinWidthStyle = computed(() => {
             :class="styles.avatar"
           />
           <EgListFieldOverflowText
-            :text="primaryDisplayText"
+            :text="initiatorPrimaryTooltipText"
+            :display-text="initiatorPrimaryDisplayText"
             variant="primary"
             :tooltip-trigger="tooltipTrigger"
           />
@@ -410,7 +429,8 @@ const hashLikeMinWidthStyle = computed(() => {
             :class="styles.avatar"
           />
           <EgListFieldOverflowText
-            :text="primaryDisplayText"
+            :text="initiatorPrimaryTooltipText"
+            :display-text="initiatorPrimaryDisplayText"
             variant="primary"
             :tooltip-trigger="tooltipTrigger"
           />

@@ -2,8 +2,8 @@
 import {
   EgAvatar,
   EgButton,
-  EgListFieldOverflowText,
   EgTag,
+  EgTextOverflowTooltip,
 } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
 import batchStyles from '../batch/batchSigning.shared.module.css';
@@ -33,6 +33,10 @@ function truncateAddressMiddle(value: string, head = 6, tail = 6): string {
   if (!value || value.includes('...')) return value;
   if (value.length <= head + tail + 3) return value;
   return `${value.slice(0, head)}...${value.slice(-tail)}`;
+}
+
+function addressCopyLabel(address: string): string {
+  return `${ui('Copy address')} ${address}`.trim();
 }
 </script>
 
@@ -104,14 +108,30 @@ function truncateAddressMiddle(value: string, head = 6, tail = 6): string {
                   >
                     {{ invitation.sender.alias }}
                   </EgTag>
-                  <EgListFieldOverflowText
-                    :class="styles.addressOverflow"
-                    :text="invitation.sender.address"
-                    :display-text="truncateAddressMiddle(invitation.sender.address)"
-                    variant="secondary"
+                  <EgTextOverflowTooltip
+                    :tooltip-text="invitation.sender.address"
+                    :copy-value="invitation.sender.address"
+                    :copy-label="addressCopyLabel(invitation.sender.address)"
+                    show-tooltip-copy
+                    semantic-truncated
+                    target-tone="secondary"
+                    defer-hover-target
+                    :typography-class="styles.addressTextMeasure"
+                    :measure-class="styles.addressTextMeasure"
+                    :host-class="styles.addressOverflowHost"
                     tooltip-trigger="hover"
                     boundary-selector=".multi-sign-invitation-panel-root"
-                  />
+                  >
+                    <span
+                      :class="[
+                        styles.addressHoverTarget,
+                        'eds-hover-tooltip-trigger__target',
+                        'eds-hover-tooltip-trigger__target--secondary',
+                      ]"
+                    >
+                      {{ truncateAddressMiddle(invitation.sender.address) }}
+                    </span>
+                  </EgTextOverflowTooltip>
                 </span>
               </span>
             </div>
@@ -131,14 +151,30 @@ function truncateAddressMiddle(value: string, head = 6, tail = 6): string {
                   >
                     {{ invitation.receiver.alias }}
                   </EgTag>
-                  <EgListFieldOverflowText
-                    :class="styles.addressOverflow"
-                    :text="invitation.receiver.address"
-                    :display-text="truncateAddressMiddle(invitation.receiver.address)"
-                    variant="secondary"
+                  <EgTextOverflowTooltip
+                    :tooltip-text="invitation.receiver.address"
+                    :copy-value="invitation.receiver.address"
+                    :copy-label="addressCopyLabel(invitation.receiver.address)"
+                    show-tooltip-copy
+                    semantic-truncated
+                    target-tone="secondary"
+                    defer-hover-target
+                    :typography-class="styles.addressTextMeasure"
+                    :measure-class="styles.addressTextMeasure"
+                    :host-class="styles.addressOverflowHost"
                     tooltip-trigger="hover"
                     boundary-selector=".multi-sign-invitation-panel-root"
-                  />
+                  >
+                    <span
+                      :class="[
+                        styles.addressHoverTarget,
+                        'eds-hover-tooltip-trigger__target',
+                        'eds-hover-tooltip-trigger__target--secondary',
+                      ]"
+                    >
+                      {{ truncateAddressMiddle(invitation.receiver.address) }}
+                    </span>
+                  </EgTextOverflowTooltip>
                 </span>
               </span>
             </div>

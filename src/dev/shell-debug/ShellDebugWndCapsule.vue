@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 import {
   EgAnchoredPopover,
   EgIcon,
@@ -7,6 +7,7 @@ import {
 } from '@eds/desktop-components';
 import styles from './ShellDebugWndCapsule.module.css';
 import { markShellDebugUiInteraction } from './installShellDebugFloatLayerGuard';
+import { registerShellDebugLauncherPopover } from './shellDebugLauncherPopovers';
 import { SHELL_DEBUG_POPOVER_CHROME_HEIGHT } from './shellDebugPopover.constants';
 import {
   SHELL_DEBUG_WINDOW_MODE_OPTIONS,
@@ -25,6 +26,7 @@ const { windowMode, windowsChromeActive, setWindowModePreview } = useShellDebugW
 const popoverAlign = ref<PopoverAlign>('end');
 const triggerRef = ref<HTMLElement | null>(null);
 const anchoredRef = ref<{ close?: () => void } | null>(null);
+let unregisterLauncherPopover: (() => void) | undefined;
 
 function resolvePopoverAlign(): PopoverAlign {
   const metrics = triggerRef.value?.querySelector('[data-eds-trigger-metrics]');
@@ -75,6 +77,13 @@ function isWindowOptionActive(mode: ShellDebugWindowPreset) {
 
 onMounted(() => {
   syncPopoverAlign();
+  unregisterLauncherPopover = registerShellDebugLauncherPopover('wnd', () => {
+    anchoredRef.value?.close?.();
+  });
+});
+
+onBeforeUnmount(() => {
+  unregisterLauncherPopover?.();
 });
 </script>
 

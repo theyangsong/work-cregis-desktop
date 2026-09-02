@@ -74,3 +74,20 @@
   min-width: 0;
   max-width: 100%;
 }
+
+.amountSecondarySource,
+.amountSecondaryAction,
+.amountSecondaryCountdown {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.amountSecondarySource :global(.eds-anchored-tooltip),
+.amountSecondaryAction :global(.eds-anchored-tooltip),
+.amountSecondaryCountdown :global(.eds-anchored-tooltip) {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}

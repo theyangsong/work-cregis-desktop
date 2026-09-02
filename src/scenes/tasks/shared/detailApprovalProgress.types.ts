@@ -1,6 +1,11 @@
 import type { ApprovalProgressMember } from '../approval/types';
 import type { TagStatus } from '@eds/desktop-components';
 
+export type DetailAutomationSignatureRule = {
+  name: string;
+  id: string;
+};
+
 export type DetailApprovalProgressStep = {
   key: string;
   title: string;
@@ -15,6 +20,8 @@ export type DetailApprovalProgressStep = {
   memberPresentation?: 'acted-rows' | 'pending-inline';
   /** 时间线圆点色；默认已完成用 brand，danger 用于撤回节点。 */
   markerTone?: 'brand' | 'danger';
+  /** 签名节点：自动签名标识（非状态）；仅单签 completed 时展示规则名 + ID。 */
+  automationSignatureRule?: DetailAutomationSignatureRule;
 };
 
 export type DetailApprovalProgressInput = {
@@ -35,4 +42,5 @@ export type DetailApprovalProgressInput = {
   signers: ApprovalProgressMember[];
   signatureAtDisplay?: string;
   withdrawnAtDisplay?: string;
+  automationSignatureRule?: DetailAutomationSignatureRule;
 };

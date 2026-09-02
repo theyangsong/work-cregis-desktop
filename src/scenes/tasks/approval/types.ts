@@ -90,6 +90,10 @@ export type ApprovalDetail = {
   signingMode: 'single' | 'multi';
   signingThreshold: string | null;
   signers: ApprovalProgressMember[];
+  automationSignatureRule?: {
+    name: string;
+    id: string;
+  };
 };
 
 export type ApprovalActionKind = 'pass' | 'reject';
