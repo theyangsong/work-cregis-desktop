@@ -22,18 +22,22 @@ function buildCustomDetailFields(rowIndex: number) {
   });
 }
 
-function buildDetail(id: string, rowIndex: number): StoreEntry {
+function buildDetail(id: string, rowIndex: number, menuItem = 'Approval'): StoreEntry {
   return {
     id,
     status: 'pending',
     version: 1,
-    ...buildApprovalDetailRowFields(rowIndex),
+    ...buildApprovalDetailRowFields(rowIndex, menuItem),
     ...buildCustomDetailFields(rowIndex),
   };
 }
 
-function syncDetailFromRow(entry: StoreEntry, rowIndex: number) {
-  Object.assign(entry, buildApprovalDetailRowFields(rowIndex));
+function syncDetailFromRow(
+  entry: StoreEntry,
+  rowIndex: number,
+  menuItem = 'Approval',
+) {
+  Object.assign(entry, buildApprovalDetailRowFields(rowIndex, menuItem));
   Object.assign(
     entry,
     buildMockDetailProgressFields(rowIndex, {
@@ -43,13 +47,17 @@ function syncDetailFromRow(entry: StoreEntry, rowIndex: number) {
   );
 }
 
-function ensureEntry(id: string, rowIndex: number): StoreEntry {
+function ensureEntry(
+  id: string,
+  rowIndex: number,
+  menuItem = 'Approval',
+): StoreEntry {
   const existing = entries.get(id);
   if (existing) {
-    syncDetailFromRow(existing, rowIndex);
+    syncDetailFromRow(existing, rowIndex, menuItem);
     return existing;
   }
-  const created = buildDetail(id, rowIndex);
+  const created = buildDetail(id, rowIndex, menuItem);
   entries.set(id, created);
   return created;
 }
@@ -83,8 +91,12 @@ export function checkApprovalPending(id: string, rowIndex: number): boolean {
   return entry.status === 'pending';
 }
 
-export function getApprovalDetail(id: string, rowIndex: number): ApprovalDetail {
-  const entry = ensureEntry(id, rowIndex);
+export function getApprovalDetail(
+  id: string,
+  rowIndex: number,
+  menuItem = 'Approval',
+): ApprovalDetail {
+  const entry = ensureEntry(id, rowIndex, menuItem);
   return { ...entry };
 }
 

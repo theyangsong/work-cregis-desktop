@@ -32,6 +32,7 @@ export function columnMinWidthForCurrencyCustomize(columnMinWidth: string): stri
 export function buildTasksListFieldCurrencyCustomize(
   rowIndex?: number,
   columnMinWidth = '',
+  menuItem?: string,
 ): Record<string, unknown> {
   let customize = { ...tasksListFieldCurrencyDefaults };
   const minWidth = columnMinWidthForCurrencyCustomize(columnMinWidth);
@@ -42,8 +43,8 @@ export function buildTasksListFieldCurrencyCustomize(
     const fromSideVisible = customize.fromSideVisible;
     const toSideVisible = customize.toSideVisible;
     customize = { ...customize, ...buildCurrencyRowPresetCustomize(rowIndex) };
-    customize = applyCurrencyDemoRowOverrides(customize, rowIndex);
-    customize = applyCurrencyRowTagVisibility(customize, rowIndex);
+    customize = applyCurrencyDemoRowOverrides(customize, rowIndex, menuItem);
+    customize = applyCurrencyRowTagVisibility(customize, rowIndex, menuItem);
     if (fromSideVisible !== undefined) {
       customize.fromSideVisible = fromSideVisible;
     }

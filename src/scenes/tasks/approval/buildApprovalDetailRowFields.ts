@@ -122,8 +122,8 @@ function buildSideAddressEntries(
 }
 
 /** 与 Data List 同行索引对齐的详情字段（列表有数据源的项）。 */
-export function buildApprovalDetailRowFields(rowIndex: number) {
-  const customize = buildTasksListFieldCurrencyCustomize(rowIndex);
+export function buildApprovalDetailRowFields(rowIndex: number, menuItem?: string) {
+  const customize = buildTasksListFieldCurrencyCustomize(rowIndex, '', menuItem);
   const fromSide = buildCurrencySideAddressData('from', customize);
   const toSide = buildCurrencySideAddressData('to', customize);
   const senders = buildSideAddressEntries('from', customize, rowIndex);

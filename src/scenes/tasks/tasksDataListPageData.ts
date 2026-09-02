@@ -279,6 +279,11 @@ export function tasksDataListShowsActionColumn(menuItem: string | undefined): bo
   return menuItem === 'Approval' || menuItem === 'Signing';
 }
 
+/** 接收方「黑名单」演示 Tag 仅待审批 / 待签名列表与对应 Detail 流程展示。 */
+export function tasksDataListShowsAddressBlacklist(menuItem: string | undefined): boolean {
+  return menuItem === 'Approval' || menuItem === 'Signing';
+}
+
 /** 我发起的 · 待审批行操作列主按钮文案。 */
 export const SENT_REQUEST_WITHDRAW_ACTION_LABEL = 'Withdraw Application';
 

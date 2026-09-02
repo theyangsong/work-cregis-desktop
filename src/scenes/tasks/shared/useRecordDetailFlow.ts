@@ -131,6 +131,7 @@ export function useRecordDetailFlow(options: {
       detailKind.value === 'signing'
         ? parseRowIndexFromSigningId(id)
         : parseRowIndexFromApprovalId(id);
+    const menuItem = detailMenuItem.value ?? options.menuItem.value;
 
     const progressFields = buildDetailProgressFields(rowIndex, {
       initiatorNote:
@@ -138,18 +139,18 @@ export function useRecordDetailFlow(options: {
           ? 'Please sign before cutoff.'
           : 'Please approve before cutoff.',
       scenario: 'record',
-      menuItem: options.menuItem.value,
+      menuItem,
     });
 
     if (detailKind.value === 'signing') {
       signingDetail.value = {
-        ...getSigningDetail(id, rowIndex),
+        ...getSigningDetail(id, rowIndex, menuItem),
         ...progressFields,
       };
       approvalDetail.value = null;
     } else {
       approvalDetail.value = {
-        ...getApprovalDetail(id, rowIndex),
+        ...getApprovalDetail(id, rowIndex, menuItem),
         ...progressFields,
       };
       signingDetail.value = null;

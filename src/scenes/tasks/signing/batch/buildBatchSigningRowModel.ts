@@ -81,7 +81,7 @@ function formatAddressDisplay(
 }
 
 export function buildBatchSigningRowModel(rowIndex: number): SigningBatchRowModel {
-  const customize = buildTasksListFieldCurrencyCustomize(rowIndex);
+  const customize = buildTasksListFieldCurrencyCustomize(rowIndex, '', 'Signing');
   const symbol = String(customize.symbol ?? 'ZEC');
   const showNetwork = Boolean(customize.showNetwork);
   const networkLabel = showNetwork ? String(customize.networkLabel ?? '').trim() : '';

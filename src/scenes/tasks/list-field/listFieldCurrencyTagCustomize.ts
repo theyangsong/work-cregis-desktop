@@ -6,6 +6,7 @@ import type {
   TagSize,
 } from '@eds/desktop-components';
 import { BLACKLIST_LABEL_KEY } from '../shared/hasBlacklistAddressTags';
+import { tasksDataListShowsAddressBlacklist } from '../tasksDataListPageData';
 import {
   MAX_CURRENCY_SIDE_ADDRESSES,
   currencyAddressTagsEnabledKey,
@@ -372,16 +373,24 @@ export const CURRENCY_DEMO_ROW_TON_AML_TAG_INDEX = 1;
 /** Data List 演示：第 3 条（0-based index 2）展示完整地址 tag 组合。 */
 export const CURRENCY_DEMO_ROW_WITH_TAGS_INDEX = 2;
 
-const CURRENCY_DEMO_ROWS_WITH_ADDRESS_TAGS = new Set([
-  CURRENCY_DEMO_ROW_TON_AML_TAG_INDEX,
+const CURRENCY_DEMO_ROWS_WITH_ADDRESS_TAGS = new Set<number>([
   CURRENCY_DEMO_ROW_WITH_TAGS_INDEX,
 ]);
+
+function resolveCurrencyDemoRowsWithAddressTags(menuItem?: string): Set<number> {
+  const rows = new Set(CURRENCY_DEMO_ROWS_WITH_ADDRESS_TAGS);
+  if (tasksDataListShowsAddressBlacklist(menuItem)) {
+    rows.add(CURRENCY_DEMO_ROW_TON_AML_TAG_INDEX);
+  }
+  return rows;
+}
 
 export function applyCurrencyRowTagVisibility(
   customize: Record<string, unknown>,
   rowIndex: number,
+  menuItem?: string,
 ): Record<string, unknown> {
-  if (CURRENCY_DEMO_ROWS_WITH_ADDRESS_TAGS.has(rowIndex)) {
+  if (resolveCurrencyDemoRowsWithAddressTags(menuItem).has(rowIndex)) {
     return customize;
   }
 

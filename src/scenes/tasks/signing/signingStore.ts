@@ -27,18 +27,22 @@ function buildCustomDetailFields(rowIndex: number) {
   });
 }
 
-function buildDetail(id: string, rowIndex: number): StoreEntry {
+function buildDetail(id: string, rowIndex: number, menuItem = 'Signing'): StoreEntry {
   return {
     id,
     status: 'pending',
     version: 1,
-    ...buildSigningDetailRowFields(rowIndex),
+    ...buildSigningDetailRowFields(rowIndex, menuItem),
     ...buildCustomDetailFields(rowIndex),
   };
 }
 
-function syncDetailFromRow(entry: StoreEntry, rowIndex: number) {
-  Object.assign(entry, buildSigningDetailRowFields(rowIndex));
+function syncDetailFromRow(
+  entry: StoreEntry,
+  rowIndex: number,
+  menuItem = 'Signing',
+) {
+  Object.assign(entry, buildSigningDetailRowFields(rowIndex, menuItem));
   Object.assign(
     entry,
     buildMockDetailProgressFields(rowIndex, {
@@ -48,13 +52,17 @@ function syncDetailFromRow(entry: StoreEntry, rowIndex: number) {
   );
 }
 
-function ensureEntry(id: string, rowIndex: number): StoreEntry {
+function ensureEntry(
+  id: string,
+  rowIndex: number,
+  menuItem = 'Signing',
+): StoreEntry {
   const existing = entries.get(id);
   if (existing) {
-    syncDetailFromRow(existing, rowIndex);
+    syncDetailFromRow(existing, rowIndex, menuItem);
     return existing;
   }
-  const created = buildDetail(id, rowIndex);
+  const created = buildDetail(id, rowIndex, menuItem);
   entries.set(id, created);
   return created;
 }
@@ -111,8 +119,12 @@ export function checkSigningPending(id: string, rowIndex: number): boolean {
   return entry.status === 'pending';
 }
 
-export function getSigningDetail(id: string, rowIndex: number): SigningDetail {
-  const entry = ensureEntry(id, rowIndex);
+export function getSigningDetail(
+  id: string,
+  rowIndex: number,
+  menuItem = 'Signing',
+): SigningDetail {
+  const entry = ensureEntry(id, rowIndex, menuItem);
   return { ...entry };
 }
 

@@ -12,6 +12,7 @@ import {
   sideAddressPoolIndex,
 } from './listFieldCryptoSampleAddresses';
 import { resolveCurrencyRowPreset } from './tasksListFieldCurrencyRowData';
+import { tasksDataListShowsAddressBlacklist } from '../tasksDataListPageData';
 
 function seededFraction(seed: number): number {
   const x = Math.sin(seed * 9973) * 10000;
@@ -70,7 +71,10 @@ function buildDemoSideAddressOverrides(
 export function applyCurrencyDemoRowOverrides(
   customize: Record<string, unknown>,
   rowIndex: number,
+  menuItem?: string,
 ): Record<string, unknown> {
+  const showBlacklist = tasksDataListShowsAddressBlacklist(menuItem);
+
   if (rowIndex === CURRENCY_DEMO_ROW_FIRST_TO_ALIAS_INDEX) {
     return {
       ...customize,
@@ -78,8 +82,10 @@ export function applyCurrencyDemoRowOverrides(
     };
   }
 
-  /** 第 2 条（TON）：接收方单地址 + 黑名单 tag。 */
+  /** 第 2 条（TON）：接收方单地址 + 黑名单 tag（仅待审批 / 待签名）。 */
   if (rowIndex === CURRENCY_DEMO_ROW_TON_AML_TAG_INDEX) {
+    if (!showBlacklist) return customize;
+
     return {
       ...customize,
       [currencyAddressTagsEnabledKey('from', 1)]: false,
@@ -97,7 +103,7 @@ export function applyCurrencyDemoRowOverrides(
       fromAlias1: 'Mr. Wang',
       [currencyAddressTagsEnabledKey('from', 1)]: false,
       [currencyAddressTagsEnabledKey('to', 1)]: true,
-      ...currencyAddressBlacklistTagOverrides('to', 1, 1, true),
+      ...(showBlacklist ? currencyAddressBlacklistTagOverrides('to', 1, 1, true) : {}),
       ...currencyAddressCustomTagOverrides('to', 1, CURRENCY_CUSTOM_TAG_DEFAULT_COUNT, true),
     };
   }

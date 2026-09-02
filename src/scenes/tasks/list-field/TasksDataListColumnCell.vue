@@ -54,7 +54,11 @@ const resolvedDataSource = computed(() =>
 const listFieldCustomize = computed(() => {
   void locale.value;
   if (resolvedDataSource.value === 'receiver') {
-    return buildTasksListFieldReceiverCustomize(props.rowIndex, props.columnMinWidth);
+    return buildTasksListFieldReceiverCustomize(
+      props.rowIndex,
+      props.columnMinWidth,
+      props.menuItem,
+    );
   }
   if (resolvedDataSource.value === 'general-structure') {
     return buildTasksListFieldGeneralStructureCustomize(

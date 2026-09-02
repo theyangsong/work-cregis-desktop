@@ -4,6 +4,7 @@ import { buildTasksListFieldCurrencyCustomize } from './tasksListFieldCurrencyDe
 export function buildTasksListFieldReceiverCustomize(
   rowIndex?: number,
   columnMinWidth = '',
+  menuItem?: string,
 ): Record<string, unknown> {
-  return buildTasksListFieldCurrencyCustomize(rowIndex, columnMinWidth);
+  return buildTasksListFieldCurrencyCustomize(rowIndex, columnMinWidth, menuItem);
 }
