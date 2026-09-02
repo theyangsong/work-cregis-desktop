@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { toRef } from 'vue';
-import { EgPopup, EgReminder } from '@eds/desktop-components';
+import { EgDialog, EgPopup } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
 import { usePopupShellLifecycle } from '../../shared/usePopupShellLifecycle';
 
@@ -15,6 +15,10 @@ const emit = defineEmits<{
 }>();
 
 const { ui } = useAppI18n();
+
+const stopSigningMessage = ui(
+  'After stopping, transactions that have not yet been signed will no longer be signed, while transactions that have already been signed will not be affected. Are you sure you want to stop the current batch signing task?',
+);
 
 const { popupMounted, popupOpen, onPopupClosed } = usePopupShellLifecycle({
   open: toRef(props, 'open'),
@@ -39,26 +43,19 @@ function onCancel() {
     v-if="popupMounted"
     v-model:open="popupOpen"
     uses="dialog"
-    dialog-type="compose"
+    dialog-type="standard"
+    alert-vertical-align="offset-top"
     @close="onPopupClosed"
   >
-    <EgReminder
-      type="compose"
+    <EgDialog
+      type="standard"
       :title="ui('Stop Signing')"
-      :show-secondary-text="false"
+      :secondary-text="stopSigningMessage"
+      :show-secondary-text="true"
       :confirm-label="ui('Confirm')"
       :cancel-label="ui('Cancel')"
-      :action-count="2"
       @confirm="onConfirm"
       @cancel="onCancel"
-    >
-      <p>
-        {{
-          ui(
-            'After stopping, transactions that have not yet been signed will no longer be signed, while transactions that have already been signed will not be affected. Are you sure you want to stop the current batch signing task?',
-          )
-        }}
-      </p>
-    </EgReminder>
+    />
   </EgPopup>
 </template>
