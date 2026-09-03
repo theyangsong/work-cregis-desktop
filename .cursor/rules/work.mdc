@@ -231,7 +231,7 @@ alwaysApply: true
 
 查：`eds-desktop/packages/tokens/spec/scale/semantic.json`、`typography/semantic.json`、`@eds/desktop-tokens/json`。
 
-**【必须】** 颜色 `var(--material-*)` / `var(--text-*)` / `var(--stroke-*)`；排版整组角色 token；hover 用 `var(--motion-transition-hover)`；click/focus/selected **禁止** transition。
+**【必须】** 颜色 `var(--material-*)` / `var(--text-*)` / `var(--stroke-*)`；排版整组角色 token；hover 用 `var(--motion-recipe-hover)`；click/focus/selected **禁止** transition。
 
 ### 6.2 数字千分位
 
