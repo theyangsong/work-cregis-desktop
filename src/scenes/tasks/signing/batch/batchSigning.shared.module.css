@@ -386,7 +386,7 @@
   min-width: 0;
   padding: var(--spacing-2) var(--spacing-3);
   border-radius: var(--radius-sm);
-  composes: motion-ease is-hover from global;
+  composes: motion-ease is-paint from global;
 }
 
 .detailHeadlineRow:hover {
@@ -955,7 +955,7 @@
   color: inherit;
   text-align: left;
   cursor: pointer;
-  composes: motion-ease is-hover from global;
+  composes: motion-ease is-paint from global;
 }
 
 .networkRow:hover {

@@ -245,7 +245,7 @@
   padding: var(--spacing-1-5) var(--spacing-2);
   border-radius: var(--radius-sm);
   box-sizing: border-box;
-  composes: motion-ease is-hover from global;
+  composes: motion-ease is-paint from global;
 }
 
 .memberMain {
@@ -312,7 +312,7 @@
   padding: var(--spacing-1-5) var(--spacing-2);
   border-radius: var(--radius-sm);
   box-sizing: border-box;
-  composes: motion-ease is-hover from global;
+  composes: motion-ease is-paint from global;
 }
 
 .pendingMembers:hover {

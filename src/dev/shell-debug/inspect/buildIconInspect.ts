@@ -242,16 +242,16 @@ const MOTION_CLASS_RULES: MotionClassRule[] = [
   },
   {
     matches: (element) =>
-      element.classList.contains('motion-ease') && element.classList.contains('is-hover-enter-only'),
-    hostClass: '.motion-ease.is-hover-enter-only',
+      element.classList.contains('motion-ease') && element.classList.contains('is-enter-only'),
+    hostClass: '.motion-ease.is-enter-only',
   },
   {
-    matches: (element) => element.classList.contains('motion-ease') && element.classList.contains('is-focus'),
-    hostClass: '.motion-ease.is-focus',
+    matches: (element) => element.classList.contains('motion-ease') && element.classList.contains('is-paint-fade'),
+    hostClass: '.motion-ease.is-paint-fade',
   },
   {
-    matches: (element) => element.classList.contains('motion-ease') && element.classList.contains('is-hover'),
-    hostClass: '.motion-ease.is-hover',
+    matches: (element) => element.classList.contains('motion-ease') && element.classList.contains('is-paint'),
+    hostClass: '.motion-ease.is-paint',
   },
   {
     matches: (element) =>

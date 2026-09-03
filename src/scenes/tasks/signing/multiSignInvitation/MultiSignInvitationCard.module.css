@@ -22,7 +22,7 @@
   min-width: 0;
   padding: var(--spacing-2) var(--spacing-3);
   border-radius: var(--radius-sm);
-  composes: motion-ease is-hover from global;
+  composes: motion-ease is-paint from global;
 }
 
 .cardHeadlineRow:hover {
@@ -96,7 +96,7 @@
   padding: var(--spacing-1) var(--spacing-2);
   border-radius: var(--radius-sm);
   justify-content: space-between;
-  composes: motion-ease is-hover from global;
+  composes: motion-ease is-paint from global;
 }
 
 .detailListRow:hover {
@@ -160,7 +160,7 @@
 }
 
 .addressHoverTarget {
-  composes: typography-footnote motion-ease is-hover from global;
+  composes: typography-footnote motion-ease is-paint from global;
   overflow: visible;
   white-space: nowrap;
   text-overflow: unset;

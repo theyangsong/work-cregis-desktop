@@ -66,7 +66,7 @@ function stopInspect() {
   color: var(--text-base-primary);
   font: inherit;
   cursor: pointer;
-  composes: motion-ease is-hover from global;
+  composes: motion-ease is-paint from global;
 }
 
 .stopButton:hover {

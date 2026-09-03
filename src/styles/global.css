@@ -255,7 +255,7 @@ body > [id^='eds-tooltip-v-'] > div:first-child:has(> :not([class*='floatingInne
 }
 
 /*
- * 可点击态：默认箭头指针，不用手型（对齐 DS EgButton / motion-ease.is-hover）。
+ * 可点击态：默认箭头指针，不用手型（对齐 DS EgButton / motion-ease.is-paint）。
  */
 .app-preview
   :is(
@@ -264,8 +264,8 @@ body > [id^='eds-tooltip-v-'] > div:first-child:has(> :not([class*='floatingInne
     [role='radio'],
     [role='tab'],
     a[href],
-    .motion-ease.is-hover,
-    .motion-ease.is-hover-enter-only
+    .motion-ease.is-paint,
+    .motion-ease.is-enter-only
   ):not(:disabled):not([aria-disabled='true']) {
   cursor: default;
 }

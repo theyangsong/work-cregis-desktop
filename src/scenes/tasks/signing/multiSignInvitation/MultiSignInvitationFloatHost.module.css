@@ -59,7 +59,7 @@
   cursor: pointer;
   font: inherit;
   color: inherit;
-  composes: motion-ease is-hover from global;
+  composes: motion-ease is-paint from global;
 }
 
 .floatBadgeIcon {

@@ -272,7 +272,7 @@ const CSS_VAR_REFERENCE = /^var\(\s*--[\w-]+\s*\)$/;
 const CSS_TOKEN_NAME = /^--[\w-]+$/;
 const CSS_VAR_EMBEDDED = /var\(\s*--[\w-]+\s*\)/;
 const MOTION_SEMANTIC_CLASS =
-  /^\.motion-(?:ease|flotation|layout|deform|page|layout-deform|none)(?:\.(?:is-(?:hover|focus|asym|hover-enter-only|active)))*$/;
+  /^\.motion-(?:ease|flotation|layout|deform|page|layout-deform|none)(?:\.is-(?:paint-fade|paint|enter-only|asym|active|hover-enter-only|hover|focus))*$/;
 const EDS_DOM_CLASS_VALUE = /^(?:eds-[\w-]+(?:\s+eds-[\w-]+)*)$/;
 
 function isMotionSemanticClassChain(value: string): boolean {

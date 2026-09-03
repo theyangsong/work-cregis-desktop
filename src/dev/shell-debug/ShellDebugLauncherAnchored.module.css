@@ -47,7 +47,7 @@
   cursor: default;
   font: inherit;
   color: var(--text-base-secondary);
-  composes: motion-ease is-hover from global;
+  composes: motion-ease is-paint from global;
 }
 
 .launcherButton:focus,

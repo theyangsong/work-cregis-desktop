@@ -135,7 +135,7 @@ DS 组件识别用 dev 下 plugin-vue 注入的 `__file`（含 `eds-desktop/pack
 
 **Text 样式名**：按 **视觉有效字号**（含 Bar 11px 的 2×+`scale(0.5)` / `zoom(0.5)` 子像素处理）匹配 Figma Text Style（`typographyInspectMatch.ts`），属性「样式」与「字体排版」区块输出对应 role 的 `--eds-*` token，而非 DOM 上的 2× computed 值。
 
-**动效（属性面板）**：属性面板 **始终** 含 **动效** 行；仅 **当前点击节点自身** 挂完整 motion semantic class 时值为 `.motion-ease.is-hover` 等，否则为 **无**。禁止继承祖先 motion；点组件内层容器若无自身 class 则显示 **无**。
+**动效（属性面板）**：属性面板 **始终** 含 **动效** 行；仅 **当前点击节点自身** 挂完整 motion semantic class 时值为 `.motion-ease.is-paint` 等，否则为 **无**。禁止继承祖先 motion；点组件内层容器若无自身 class 则显示 **无**。
 
 | 允许 | 禁止 |
 |------|------|
