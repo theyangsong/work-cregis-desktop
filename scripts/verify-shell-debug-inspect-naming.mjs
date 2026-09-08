@@ -18,6 +18,7 @@
  * I11 同组件多 Figma 角色走 catalog resolveDisplayName hook，不写 resolver 特判
  * I12 「祖先」只作属性面板首行，禁止回流进命名
  * I13 Dev Inspect 不得读取壳外 Shell Debug UI（见 shellDebugUiScope.ts）
+ * I14 hover 轻量路径：buildElementInspectHoverPreview + 无全局 cursor * + hover chrome 简化
  */
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { join, dirname, relative } from 'node:path';
@@ -415,11 +416,94 @@ if (!/isShellDebugUiElement\(element\)/.test(floatScopeSource)) {
   fail('I13', 'isInspectFloatLayerElement 须排除 isShellDebugUiElement');
 }
 
+// I14 hover 轻量路径：禁止在鼠标移动时跑全量 buildElementInspectInfo / 全局 cursor *
+const devInspectCss = readFileSync(join(inspectDir, 'developerInspect.css'), 'utf8');
+const hoverFnStart = pickerSource.indexOf('function updateHoverTarget');
+const hoverFnEnd = pickerSource.indexOf('function processPointerMove');
+const hoverFnSource = hoverFnStart >= 0 && hoverFnEnd > hoverFnStart
+  ? pickerSource.slice(hoverFnStart, hoverFnEnd)
+  : '';
+if (!/buildElementInspectHoverPreview\(target,\s*preview\)/.test(hoverFnSource)) {
+  fail('I14', 'updateHoverTarget 须调用 buildElementInspectHoverPreview(target, preview)');
+}
+if (/\bbuildElementInspectInfo\s*\(/.test(hoverFnSource)) {
+  fail('I14', 'updateHoverTarget 不得调用 buildElementInspectInfo');
+}
+if (
+  /\*\s*:not/.test(devInspectCss)
+  && /cursor:\s*crosshair\s*!important/.test(devInspectCss)
+) {
+  fail('I14', 'developerInspect.css 禁止对 * 强制 crosshair !important');
+}
+if (!/variant="hover"/.test(readFileSync(join(inspectDir, 'DeveloperInspectOverlay.vue'), 'utf8'))) {
+  fail('I14', 'hover 高亮须使用 InspectLayoutChrome variant="hover"');
+}
+const overlaySource = readFileSync(join(inspectDir, 'DeveloperInspectOverlay.vue'), 'utf8');
+if (!/buildHoverMeasureModel/.test(overlaySource)) {
+  fail('I14', 'Pin+Hover 比对须调用 buildHoverMeasureModel');
+}
+if (!/InspectEdgeMeasureChrome/.test(overlaySource)) {
+  fail('I14', 'Pin+Hover 间距须由 InspectEdgeMeasureChrome 渲染');
+}
+if (!/devInspectCompareMeasure\.css/.test(readFileSync(join(inspectDir, 'InspectEdgeMeasureChrome.vue'), 'utf8'))) {
+  fail('I14', '比对间距色系真源须为 devInspectCompareMeasure.css');
+}
+if (!readFileSync(join(inspectDir, 'devInspectCompareMeasure.css'), 'utf8').includes('#f59f00')) {
+  fail('I14', '比对间距浅色须为 #F59F00');
+}
+const measureSource = readFileSync(join(inspectDir, 'buildLayoutMeasurement.ts'), 'utf8');
+if (!/gapBelow/.test(measureSource) || !/gapRight/.test(measureSource)) {
+  fail('I14', 'buildHoverMeasureModel 须按最近边间距（gapBelow/gapRight）计算');
+}
+if (!/resolveHoverMeasureLabels/.test(measureSource)) {
+  fail('I14', '双轴比对间距须 resolveHoverMeasureLabels 错开标签');
+}
+
+const hoverPreviewStart = infoSource.indexOf('export function buildElementInspectHoverPreview');
+const hoverPreviewEnd = infoSource.indexOf('export type BuildElementInspectInfoOptions');
+const hoverPreviewSource = hoverPreviewStart >= 0 && hoverPreviewEnd > hoverPreviewStart
+  ? infoSource.slice(hoverPreviewStart, hoverPreviewEnd)
+  : '';
+if (!/resolveInspectPrimaryLabel\(element\)/.test(hoverPreviewSource)) {
+  fail('I14', 'buildElementInspectHoverPreview 须用 resolveInspectPrimaryLabel(element)');
+}
+if (/resolveInspectTarget|collectDeclaredCssValues|buildInspectCodeSections/.test(hoverPreviewSource)) {
+  fail('I14', 'buildElementInspectHoverPreview 不得跑全量命名 / CSS 级联 / 代码片段');
+}
+if (/function resolveInspectPrimaryLabel[\s\S]*?parentElement|closest\(/.test(
+  resolverSource.slice(
+    resolverSource.indexOf('export function resolveInspectPrimaryLabel'),
+    resolverSource.indexOf('export function resolveInspectTarget'),
+  ),
+)) {
+  fail('I14', 'resolveInspectPrimaryLabel 不得沿祖先取名（与 I2 / I12 同约束）');
+}
+if (!/resolveInspectLayerIdentity\(element\)/.test(
+  resolverSource.slice(
+    resolverSource.indexOf('export function resolveInspectPrimaryLabel'),
+    resolverSource.indexOf('export function resolveInspectTarget'),
+  ),
+)) {
+  fail('I14', 'resolveInspectPrimaryLabel 须复用 resolveInspectLayerIdentity，禁止另起判定');
+}
+
+// 探针 div 插入 token 根会强制 style 重算，13 个排版角色逐个探测足以拖死 hover。
+if (!/normalizedValueCache/.test(read('resolveDesignToken.ts'))) {
+  fail('I14', 'normalizeComparableStyleValue 的探针结果须缓存');
+}
+if (
+  /roleMatchesEffectiveMetrics[\s\S]{0,400}?normalizeStyleValueForCompare/.test(
+    read('typographyInspectMatch.ts'),
+  )
+) {
+  fail('I14', 'normalizeStyleValueForCompare 不得在排版角色循环内逐个调用');
+}
+
 // ---------------------------------------------------------------- report
 
 if (errors.length === 0) {
   console.log(
-    `verify-shell-debug-inspect-naming: OK — ${EXPECTED_ORDER.length} 条规则 / ${regionSpecs.length} 个具名区域 / 13 项不变量`,
+    `verify-shell-debug-inspect-naming: OK — ${EXPECTED_ORDER.length} 条规则 / ${regionSpecs.length} 个具名区域 / 14 项不变量`,
   );
   process.exit(0);
 }

@@ -1,0 +1,83 @@
+/*
+ * Dev Inspect 代码语法色 —— 唯一真源。
+ *
+ * 规则只挂 `.dev-inspect-code-token--*` 全局类，**不带任何容器前缀**：Popover 内的代码块
+ * 与 teleport 到 `body` 的 Effect spec tooltip 共用同一条声明，色值不可能分叉。
+ *
+ * 【禁止】把色值收进只在某个容器上声明的 `--dev-inspect-syntax-*` 中间变量 —— 自定义属性
+ * 在**声明处**求值，teleport 出去的浮层拿不到变量链，`color` 会整条失效并继承父色。
+ * 【禁止】在 Vue 侧用 inline `style` 或 `!important` 给某个容器单独补色。
+ *
+ * 主色 / 注释走 DS token（两处容器都在 `.desktopTokens` 内）；语法色 sRGB 后跟 P3 渐进增强。
+ */
+
+.dev-inspect-code-token--prop,
+.dev-inspect-code-token--punct,
+.dev-inspect-code-token--plain,
+.dev-inspect-code-token--variable {
+  color: var(--text-base-primary);
+}
+
+.dev-inspect-code-token--comment {
+  color: var(--text-base-tertiary);
+}
+
+.dev-inspect-code-token--keyword,
+.dev-inspect-code-token--value {
+  color: #ec008c;
+  color: color(display-p3 0.9255 0 0.549);
+}
+
+.dev-inspect-code-token--function,
+.dev-inspect-code-token--string,
+.dev-inspect-code-token--effectClass {
+  color: #b45309;
+  color: color(display-p3 0.7059 0.3255 0.0353);
+}
+
+.dev-inspect-code-token--attr {
+  color: #006d42;
+  color: color(display-p3 0 0.4275 0.2588);
+}
+
+.dev-inspect-code-token--tag {
+  color: #6d28d9;
+  color: color(display-p3 0.4275 0.1569 0.851);
+}
+
+[data-theme='dark'] .dev-inspect-code-token--keyword,
+[data-theme='dark'] .dev-inspect-code-token--value {
+  color: #ff77b9;
+  color: color(display-p3 1 0.4667 0.7255);
+}
+
+[data-theme='dark'] .dev-inspect-code-token--function,
+[data-theme='dark'] .dev-inspect-code-token--string,
+[data-theme='dark'] .dev-inspect-code-token--effectClass {
+  color: #e8a749;
+  color: color(display-p3 0.9098 0.6549 0.2863);
+}
+
+[data-theme='dark'] .dev-inspect-code-token--attr {
+  color: #54e8ae;
+  color: color(display-p3 0.3294 0.9098 0.6824);
+}
+
+[data-theme='dark'] .dev-inspect-code-token--tag {
+  color: #af7dff;
+  color: color(display-p3 0.6863 0.4902 1);
+}
+
+/* Effect 类名触发行：虚线下划线跟随当前语法色。 */
+.effect-class-trigger-host .dev-inspect-code-token--effectClass {
+  position: relative;
+}
+
+.effect-class-trigger-host .dev-inspect-code-token--effectClass::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  border-bottom: var(--stroke-sm) dashed currentColor;
+  pointer-events: none;
+}

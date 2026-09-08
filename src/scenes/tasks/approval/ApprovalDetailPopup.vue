@@ -28,6 +28,9 @@ import ExpiryCountdown from '../shared/ExpiryCountdown.vue';
 import { useDetailAmlSearchFlow } from '../shared/useDetailAmlSearchFlow';
 import { applyDetailAmlSearchSectionOverlay } from '../shared/applyDetailAmlSearchSectionOverlay';
 import DetailAmlSearchToastHost from '../shared/DetailAmlSearchToastHost.vue';
+import WithdrawApplicationConfirmPopover from '../shared/WithdrawApplicationConfirmPopover.vue';
+import remarkTriggerStyles from '../shared/remarkPopoverTrigger.module.css';
+import withdrawConfirmTriggerStyles from '../shared/WithdrawApplicationConfirmPopover.module.css';
 import { sentRequestDetailShowsWithdrawToolbar } from '../tasksDataListPageData';
 
 const props = withDefaults(
@@ -200,7 +203,7 @@ async function onPassClick() {
   }
 }
 
-function onWithdrawClick() {
+function onWithdrawConfirm() {
   emit('withdrawRequest');
 }
 
@@ -247,15 +250,29 @@ function onDetailClose() {
             <DetailToolbarRemarkTrigger :page-key="detail?.id" />
           </template>
           <template #actions>
-            <EgButton
+            <WithdrawApplicationConfirmPopover
               v-if="resolvedShowWithdrawAction"
-              tone="danger"
-              variant="solid"
-              size="md"
-              @click="onWithdrawClick"
+              @confirm="onWithdrawConfirm"
             >
-              {{ ui('Withdraw Application') }}
-            </EgButton>
+              <template #trigger="{ onClick, active }">
+                <span
+                  :class="[
+                    withdrawConfirmTriggerStyles.trigger,
+                    active && remarkTriggerStyles.remarkTriggerWithdrawPressed,
+                  ]"
+                >
+                  <EgButton
+                    tone="danger"
+                    variant="solid"
+                    size="md"
+                    :aria-expanded="active"
+                    @click.stop="onClick"
+                  >
+                    {{ ui('Withdraw Application') }}
+                  </EgButton>
+                </span>
+              </template>
+            </WithdrawApplicationConfirmPopover>
             <template v-else-if="!readOnly">
               <EgButton
                 tone="danger"

@@ -1,5 +1,6 @@
 import type { InspectCodeSection } from './buildIconInspect';
 import type { InspectPropertyItem } from './buildElementInspectInfo';
+import { buildEffectSemanticCodeSections } from './buildEffectSemanticInspect';
 import { canInspectAsText } from './buildTextInspect';
 
 const COMPONENT_SECTION_SKIP = new Set(['布局', '样式', '字体排版']);
@@ -12,11 +13,25 @@ function sectionFromItems(title: string, items: InspectPropertyItem[]): InspectC
   };
 }
 
+function resolveInspectableSection(
+  title: string,
+  declaredItems: InspectPropertyItem[],
+  componentSections: InspectCodeSection[] | undefined,
+  effectSections: InspectCodeSection[] | undefined,
+): InspectCodeSection | null {
+  const effectSection = effectSections?.find((section) => section.title === title);
+  if (effectSection?.content.trim()) return effectSection;
+
+  const componentSection = componentSections?.find((section) => section.title === title);
+  if (componentSection?.content.trim()) return componentSection;
+
+  return sectionFromItems(title, declaredItems);
+}
+
 /**
  * 全组件统一代码区块：
- * - Text：字体排版优先（专用 builder），布局用 Text 区块或 Dev Mode 回退
- * - 其它 DS 组件：Dev Mode 布局 + 样式（buildDeclaredInspectCode @ style target）
- * - Icon / Crypto / Avatar：仅追加 SVG 等专用块
+ * - 节点挂 effect-* 语义类时，布局/样式引用 spec（effect/semantic.json），覆盖项单独列出
+ * - Text：字体排版优先；其它走 declared 或组件专用块
  */
 export function buildInspectCodeSections(
   element: Element,
@@ -26,19 +41,17 @@ export function buildInspectCodeSections(
 ): InspectCodeSection[] {
   const sections: InspectCodeSection[] = [];
   const isText = canInspectAsText(element);
+  const effectSections = buildEffectSemanticCodeSections(element) ?? undefined;
 
   if (isText && componentSections) {
-    const textLayout = componentSections.find((section) => section.title === '布局');
+    const layoutSection = resolveInspectableSection('布局', declaredCode.layout, componentSections, effectSections);
     const typography = componentSections.find((section) => section.title === '字体排版');
-
-    const layoutSection = textLayout ?? sectionFromItems('布局', declaredCode.layout);
     if (layoutSection) sections.push(layoutSection);
-    if (typography) sections.push(typography);
+    if (typography?.content.trim()) sections.push(typography);
   } else {
-    const layoutSection = sectionFromItems('布局', declaredCode.layout);
+    const layoutSection = resolveInspectableSection('布局', declaredCode.layout, componentSections, effectSections);
+    const styleSection = resolveInspectableSection('样式', declaredCode.styleItems, componentSections, effectSections);
     if (layoutSection) sections.push(layoutSection);
-
-    const styleSection = sectionFromItems('样式', declaredCode.styleItems);
     if (styleSection) sections.push(styleSection);
   }
 

@@ -387,6 +387,10 @@ function buildUsageSnippet(
   element: Element,
   rootElement: Element | null,
 ): string {
+  if (entry.buildUsageSnippet) {
+    return entry.buildUsageSnippet(vueProps);
+  }
+
   const componentTag = vueName.startsWith('Eg') ? vueName : `Eg${entry.displayName}`;
   const ctx: EdsPropExtractContext = { props: vueProps, element, rootElement };
   const attrs: string[] = [];
@@ -667,6 +671,47 @@ function buildInspectComponentChain(element: Element, preview: Element): string[
   }
 
   return chain;
+}
+
+/**
+ * Hover 高亮只要名字：跳过 props / 用法 / 代码片段构建，也不回溯 componentChain。
+ *
+ * 判定仍走同一 `resolveInspectLayerIdentity`，与 `resolveInspectTarget` 同源同序，
+ * 不构成第二条命名路径。**【禁止】** 在此加入祖先取名或规则特判。
+ */
+export function resolveInspectPrimaryLabel(element: Element): string {
+  const identity = resolveInspectLayerIdentity(element);
+
+  switch (identity.rule) {
+    case 'atomic-graphic':
+    case 'component-root': {
+      const { candidate } = identity;
+      if (candidate.genericInspect) return candidate.genericInspect.displayName;
+
+      const instance = resolveCandidateInstance(
+        element,
+        candidate.entry,
+        candidate.instance,
+        candidate.rootElement,
+      );
+      const vueProps = readVueProps(instance);
+
+      if (
+        candidate.entry.displayName === 'Icon'
+        && isAvatarGraphicAssetName(resolveIconName(element, vueProps))
+      ) {
+        return 'Avatar';
+      }
+
+      return resolveEntryDisplayName(candidate.entry, vueProps);
+    }
+    case 'text-leaf':
+      return 'Text';
+    case 'named-region':
+      return identity.region.spec.displayName;
+    case 'dom-tag':
+      return formatDomTagInspectLabel(element.tagName);
+  }
 }
 
 /** 点谁是谁：五条统一规则 + 单名展示；componentChain 沿 DOM 祖先逐层套用同一规则。 */

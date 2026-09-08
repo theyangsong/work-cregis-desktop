@@ -301,6 +301,7 @@ export const UI_TEXT_ZH_CN: Record<string, string> = {
   Withdrawn: '已撤回',
   Withdraw: '撤回',
   'Withdraw Application': '撤回申请',
+  'Are you sure you want to withdraw this application?': '确定要撤回该申请吗？',
   'Request withdrawn': '申请已撤回',
   'Application Withdrawn': '申请已撤回',
   Canceled: '已取消',

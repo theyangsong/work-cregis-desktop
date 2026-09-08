@@ -1,5 +1,5 @@
 import { onBeforeUnmount, onMounted, watch } from 'vue';
-import { buildElementInspectInfo } from './buildElementInspectInfo';
+import { buildElementInspectHoverPreview, buildElementInspectInfo } from './buildElementInspectInfo';
 import {
   clearInspectSelection,
   developerInspectActive,
@@ -18,6 +18,8 @@ const PREVIEW_SELECTOR = '.app-preview';
 const BLOCK_EVENT_TYPES = ['click', 'mousedown', 'dblclick'] as const;
 
 let lastHoverTarget: Element | null = null;
+let pointerRafId: number | null = null;
+let pendingPointer: { x: number; y: number; eventTarget: EventTarget | null } | null = null;
 
 function resolvePreview(): Element | null {
   return document.querySelector(PREVIEW_SELECTOR);
@@ -153,7 +155,7 @@ function updateHoverTarget(target: Element | null, preview: Element) {
   }
 
   lastHoverTarget = target;
-  const info = buildElementInspectInfo(target, preview);
+  const info = buildElementInspectHoverPreview(target, preview);
   if (!info) {
     clearHoverSelection();
     return;
@@ -172,10 +174,7 @@ function updateHoverTarget(target: Element | null, preview: Element) {
   inspectMeasureRect.value = null;
 }
 
-function onPointerMove(event: PointerEvent) {
-  if (!developerInspectActive.value) return;
-
-  const eventTarget = event.target;
+function processPointerMove(x: number, y: number, eventTarget: EventTarget | null) {
   if (eventTarget instanceof Element && isShellDebugUiElement(eventTarget)) {
     clearHoverSelection();
     return;
@@ -184,8 +183,34 @@ function onPointerMove(event: PointerEvent) {
   const preview = resolvePreview();
   if (!preview) return;
 
-  const target = elementFromPreviewPoint(event.clientX, event.clientY, preview);
+  const target = elementFromPreviewPoint(x, y, preview);
   updateHoverTarget(target, preview);
+}
+
+function onPointerMove(event: PointerEvent) {
+  if (!developerInspectActive.value) return;
+
+  pendingPointer = {
+    x: event.clientX,
+    y: event.clientY,
+    eventTarget: event.target,
+  };
+  if (pointerRafId !== null) return;
+
+  pointerRafId = requestAnimationFrame(() => {
+    pointerRafId = null;
+    const pending = pendingPointer;
+    pendingPointer = null;
+    if (!pending || !developerInspectActive.value) return;
+    processPointerMove(pending.x, pending.y, pending.eventTarget);
+  });
+}
+
+function cancelPointerRaf() {
+  if (pointerRafId === null) return;
+  cancelAnimationFrame(pointerRafId);
+  pointerRafId = null;
+  pendingPointer = null;
 }
 
 function onPointerDown(event: PointerEvent) {
@@ -251,6 +276,7 @@ export function useDeveloperInspectPicker() {
   });
 
   onBeforeUnmount(() => {
+    cancelPointerRaf();
     for (const type of BLOCK_EVENT_TYPES) {
       window.removeEventListener(type, blockPreviewInteraction, true);
     }
@@ -263,6 +289,7 @@ export function useDeveloperInspectPicker() {
 
   watch(developerInspectActive, (active) => {
     if (active) return;
+    cancelPointerRaf();
     lastHoverTarget = null;
     clearInspectSelection();
   });

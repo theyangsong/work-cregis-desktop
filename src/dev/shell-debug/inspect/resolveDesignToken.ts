@@ -76,6 +76,8 @@ export type InspectTokenResolveResult = {
 let cachedRoot: Element | null = null;
 let cachedTokenNames: string[] | null = null;
 const computedTokenCache = new Map<string, string>();
+/** 探针 div 每次插入 token 根都会强制 style 重算，命中率高必须缓存。 */
+const normalizedValueCache = new Map<string, string>();
 
 function resolveTokenRoot(preview: Element): Element {
   return preview.querySelector('.desktopTokens') ?? preview;
@@ -99,6 +101,7 @@ export function listDesignTokenNames(preview: Element): string[] {
   cachedRoot = root;
   cachedTokenNames = names.sort((left, right) => left.localeCompare(right));
   computedTokenCache.clear();
+  normalizedValueCache.clear();
   return cachedTokenNames;
 }
 
@@ -120,6 +123,10 @@ function normalizeComparableStyleValue(
     return normalized;
   }
 
+  const cacheKey = `${preview.isConnected ? 'live' : 'detached'}::${styleProperty}::${normalized}`;
+  const cached = normalizedValueCache.get(cacheKey);
+  if (cached !== undefined) return cached;
+
   const root = resolveTokenRoot(preview);
   const probe = document.createElement('div');
   probe.style.position = 'absolute';
@@ -131,6 +138,7 @@ function normalizeComparableStyleValue(
   root.appendChild(probe);
   const computed = normalizeCssValue(getComputedStyle(probe)[styleProperty]);
   root.removeChild(probe);
+  normalizedValueCache.set(cacheKey, computed);
   return computed;
 }
 
@@ -294,4 +302,5 @@ export function invalidateDesignTokenCache() {
   cachedRoot = null;
   cachedTokenNames = null;
   computedTokenCache.clear();
+  normalizedValueCache.clear();
 }

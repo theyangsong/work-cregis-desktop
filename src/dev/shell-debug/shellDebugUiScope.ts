@@ -8,7 +8,7 @@ export const SHELL_DEBUG_UI_ROOT_SELECTOR =
 
 /** 与 installShellDebugFloatLayerGuard / ShellDebugPlatform.module.css 对齐。 */
 export const SHELL_DEBUG_FLOAT_CONTENT_MARKERS =
-  '.shell-debug-popover-content, .shell-debug-dev-inspect-hint, .shell-debug-dev-inspect-popover, .shell-debug-model-popover-content, .shell-debug-wnd-popover-content, .shell-debug-qa-popover';
+  '.shell-debug-popover-content, .shell-debug-dev-inspect-hint, .shell-debug-dev-inspect-popover, .shell-debug-model-popover-content, .shell-debug-wnd-popover-content, .shell-debug-qa-popover, .shell-debug-effect-spec-tooltip';
 
 function floatingHostContainsShellDebugContent(element: Element): boolean {
   const popover = element.closest('.eds-popover');

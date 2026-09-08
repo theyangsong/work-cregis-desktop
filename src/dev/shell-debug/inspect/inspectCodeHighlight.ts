@@ -12,7 +12,8 @@ export type InspectCodeToken = {
     | 'tag'
     | 'attr'
     | 'string'
-    | 'comment';
+    | 'comment'
+    | 'effectClass';
   text: string;
 };
 
@@ -157,6 +158,42 @@ function tokenizeCssValue(value: string): InspectCodeToken[] {
 }
 
 export function tokenizeCssLine(line: string): InspectCodeToken[] {
+  const trimmed = line.trim();
+  const effectAttrMatch = trimmed.match(/^class="(\.effect-[\w-]+)"$/);
+  if (effectAttrMatch) {
+    return [
+      { kind: 'attr', text: 'class' },
+      { kind: 'punct', text: '="' },
+      { kind: 'effectClass', text: effectAttrMatch[1] },
+      { kind: 'punct', text: '"' },
+    ];
+  }
+
+  const effectClassMatch = trimmed.match(/^(\.effect-[\w-]+)$/);
+  if (effectClassMatch) {
+    return [{ kind: 'effectClass', text: effectClassMatch[1] }];
+  }
+
+  const selectorBlockMatch = trimmed.match(/^(\.effect-[\w-]+)(\s*\{)$/);
+  if (selectorBlockMatch) {
+    return [
+      { kind: 'effectClass', text: selectorBlockMatch[1] },
+      { kind: 'punct', text: selectorBlockMatch[2] },
+    ];
+  }
+
+  if (trimmed === '{') {
+    return [{ kind: 'punct', text: '{' }];
+  }
+
+  if (trimmed === '}') {
+    return [{ kind: 'punct', text: '}' }];
+  }
+
+  if (trimmed.startsWith('/*')) {
+    return [{ kind: 'comment', text: trimmed }];
+  }
+
   const trailingComment = splitTrailingCssComment(line.trimEnd());
   const source = trailingComment.body;
   const comment = trailingComment.comment;
@@ -175,6 +212,18 @@ export function tokenizeCssLine(line: string): InspectCodeToken[] {
   const valueParts = splitTrailingCssComment(rawValue);
   const value = valueParts.body;
   const inlineComment = valueParts.comment;
+
+  if (prop === 'class') {
+    const effectClassMatch = value.trim().match(/^(\.effect-[\w-]+)$/);
+    if (effectClassMatch) {
+      return [
+        { kind: 'prop', text: prop },
+        { kind: 'punct', text: colon },
+        { kind: 'effectClass', text: effectClassMatch[1] },
+        ...(tail ? [{ kind: 'punct', text: tail } as InspectCodeToken] : []),
+      ];
+    }
+  }
 
   return [
     { kind: 'prop', text: prop },
@@ -232,6 +281,16 @@ export function tokenizeSvgLine(line: string): InspectCodeToken[] {
   }
 
   return tokens.length > 0 ? tokens : [{ kind: 'plain', text: line }];
+}
+
+/**
+ * 语法色唯一入口：只给全局类名，色值全在 `shellDebugInspectCodeTokens.css`。
+ *
+ * **【禁止】** 再导出「按容器返回 inline style」的取色函数 —— Popover 代码块与 teleport
+ * 出去的 Effect spec tooltip 必须共用同一条 CSS 声明，否则两处颜色会各自漂移。
+ */
+export function inspectCodeTokenClass(kind: InspectCodeToken['kind']): string {
+  return `dev-inspect-code-token dev-inspect-code-token--${kind}`;
 }
 
 export function tokenizeCodeLine(line: string, mode: 'css' | 'svg'): InspectCodeToken[] {

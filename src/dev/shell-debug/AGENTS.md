@@ -124,9 +124,9 @@ DS 组件识别用 dev 下 plugin-vue 注入的 `__file`（含 `eds-desktop/pack
 | 单元格里业务 `div.list-field-amount` | Div | R5 |
 - **布局 / 样式代码（Figma Dev Mode 式）**：
   - **识别**：点谁是谁（见上表）；`componentChain` 沿 DOM 祖先，仅供内部。
-  - **取值**：`inspectDeclaredStyles` 按 **特异性 + 文档顺序** 级联，读取规则内 **原始声明**（`var(--*)` 直出）；禁止 computed 反查误配。
-  - **输出**：`buildDeclaredInspectCode` 对 **当前点击节点** 取 declared 样式（非外层 DS root）；**declared `var(--*)` 优先**
-  - **合并**：`buildInspectCodeSections` — 所有 DS 组件 **统一** 先出布局 + 样式；Text 追加「字体排版」（declared 优先）；Icon / Crypto 等仅追加 SVG 等专用块。
+  - **取值**：节点挂 **Effect 语义类** 时，**样式**一行 `class=".effect-*"`（attr 高亮 + 虚线下划线）；左側 Tooltip 展示 spec，行级复制/悬浮与外层一致。
+  - **输出**：Effect 壳由 `buildEffectSemanticInspect`；普通节点仍走 `buildDeclaredInspectCode` declared。
+  - **合并**：`buildInspectCodeSections` — Effect 语义区块 **优先** 于 declared；Divider / Icon 等组件专用块仍可覆盖同名区；Text 追加「字体排版」。
 - **壳层 Tooltip**：`.app-preview` 根 `panelKind=container` 与 EgPopup 外壳 Tooltip **跳过**（见 `resolveEdsComponentInspect.ts`）。
 
 **Text 识别**：仅 **typography 叶子**（`span` / `p` / `label` 等，含 Bar 子像素宿主）→ **Text**；`td` / `div` / `button` 等容器或组件根 → DS 组件 catalog 或元素属性，**不**判为 Text。
@@ -160,11 +160,34 @@ DS 组件识别用 dev 下 plugin-vue 注入的 `__file`（含 `eds-desktop/pack
 
 **Catalog 覆盖**：`node scripts/verify-shell-debug-inspect-catalog.mjs` 对照 `../eds-desktop` 组件根 `eds-*` 与 `edsInspectCatalog.ts`；缺条目时补 catalog，勿再开 CSS Module 借名后门。
 
-**Inspect 命名**：`node scripts/verify-shell-debug-inspect-naming.mjs` —— 12 项全局不变量（规则顺序、归属判据、region 真源 / 不重名 / 不覆盖组件根、旧机制已清、样式对准点击节点、片段匹配、单一命名路径、任意 DS 组件根有自己的名字、多角色走 catalog hook、祖先只作属性首行）。已接入 `predev` / `prebuild`，与 catalog 覆盖脚本同时跑。
+**代码语法色（E6）**：真源只有 `inspect/shellDebugInspectCodeTokens.css`，规则挂**无容器前缀**的 `.dev-inspect-code-token--*` 全局类；`inspectCodeTokenClass()` 是唯一入口。Popover 代码块与 teleport 到 `body` 的 Effect spec tooltip 因此共用同一条声明。
+
+**【禁止】** 把色值收进只在容器上声明的 `--dev-inspect-syntax-*` 中间变量 —— 自定义属性在**声明处**求值，浮层 teleport 出去后变量链断裂，`color` 整条失效并继承父色（tooltip 颜色与面板不一致的历史成因）。 
+**【禁止】** 用 inline `style`、`!important`、`[data-effect-spec-panel]` 等容器分支给某一处单独补色；**【禁止】** 在 `InspectDetailPanel.vue` 的 `<style module>` 里再声明 `.token*` 颜色。 
+**【必须】** 主色 / 注释走 `var(--text-base-primary)` / `var(--text-base-tertiary)`（两处容器都在 `.desktopTokens` 内）；语法色 sRGB 后跟 `color(display-p3 …)` 渐进增强。
+
+**Inspect 命名**：`node scripts/verify-shell-debug-inspect-naming.mjs` —— 14 项全局不变量（规则顺序、归属判据、region 真源 / 不重名 / 不覆盖组件根、旧机制已清、样式对准点击节点、片段匹配、单一命名路径、任意 DS 组件根有自己的名字、多角色走 catalog hook、祖先只作属性首行、壳外 UI 排除、hover 轻量路径）。已接入 `predev` / `prebuild`，与 catalog 覆盖脚本同时跑。
 
 **4174 Inspect 与 4173 对齐**：R2 / DataList 实例读取依赖 DOM 上的 `__vueParentComponent`（`inspectIdentity.ts` 的 `findVueInstancesWithDomRoot`）。Vue 3.5 production 默认不写入，须在 Shell Debug 构建中开启 `__VUE_PROD_DEVTOOLS__`（见 `vite.config.ts`）；`verify-pages-artifact.mjs` 会检查 bundle 含 `__vueParentComponent`。
 
-**DataList 适配（Inspect）**：仅当 **点选节点在 `.eds-data-list` 子树内** 时，Dev 面板在 **属性** 与 **用法** 之间展示 **DataList 适配** 组（`.eds-popup` / `.eds-detail` 内 **不展示**）。每可见列一行（`第1列` …），值为 `min-width: xxxpx`，参与 flex 均分则后缀 `（flex）`。**【必须】** 仅在 **Pin（pointerdown 固定）** 时计算（`buildElementInspectInfo` 的 `includeAdaptive: true`）；hover 不算，避免 Inspect 模式鼠标移动卡死。
+**DataList 适配（Inspect）**：仅当 **点选节点在 `.eds-data-list` 子树内** 时，Dev 面板在 **属性** 与 **用法** 之间展示 **DataList 适配** 组（`.eds-popup` / `.eds-detail` 内 **不展示**）。每可见列一行（`第1列` …），值为 `min-width: xxxpx`，参与 flex 均分则后缀 `（flex）`。**【必须】** 仅在 **Pin（pointerdown 固定）** 时计算（`buildElementInspectInfo` 的 `includeAdaptive: true`）。
+
+**Hover 性能（I14）**：hover 与 Pin 是两条路径，禁止合流。
+
+| 阶段 | 入口 | 允许的开销 |
+|---|---|---|
+| hover（`pointermove`） | `buildElementInspectHoverPreview` → `resolveInspectPrimaryLabel` | 仅 `resolveInspectLayerIdentity` + 展示名；`rAF` 每帧最多一次 |
+| Pin（`pointerdown`） | `buildElementInspectInfo(..., { includeAdaptive: true })` | 全量 props / CSS 级联 / 代码片段 / DataList 适配 |
+
+**【禁止】** hover 调用 `resolveInspectTarget`（会沿 DOM 祖先逐层重跑命名 `componentChain`，文本叶子分支还会全量扫 `document.styleSheets`）、`collectDeclaredCssValues`、`buildInspectCodeSections`。 
+**【允许】** hover 高亮跑 `buildLayoutChromeModel`（仅 DOM 测量：padding / 子元素 gap）；命名解析仍走 `buildElementInspectHoverPreview`，与测量解耦。标签只展示组件名，**不**在角标拼 `宽 × 高`（尺寸见属性面板 Pin 后「尺寸」行）。 
+**Pin + Hover 比对**：已固定（粉）且悬停另一元素（紫）时，须渲染 `buildHoverMeasureModel` → `InspectEdgeMeasureChrome`，在两者之间展示间距数字（如 `16px`）。比对间距色系：**浅 `#F59F00` / 深 `#FFC247`**（`devInspectCompareMeasure.css`，sRGB + display-p3），与 hover 紫 / pin 粉区分。 
+**【禁止】** `developerInspect.css` 对 `.app-preview *` 强制 `cursor: crosshair !important`（大规模样式重算），仅根节点 `cursor: crosshair`。 
+**【必须】** `resolveInspectPrimaryLabel` 复用同一 `resolveInspectLayerIdentity`，不得成为第二条命名路径，也不得沿祖先取名。
+
+**探针缓存（I14）**：`resolveDesignToken.ts` 的 `normalizeComparableStyleValue` 会把探针 `<div>` 插入 token 根再读 `getComputedStyle` —— 每次插入/移除都强制 style 重算，还会惊动业务侧 Observer。 
+**【必须】** 结果进 `normalizedValueCache`（与 `computedTokenCache` 同批 clear）。 
+**【禁止】** 在 `matchTypographyRole` 的 13 个排版角色循环内逐个调 `normalizeStyleValueForCompare` —— 元素字重与角色无关，循环外算一次传入。
 
 ## 扩展
 

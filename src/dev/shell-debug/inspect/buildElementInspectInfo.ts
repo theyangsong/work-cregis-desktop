@@ -14,7 +14,11 @@ import { buildInspectCodeSections } from './buildInspectCodeSections';
 import { formatDomTagInspectLabel } from './buildTextInspect';
 import { isShellDebugUiElement } from '../shellDebugUiScope';
 import { isInspectFloatLayerElement, resolveInspectScopeRoot } from './inspectFloatLayerScope';
-import { resolveInspectTarget, type InspectTargetResolution } from './resolveEdsComponentInspect';
+import {
+  resolveInspectPrimaryLabel,
+  resolveInspectTarget,
+  type InspectTargetResolution,
+} from './resolveEdsComponentInspect';
 import { resolveInspectAncestorName } from './resolveInspectAncestorName';
 
 export type InspectPropertyItem = {
@@ -211,6 +215,32 @@ function buildCopyBundle(
   }
 
   return lines.join('\n').trim();
+}
+
+/** Hover 高亮仅需元素与命名；完整属性在 Pin 时由 buildElementInspectInfo 计算。 */
+export type InspectHoverPreview = {
+  element: Element;
+  label: string;
+};
+
+/**
+ * Hover 专用轻量构建。
+ *
+ * **【禁止】** 在此调用 `buildElementInspectInfo` / `resolveInspectTarget` —— 后者会沿
+ * DOM 祖先逐层重跑命名（componentChain），文本叶子还会全量扫 `document.styleSheets`，
+ * 在 DataList / 批选态下会让鼠标移动明显掉帧。
+ */
+export function buildElementInspectHoverPreview(
+  element: Element,
+  preview: Element,
+): InspectHoverPreview | null {
+  if (!preview.contains(element) && !isInspectFloatLayerElement(element)) return null;
+  if (isShellDebugUiElement(element)) return null;
+
+  return {
+    element,
+    label: resolveInspectPrimaryLabel(element),
+  };
 }
 
 export type BuildElementInspectInfoOptions = {

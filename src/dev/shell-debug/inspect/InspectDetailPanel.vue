@@ -1,18 +1,28 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue';
+import { EgAnchoredTooltip, EgTooltip } from '@eds/desktop-components';
 import type { ElementInspectInfo, InspectPropertyItem } from './buildElementInspectInfo';
 import { copyDevInspectText } from './copyDevInspectText';
 import { DEV_INSPECT_COPY_FEEDBACK } from './devInspectCopyFeedback';
 import {
+  buildEffectSemanticCssBlock,
+  parseEffectSemanticClassFromStyleLine,
+} from './effectSemanticSpec';
+import {
   resolveCodeLineMode,
   resolveInspectPropertyValueTone,
   splitInspectCodeLines,
+  inspectCodeTokenClass,
   tokenizeCodeLine,
   tokenizeInspectPropertyCodeValue,
   tokenizeInspectPropertyTokenValue,
   tokenizeInspectValue,
-  type InspectCodeToken,
 } from './inspectCodeHighlight';
+import './shellDebugInspectCodeTokens.css';
+
+import { markShellDebugUiInteraction } from '../installShellDebugFloatLayerGuard';
+
+const EFFECT_SPEC_TOOLTIP_WIDTH = 320;
 
 const props = defineProps<{
   info: ElementInspectInfo | null;
@@ -20,6 +30,7 @@ const props = defineProps<{
 }>();
 
 const copiedLineKey = ref<string | null>(null);
+const effectSpecTooltipRef = ref<{ close?: () => void } | null>(null);
 let copiedLineTimer: ReturnType<typeof setTimeout> | undefined;
 
 const hasSelection = computed(() => props.info != null);
@@ -52,33 +63,6 @@ function propertyValueTone(item: InspectPropertyItem) {
   return resolveInspectPropertyValueTone(item.value, item);
 }
 
-function tokenClass(kind: InspectCodeToken['kind']): string {
-  switch (kind) {
-    case 'prop':
-      return 'tokenProp';
-    case 'keyword':
-      return 'tokenKeyword';
-    case 'function':
-      return 'tokenFunction';
-    case 'variable':
-      return 'tokenVariable';
-    case 'value':
-      return 'tokenValue';
-    case 'tag':
-      return 'tokenTag';
-    case 'attr':
-      return 'tokenAttr';
-    case 'string':
-      return 'tokenString';
-    case 'punct':
-      return 'tokenPunct';
-    case 'comment':
-      return 'tokenComment';
-    default:
-      return 'tokenPlain';
-  }
-}
-
 function usageSnippetLines(snippet: string) {
   return splitInspectCodeLines(snippet).map((line, index) => ({
     number: index + 1,
@@ -94,6 +78,45 @@ function sectionLines(title: string, content: string) {
     line,
     tokens: tokenizeCodeLine(line, mode),
   }));
+}
+
+function effectClassFromLine(line: string): string | null {
+  return parseEffectSemanticClassFromStyleLine(line);
+}
+
+function effectCssBlockLines(className: string) {
+  const block = buildEffectSemanticCssBlock(className);
+  if (!block) return [];
+  return splitInspectCodeLines(block).map((line, index) => ({
+    number: index + 1,
+    line,
+    tokens: tokenizeCodeLine(line, 'css'),
+  }));
+}
+
+function onEffectClassPointerDown(event: PointerEvent) {
+  event.stopPropagation();
+  markShellDebugUiInteraction();
+}
+
+function onInspectPanelPointerDown(event: PointerEvent) {
+  if (!(event.target instanceof Element)) return;
+  if (event.target.closest('[data-effect-spec-trigger]')) return;
+  if (event.target.closest('.shell-debug-effect-spec-tooltip')) return;
+  if (event.target.closest('[class*="floating"]')?.querySelector('.shell-debug-effect-spec-tooltip')) {
+    return;
+  }
+  if (!event.target.closest('.shell-debug-dev-inspect-popover')) return;
+  effectSpecTooltipRef.value?.close?.();
+}
+
+function onEffectSpecTooltipPointerDown(event: PointerEvent) {
+  event.stopPropagation();
+  markShellDebugUiInteraction();
+}
+
+function effectSpecLineKey(className: string, lineNumber: number) {
+  return `effect-spec-${className}-${lineNumber}`;
 }
 
 async function onCopyLine(line: string, lineKey: string) {
@@ -123,6 +146,7 @@ onBeforeUnmount(() => {
     v-if="hasSelection && info"
     :class="[$style.root, embedded && $style.rootEmbedded]"
     data-dev-inspect-copy
+    @pointerdown="onInspectPanelPointerDown"
   >
     <div v-if="propertyItems.length > 0" :class="$style.inspectGroup">
       <p :class="$style.sectionTitle">属性</p>
@@ -145,14 +169,14 @@ onBeforeUnmount(() => {
                   <span
                     v-for="(token, tokenIndex) in tokenizeInspectPropertyCodeValue(item.value)"
                     :key="`property-value-${item.label}-${tokenIndex}`"
-                    :class="$style[tokenClass(token.kind)]"
+                    :class="inspectCodeTokenClass(token.kind)"
                   >{{ token.text }}</span>
                 </template>
                 <template v-else-if="propertyValueTone(item) === 'token'">
                   <span
                     v-for="(token, tokenIndex) in tokenizeInspectPropertyTokenValue(item.value)"
                     :key="`property-value-${item.label}-${tokenIndex}`"
-                    :class="$style[tokenClass(token.kind)]"
+                    :class="inspectCodeTokenClass(token.kind)"
                   >{{ token.text }}</span>
                 </template>
                 <template v-else>{{ item.value }}</template>
@@ -188,14 +212,14 @@ onBeforeUnmount(() => {
                   <span
                     v-for="(token, tokenIndex) in tokenizeInspectPropertyCodeValue(item.value)"
                     :key="`adaptive-value-${item.label}-${tokenIndex}`"
-                    :class="$style[tokenClass(token.kind)]"
+                    :class="inspectCodeTokenClass(token.kind)"
                   >{{ token.text }}</span>
                 </template>
                 <template v-else-if="propertyValueTone(item) === 'token'">
                   <span
                     v-for="(token, tokenIndex) in tokenizeInspectPropertyTokenValue(item.value)"
                     :key="`adaptive-value-${item.label}-${tokenIndex}`"
-                    :class="$style[tokenClass(token.kind)]"
+                    :class="inspectCodeTokenClass(token.kind)"
                   >{{ token.text }}</span>
                 </template>
                 <template v-else>{{ item.value }}</template>
@@ -222,7 +246,6 @@ onBeforeUnmount(() => {
             <button
               type="button"
               :class="$style.codeLineButton"
-              title="点击复制"
               @click="onCopyLine(row.line, `usage-${row.number}`)"
             >
               <span :class="$style.lineNumber">{{ row.number }}</span>
@@ -230,7 +253,7 @@ onBeforeUnmount(() => {
                 <span
                   v-for="(token, tokenIndex) in row.tokens"
                   :key="`usage-${row.number}-${tokenIndex}`"
-                  :class="$style[tokenClass(token.kind)]"
+                  :class="inspectCodeTokenClass(token.kind)"
                 >{{ token.text }}</span>
               </span>
               <span
@@ -254,12 +277,106 @@ onBeforeUnmount(() => {
           <li
             v-for="row in sectionLines(section.title, section.content)"
             :key="`${section.title}-${row.number}`"
-            :class="$style.codeLineRow"
+            :class="[
+              $style.codeLineRow,
+              effectClassFromLine(row.line) && $style.codeLineRowExpand,
+            ]"
           >
+            <div
+              v-if="effectClassFromLine(row.line)"
+              class="effect-class-trigger-host"
+              :class="$style.effectClassTooltipHost"
+            >
+              <EgAnchoredTooltip
+                ref="effectSpecTooltipRef"
+                placement="left"
+                align="end"
+                trigger="click"
+                :click-toggle="true"
+                :wrap-tooltip="false"
+                :close-on-scroll="false"
+                teleport-to="body"
+                boundary-selector="body"
+              >
+                <button
+                  type="button"
+                  :class="$style.codeLineButton"
+                  data-effect-spec-trigger
+                  title="点击查看 Effect 参数"
+                  @pointerdown="onEffectClassPointerDown"
+                >
+                  <span :class="$style.lineNumber">{{ row.number }}</span>
+                  <span :class="$style.lineContent">
+                    <span
+                      v-for="(token, tokenIndex) in row.tokens"
+                      :key="`${section.title}-${row.number}-${tokenIndex}`"
+                      :class="inspectCodeTokenClass(token.kind)"
+                    >{{ token.text }}</span>
+                  </span>
+                </button>
+                <template #content>
+                  <EgTooltip
+                    panel-kind="flotation"
+                    panel-radius="radius-md"
+                    panel-layout-motion
+                    panel-micro-float
+                    width-mode="fixed"
+                    :width="EFFECT_SPEC_TOOLTIP_WIDTH"
+                    height-mode="adaptive"
+                    :max-height="360"
+                    :scrollable="true"
+                  >
+                    <div
+                      class="shell-debug-effect-spec-tooltip"
+                      :class="$style.effectSpecCodeBlock"
+                      @pointerdown="onEffectSpecTooltipPointerDown"
+                    >
+                      <ul :class="$style.codeLineRows">
+                        <li
+                          v-for="detailRow in effectCssBlockLines(effectClassFromLine(row.line)!)"
+                          :key="`${section.title}-effect-${detailRow.number}`"
+                          :class="$style.codeLineRow"
+                        >
+                          <div
+                            role="button"
+                            tabindex="0"
+                            :class="$style.effectSpecLineButton"
+                            @click="onCopyLine(
+                              detailRow.line,
+                              effectSpecLineKey(effectClassFromLine(row.line)!, detailRow.number),
+                            )"
+                            @keydown.enter.prevent="onCopyLine(
+                              detailRow.line,
+                              effectSpecLineKey(effectClassFromLine(row.line)!, detailRow.number),
+                            )"
+                          >
+                            <span :class="$style.lineNumber">{{ detailRow.number }}</span>
+                            <span :class="$style.effectSpecLineContent">
+                              <span
+                                v-for="(token, tokenIndex) in detailRow.tokens"
+                                :key="`${section.title}-effect-${detailRow.number}-${tokenIndex}`"
+                                :class="inspectCodeTokenClass(token.kind)"
+                              >{{ token.text }}</span>
+                            </span>
+                            <span
+                              v-if="copiedLineKey === effectSpecLineKey(
+                                effectClassFromLine(row.line)!,
+                                detailRow.number,
+                              )"
+                              :class="$style.copyFeedback"
+                            >{{ DEV_INSPECT_COPY_FEEDBACK }}</span>
+                          </div>
+                        </li>
+                      </ul>
+                    </div>
+                  </EgTooltip>
+                </template>
+              </EgAnchoredTooltip>
+            </div>
             <button
+              v-else
               type="button"
               :class="$style.codeLineButton"
-              title="点击复制"
               @click="onCopyLine(row.line, `${section.title}-${row.number}`)"
             >
               <span :class="$style.lineNumber">{{ row.number }}</span>
@@ -267,7 +384,7 @@ onBeforeUnmount(() => {
                 <span
                   v-for="(token, tokenIndex) in row.tokens"
                   :key="`${section.title}-${row.number}-${tokenIndex}`"
-                  :class="$style[tokenClass(token.kind)]"
+                  :class="inspectCodeTokenClass(token.kind)"
                 >{{ token.text }}</span>
               </span>
               <span
@@ -356,6 +473,25 @@ onBeforeUnmount(() => {
 .propRow {
   display: contents;
   margin: 0;
+}
+
+.codeLineRowExpand {
+  width: 100%;
+}
+
+.effectClassTooltipHost {
+  display: block;
+  width: 100%;
+}
+
+.effectClassTooltipHost :global([class*='root']) {
+  display: block;
+  width: 100%;
+}
+
+.effectClassTooltipHost :global([class*='trigger']) {
+  display: block;
+  width: 100%;
 }
 
 .codeRow,
@@ -466,62 +602,7 @@ onBeforeUnmount(() => {
   text-align: left;
 }
 
-.tokenProp,
-.tokenPunct,
-.tokenPlain,
-.tokenVariable {
-  color: var(--text-base-primary);
-}
-
-.tokenKeyword,
-.tokenValue {
-  color: #ec008c;
-  color: color(display-p3 0.9255 0 0.549);
-}
-
-.tokenFunction,
-.tokenString {
-  color: #b45309;
-  color: color(display-p3 0.7059 0.3255 0.0353);
-}
-
-.codeBlockFrame .tokenComment {
-  color: var(--text-base-tertiary);
-}
-
-.codeBlockFrame .tokenAttr {
-  color: #006d42;
-}
-
-.codeBlockFrame .tokenTag {
-  color: #6d28d9;
-}
-
-:global([data-theme='dark']) .tokenKeyword,
-:global([data-theme='dark']) .tokenValue {
-  color: #ff77b9;
-  color: color(display-p3 1 0.4667 0.7255);
-}
-
-:global([data-theme='dark']) .tokenFunction,
-:global([data-theme='dark']) .tokenString {
-  color: #e8a749;
-  color: color(display-p3 0.9098 0.6549 0.2863);
-}
-
-:global([data-theme='dark']) .codeBlockFrame .tokenKeyword,
-:global([data-theme='dark']) .codeBlockFrame .tokenValue,
-:global([data-theme='dark']) .codeBlockFrame .tokenTag {
-  color: #af7dff;
-  color: color(display-p3 0.6863 0.4902 1);
-}
-
-:global([data-theme='dark']) .codeBlockFrame .tokenFunction,
-:global([data-theme='dark']) .codeBlockFrame .tokenString,
-:global([data-theme='dark']) .codeBlockFrame .tokenAttr {
-  color: #54e8ae;
-  color: color(display-p3 0.3294 0.9098 0.6824);
-}
+/* 语法色真源在 shellDebugInspectCodeTokens.css；此处不得再声明 token 颜色。 */
 
 .copyFeedback {
   grid-column: 3;
@@ -531,6 +612,49 @@ onBeforeUnmount(() => {
   line-height: var(--eds-footnote-line-height);
   color: var(--text-base-secondary);
   white-space: nowrap;
+}
+
+.effectSpecCodeBlock {
+  border: none;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  box-sizing: border-box;
+  min-width: 0;
+  user-select: text;
+}
+
+.effectSpecLineButton {
+  display: grid;
+  width: 100%;
+  grid-template-columns: var(--spacing-6) minmax(0, 1fr) auto;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  border-radius: var(--radius-xs);
+  color: unset;
+  composes: motion-ease is-paint from global;
+}
+
+.effectSpecLineButton:hover {
+  background: var(--event-hover);
+}
+
+.effectSpecLineContent {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: var(--spacing-05) var(--spacing-3);
+  font-family: var(--eds-family-mono, ui-monospace, monospace);
+  font-size: var(--eds-footnote-size);
+  font-weight: var(--eds-footnote-weight);
+  line-height: var(--eds-footnote-line-height);
+  white-space: pre-wrap;
+  word-break: break-word;
+  text-align: left;
 }
 
 .hint {

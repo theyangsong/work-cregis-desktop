@@ -156,6 +156,12 @@
   display: none;
 }
 
+:global(.eds-popover:has(.shell-debug-dev-inspect-popover) [class*='contentSlotWithTopTool'].shell-debug-dev-inspect-scroll-fade-bottom) {
+  -webkit-mask-image: linear-gradient(to top, transparent 0, #000 var(--spacing-2));
+  mask-image: linear-gradient(to top, transparent 0, #000 var(--spacing-2));
+  transition: var(--motion-recipe-scroll-fade);
+}
+
 :global(.shell-debug-dev-inspect-hint) {
   display: block;
   width: max-content;

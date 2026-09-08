@@ -725,17 +725,35 @@ const isDataListEmpty = computed(
   () => Boolean(customize.empty) || totalRowCount.value === 0,
 );
 
+const isBatchSelectModeActive = computed(() => Boolean(customize.selectMode));
+
 /** 批处理多选进行中：工具栏批处理钮禁用（退出走 Batch Bar / Esc，勿再点工具栏切换）。 */
 const isBatchToolbarDisabled = computed(
   () =>
     skidContentLocked.value
     || batchButton.value.disabled
-    || customize.selectMode
+    || isBatchSelectModeActive.value
     || isDataListEmpty.value,
 );
 
+/** 批处理多选：自动化 / 筛选禁用。 */
+const isToolbarAutomationDisabled = computed(
+  () =>
+    skidContentLocked.value
+    || automationButton.value.disabled
+    || isDataListEmpty.value
+    || isBatchSelectModeActive.value,
+);
+
+const isToolbarFilterDisabled = computed(
+  () => skidContentLocked.value || isDataListEmpty.value || isBatchSelectModeActive.value,
+);
+
+/** 待审批 / 待签名批处理时表头排序仍可用。 */
 const isHeaderSortDisabled = computed(
-  () => isDataListEmpty.value || Boolean(customize.selectMode),
+  () =>
+    isDataListEmpty.value
+    || (isBatchSelectModeActive.value && !isApprovalMenu.value && !isSigningMenu.value),
 );
 
 function onToolbarBatchClick() {
@@ -934,7 +952,7 @@ const displayBatchActions = computed(() => {
               :badge="automationButton.badge"
               :show-badge="automationButton.showBadge"
               :show-reddot="automationButton.showReddot"
-              :disabled="skidContentLocked || automationButton.disabled || isDataListEmpty"
+              :disabled="isToolbarAutomationDisabled"
             >
               <EgIcon :name="automationButton.icon" size="sm" />
             </EgIconButtonPro>
@@ -950,7 +968,7 @@ const displayBatchActions = computed(() => {
               :disabled="
                 skidContentLocked
                   || button.item.disabled
-                  || (button.key === 'filter' && isDataListEmpty)
+                  || (button.key === 'filter' && isToolbarFilterDisabled)
               "
               @click="onToolbarActionClick(button.key)"
             >
@@ -968,7 +986,7 @@ const displayBatchActions = computed(() => {
               :disabled="
                 skidContentLocked
                   || button.item.disabled
-                  || (button.key === 'filter' && isDataListEmpty)
+                  || (button.key === 'filter' && isToolbarFilterDisabled)
               "
               @click="onToolbarActionClick(button.key)"
             >

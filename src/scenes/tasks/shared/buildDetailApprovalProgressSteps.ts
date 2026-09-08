@@ -242,7 +242,6 @@ function buildWithdrawnStep(
         ),
       ],
       memberPresentation: 'acted-rows',
-      markerTone: 'danger',
     };
   }
 
@@ -256,7 +255,6 @@ function buildWithdrawnStep(
       ? membersWithActedDeviceInfo([{ ...initiator, atDisplay }])
       : [],
     memberPresentation: 'acted-rows',
-    markerTone: 'danger',
   };
 }
 

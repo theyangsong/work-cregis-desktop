@@ -222,95 +222,133 @@ export function buildHoverMeasureModel(
   preview: Element,
 ): InspectEdgeMeasure[] {
   const measures: InspectEdgeMeasure[] = [];
+  const gapBelow = targetRect.top - pinnedRect.bottom;
+  const gapAbove = pinnedRect.top - targetRect.bottom;
+  const gapRight = targetRect.left - pinnedRect.right;
+  const gapLeft = pinnedRect.left - targetRect.right;
 
-  if (targetRect.left >= pinnedRect.right - 0.5) {
-    const distance = targetRect.left - pinnedRect.right;
-    const centerY = overlapCenter(pinnedRect.top, pinnedRect.bottom, targetRect.top, targetRect.bottom);
-    measures.push({
-      axis: 'horizontal',
-      lineRect: {
-        top: centerY - 0.5,
-        left: pinnedRect.right,
-        width: Math.max(distance, 1),
-        height: 1,
-      },
-      labelRect: {
-        top: centerY - 18,
-        left: pinnedRect.right + distance / 2 - 48,
-        width: 96,
-        height: 20,
-      },
-      displayLabel: formatDistanceLabel(preview, distance),
-    });
-  } else if (targetRect.right <= pinnedRect.left + 0.5) {
-    const distance = pinnedRect.left - targetRect.right;
-    const centerY = overlapCenter(pinnedRect.top, pinnedRect.bottom, targetRect.top, targetRect.bottom);
-    measures.push({
-      axis: 'horizontal',
-      lineRect: {
-        top: centerY - 0.5,
-        left: targetRect.right,
-        width: Math.max(distance, 1),
-        height: 1,
-      },
-      labelRect: {
-        top: centerY - 18,
-        left: targetRect.right + distance / 2 - 48,
-        width: 96,
-        height: 20,
-      },
-      displayLabel: formatDistanceLabel(preview, distance),
-    });
-  }
-
-  if (targetRect.top >= pinnedRect.bottom - 0.5) {
-    const distance = targetRect.top - pinnedRect.bottom;
-    const centerX = overlapCenter(pinnedRect.left, pinnedRect.right, targetRect.left, targetRect.right);
+  if (gapBelow > 0.5) {
     measures.push({
       axis: 'vertical',
       lineRect: {
         top: pinnedRect.bottom,
-        left: centerX - 0.5,
+        left: overlapCenterOnAxis(pinnedRect.left, pinnedRect.right, targetRect.left, targetRect.right) - 0.5,
         width: 1,
-        height: Math.max(distance, 1),
+        height: Math.max(gapBelow, 1),
       },
-      labelRect: {
-        top: pinnedRect.bottom + distance / 2 - 10,
-        left: centerX + 6,
-        width: 96,
-        height: 20,
-      },
-      displayLabel: formatDistanceLabel(preview, distance),
+      labelRect: { top: 0, left: 0, width: 0, height: 0 },
+      displayLabel: formatDistanceLabel(preview, gapBelow),
     });
-  } else if (targetRect.bottom <= pinnedRect.top + 0.5) {
-    const distance = pinnedRect.top - targetRect.bottom;
-    const centerX = overlapCenter(pinnedRect.left, pinnedRect.right, targetRect.left, targetRect.right);
+  } else if (gapAbove > 0.5) {
     measures.push({
       axis: 'vertical',
       lineRect: {
         top: targetRect.bottom,
-        left: centerX - 0.5,
+        left: overlapCenterOnAxis(pinnedRect.left, pinnedRect.right, targetRect.left, targetRect.right) - 0.5,
         width: 1,
-        height: Math.max(distance, 1),
+        height: Math.max(gapAbove, 1),
       },
-      labelRect: {
-        top: targetRect.bottom + distance / 2 - 10,
-        left: centerX + 6,
-        width: 96,
-        height: 20,
-      },
-      displayLabel: formatDistanceLabel(preview, distance),
+      labelRect: { top: 0, left: 0, width: 0, height: 0 },
+      displayLabel: formatDistanceLabel(preview, gapAbove),
     });
   }
 
-  return measures;
+  if (gapRight > 0.5) {
+    measures.push({
+      axis: 'horizontal',
+      lineRect: {
+        top: overlapCenterOnAxis(pinnedRect.top, pinnedRect.bottom, targetRect.top, targetRect.bottom) - 0.5,
+        left: pinnedRect.right,
+        width: Math.max(gapRight, 1),
+        height: 1,
+      },
+      labelRect: { top: 0, left: 0, width: 0, height: 0 },
+      displayLabel: formatDistanceLabel(preview, gapRight),
+    });
+  } else if (gapLeft > 0.5) {
+    measures.push({
+      axis: 'horizontal',
+      lineRect: {
+        top: overlapCenterOnAxis(pinnedRect.top, pinnedRect.bottom, targetRect.top, targetRect.bottom) - 0.5,
+        left: targetRect.right,
+        width: Math.max(gapLeft, 1),
+        height: 1,
+      },
+      labelRect: { top: 0, left: 0, width: 0, height: 0 },
+      displayLabel: formatDistanceLabel(preview, gapLeft),
+    });
+  }
+
+  return resolveHoverMeasureLabels(measures);
 }
 
-function overlapCenter(aStart: number, aEnd: number, bStart: number, bEnd: number): number {
+/** 两区间水平/垂直重叠段的中点；无重叠时取四端点均值。 */
+function overlapCenterOnAxis(aStart: number, aEnd: number, bStart: number, bEnd: number): number {
   const start = Math.max(aStart, bStart);
   const end = Math.min(aEnd, bEnd);
-  if (end > start) return (start + end) / 2;
+  if (end - start > 0.5) return (start + end) / 2;
   return (aStart + aEnd + bStart + bEnd) / 4;
+}
+
+const VERTICAL_LABEL_DOWN_NUDGE_PX = 8;
+const HORIZONTAL_LABEL_UP_OFFSET_PX = 16;
+const HORIZONTAL_LABEL_FROM_LEFT_PX = 2;
+
+function measureLineCenter(rect: InspectBoxRect): { x: number; y: number } {
+  return {
+    x: rect.left + rect.width / 2,
+    y: rect.top + rect.height / 2,
+  };
+}
+
+/** 双轴比对时沿各自测量线垂直错开标签，避免 L 形拐角处叠字。 */
+export function resolveHoverMeasureLabels(measures: InspectEdgeMeasure[]): InspectEdgeMeasure[] {
+  const vertical = measures.find((measure) => measure.axis === 'vertical');
+  const horizontal = measures.find((measure) => measure.axis === 'horizontal');
+  const hasBoth = vertical != null && horizontal != null;
+
+  if (!hasBoth) {
+    return measures.map((measure) => {
+      const center = measureLineCenter(measure.lineRect);
+      return {
+        ...measure,
+        labelRect: {
+          top: center.y,
+          left: center.x,
+          width: 0,
+          height: 0,
+        },
+      };
+    });
+  }
+
+  return measures.map((measure) => {
+    const center = measureLineCenter(measure.lineRect);
+
+    if (measure.axis === 'vertical') {
+      return {
+        ...measure,
+        labelRect: {
+          top: center.y + VERTICAL_LABEL_DOWN_NUDGE_PX,
+          left: center.x,
+          width: 0,
+          height: 0,
+        },
+      };
+    }
+
+    const lineRect = measure.lineRect;
+    const lineCenter = measureLineCenter(lineRect);
+    return {
+      ...measure,
+      labelRect: {
+        top: lineCenter.y - HORIZONTAL_LABEL_UP_OFFSET_PX,
+        left: lineRect.left + HORIZONTAL_LABEL_FROM_LEFT_PX,
+        width: 0,
+        height: 0,
+      },
+    };
+  });
 }
 
 export function boxRectStyle(rect: InspectBoxRect): Record<string, string> {

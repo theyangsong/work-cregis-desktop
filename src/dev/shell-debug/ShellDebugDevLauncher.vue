@@ -167,9 +167,12 @@ function syncInspectDividerScrollState() {
   const popover = inspectScrollPopover;
   if (!slot || !popover) return;
 
-  const canScroll = slot.scrollHeight - slot.clientHeight > INSPECT_SCROLL_EPSILON;
-  const scrolled = slot.scrollTop > INSPECT_SCROLL_EPSILON;
+  const { scrollTop, scrollHeight, clientHeight } = slot;
+  const canScroll = scrollHeight - clientHeight > INSPECT_SCROLL_EPSILON;
+  const scrolled = scrollTop > INSPECT_SCROLL_EPSILON;
+
   popover.classList.toggle('shell-debug-dev-inspect-scrolled', canScroll && scrolled);
+  slot.classList.toggle('shell-debug-dev-inspect-scroll-fade-bottom', canScroll);
 }
 
 function unbindInspectScrollChrome() {
@@ -178,8 +181,10 @@ function unbindInspectScrollChrome() {
   }
   inspectScrollResizeObserver?.disconnect();
   inspectScrollResizeObserver = undefined;
+  const slot = inspectScrollSlot;
   inspectScrollSlot = null;
   inspectScrollPopover?.classList.remove('shell-debug-dev-inspect-scrolled');
+  slot?.classList.remove('shell-debug-dev-inspect-scroll-fade-bottom');
   inspectScrollPopover = null;
   inspectScrollListener = undefined;
 }

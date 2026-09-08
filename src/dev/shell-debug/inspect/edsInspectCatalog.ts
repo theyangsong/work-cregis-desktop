@@ -12,6 +12,7 @@ import {
   deriveDividerDirection,
   deriveDividerType,
 } from './buildDividerInspect';
+import { buildTooltipUsageSnippet } from './buildEffectSemanticInspect';
 import { resolveInspectPropLabel } from './inspectPropLabels';
 
 export type EdsPropSpec = {
@@ -43,6 +44,8 @@ export type EdsInspectCatalogEntry = {
    * 返回 null 用 `displayName`。**【禁止】** 在 resolver 里写逐组件 `if` 代替本 hook。
    */
   resolveDisplayName?: (props: Record<string, unknown>) => string | null;
+  /** 用法片段 hook（如 Tooltip 须始终输出 panelKind）。 */
+  buildUsageSnippet?: (props: Record<string, unknown>) => string;
   props: EdsPropSpec[];
 };
 
@@ -52,11 +55,12 @@ export type EdsInspectCatalogEntry = {
  *
  * 真源：eds-desktop `Tooltip.vue` 的 `EFFECT_PANEL_CLASS`
  * + `packages/tokens/spec/effect/semantic.json` 的 `title`（Popup Box / Container Box）。
- * 仅收录「盒子」角色；flotation / subtle / molde 仍是 Tooltip 本职。
+ * 仅收录「盒子」角色；flotation → **FlotationBox**；subtle / molde 仍是 Tooltip 本职。
  */
 const TOOLTIP_PANEL_ROLE_NAMES: Readonly<Record<string, string>> = {
   popup: 'PopupBox',
   container: 'ContainerBox',
+  flotation: 'FlotationBox',
 };
 
 function formatBoolean(value: unknown): string {
@@ -384,6 +388,7 @@ export const EDS_INSPECT_CATALOG: EdsInspectCatalogEntry[] = [
     vueNames: ['Tooltip', 'EgTooltip', 'AnchoredTooltip', 'EgAnchoredTooltip'],
     resolveDisplayName: (props) =>
       TOOLTIP_PANEL_ROLE_NAMES[String(props.panelKind ?? '')] ?? null,
+    buildUsageSnippet: buildTooltipUsageSnippet,
     props: [
       { key: 'panelKind', label: '面板类型', defaultValue: 'flotation' },
       { key: 'panelRadius', label: '面板圆角' },

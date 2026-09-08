@@ -8,6 +8,8 @@ import {
   inspectPinnedRect,
 } from './developerInspectSession';
 import InspectLayoutChrome from './InspectLayoutChrome.vue';
+import InspectEdgeMeasureChrome from './InspectEdgeMeasureChrome.vue';
+import { buildHoverMeasureModel } from './buildLayoutMeasurement';
 import {
   DEV_INSPECT_HOVER_ACCENT,
   DEV_INSPECT_PINNED_ACCENT,
@@ -44,6 +46,29 @@ const showHoverChrome = computed(() => {
   if (!pinned) return true;
   return inspectHoverInfo.value.element !== pinned.element;
 });
+
+const compareEdgeMeasures = computed(() => {
+  if (
+    !developerInspectActive.value
+    || !inspectPinnedInfo.value
+    || !inspectPinnedRect.value
+    || !inspectHoverInfo.value
+    || !inspectHoverRect.value
+    || !previewRoot.value
+  ) {
+    return [];
+  }
+  if (inspectPinnedInfo.value.element === inspectHoverInfo.value.element) {
+    return [];
+  }
+  void inspectPinnedRect.value;
+  void inspectHoverRect.value;
+  return buildHoverMeasureModel(
+    inspectPinnedRect.value,
+    inspectHoverRect.value,
+    previewRoot.value,
+  );
+});
 </script>
 
 <template>
@@ -58,8 +83,14 @@ const showHoverChrome = computed(() => {
         :accent="DEV_INSPECT_PINNED_ACCENT"
       />
 
+      <InspectEdgeMeasureChrome
+        v-if="compareEdgeMeasures.length > 0"
+        :measures="compareEdgeMeasures"
+      />
+
       <InspectLayoutChrome
         v-if="showHoverChrome && inspectHoverInfo && inspectHoverRect && previewRoot"
+        variant="hover"
         :preview="previewRoot"
         :component-label="inspectHoverInfo.label"
         :pinned-element="inspectHoverInfo.element"

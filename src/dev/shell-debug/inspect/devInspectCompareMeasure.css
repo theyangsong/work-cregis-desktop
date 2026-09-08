@@ -1,0 +1,27 @@
+/* Pin + Hover 比对间距 —— 橙色系；字面量 + P3，不依赖容器变量链（teleport 到 body）。 */
+
+.dev-inspect-compare-measure__gap {
+  border: 1px dashed color-mix(in srgb, #f59f00 58%, transparent);
+  border: 1px dashed color-mix(in srgb, color(display-p3 0.9608 0.6235 0) 58%, transparent);
+  background: color-mix(in srgb, #f59f00 14%, transparent);
+  background: color-mix(in srgb, color(display-p3 0.9608 0.6235 0) 14%, transparent);
+}
+
+.dev-inspect-compare-measure__label {
+  background: #f59f00;
+  background: color(display-p3 0.9608 0.6235 0);
+  color: #ffffff;
+}
+
+[data-theme='dark'] .dev-inspect-compare-measure__gap {
+  border: 1px dashed color-mix(in srgb, #ffc247 58%, transparent);
+  border: 1px dashed color-mix(in srgb, color(display-p3 1 0.7686 0.2941) 58%, transparent);
+  background: color-mix(in srgb, #ffc247 14%, transparent);
+  background: color-mix(in srgb, color(display-p3 1 0.7686 0.2941) 14%, transparent);
+}
+
+[data-theme='dark'] .dev-inspect-compare-measure__label {
+  background: #ffc247;
+  background: color(display-p3 1 0.7686 0.2941);
+  color: #1c1c1e;
+}

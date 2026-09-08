@@ -1,5 +1,5 @@
 import { ref, shallowRef, type ShallowRef } from 'vue';
-import type { ElementInspectInfo } from './buildElementInspectInfo';
+import type { ElementInspectInfo, InspectHoverPreview } from './buildElementInspectInfo';
 
 /** 开发者点选模式：开启时拦截 .app-preview 内业务交互。 */
 export const developerInspectActive = ref(false);
@@ -9,7 +9,7 @@ export const devInspectPopoverOpen = developerInspectActive;
 
 export const inspectHoverPopoverHovered = ref(false);
 
-export const inspectHoverInfo = shallowRef<ElementInspectInfo | null>(null);
+export const inspectHoverInfo = shallowRef<InspectHoverPreview | null>(null);
 export const inspectHoverRect = shallowRef<DOMRect | null>(null);
 
 export const inspectPinnedInfo = shallowRef<ElementInspectInfo | null>(

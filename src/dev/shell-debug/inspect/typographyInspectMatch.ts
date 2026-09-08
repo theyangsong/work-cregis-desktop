@@ -70,13 +70,13 @@ function roleMatchesEffectiveMetrics(
   preview: Element,
   role: TypographyTextStyleRole,
   metrics: EffectiveTypographyMetrics,
+  elementWeight: string,
 ): boolean {
   const roleSizePx = Number.parseFloat(getComputedDesignTokenValue(preview, role.sizeToken, 'fontSize'));
   const roleLineHeightPx = Number.parseFloat(
     getComputedDesignTokenValue(preview, role.lineHeightToken, 'lineHeight'),
   );
   const roleWeight = getComputedDesignTokenValue(preview, role.weightToken, 'fontWeight');
-  const elementWeight = normalizeStyleValueForCompare(preview, metrics.fontWeight, 'fontWeight');
 
   return (
     isNear(metrics.fontSizePx, roleSizePx)
@@ -134,8 +134,9 @@ export function matchTypographyRole(
   }
 
   const metrics = resolveEffectiveTypographyMetrics(style);
+  const elementWeight = normalizeStyleValueForCompare(preview, metrics.fontWeight, 'fontWeight');
   const candidates = TYPOGRAPHY_TEXT_STYLE_ROLES.filter((role) =>
-    roleMatchesEffectiveMetrics(preview, role, metrics),
+    roleMatchesEffectiveMetrics(preview, role, metrics, elementWeight),
   );
 
   if (candidates.length === 0) return null;

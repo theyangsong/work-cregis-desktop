@@ -15,3 +15,5 @@
   .eds-divider:not([aria-hidden='true']) {
   display: block;
 }
+
+@import './inspect/shellDebugInspectCodeTokens.css';

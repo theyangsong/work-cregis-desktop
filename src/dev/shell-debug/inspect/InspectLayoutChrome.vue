@@ -3,18 +3,25 @@ import { computed } from 'vue';
 import { buildLayoutChromeModel, boxRectStyle } from './buildLayoutMeasurement';
 import { DEV_INSPECT_PINNED_ACCENT } from './devInspectTheme';
 
-const props = defineProps<{
-  preview: Element;
-  componentLabel: string;
-  pinnedElement: Element;
-  pinnedRect: DOMRect;
-  accent?: string;
-}>();
+const props = withDefaults(
+  defineProps<{
+    preview: Element;
+    componentLabel: string;
+    pinnedElement: Element;
+    pinnedRect: DOMRect;
+    accent?: string;
+    /** hover 与 pin 共用 padding / gap 测量；命名解析仍走轻量路径。 */
+    variant?: 'full' | 'hover';
+  }>(),
+  { variant: 'full' },
+);
 
 const layoutModel = computed(() => {
   void props.pinnedRect;
   return buildLayoutChromeModel(props.pinnedElement, props.preview);
 });
+
+const selectionRectStyle = computed(() => boxRectStyle(layoutModel.value.selectionRect));
 
 const accentStyle = computed(
   () =>
@@ -26,7 +33,7 @@ const accentStyle = computed(
 
 <template>
   <div :class="$style.root" :style="accentStyle">
-    <div :class="$style.selectionShell" :style="boxRectStyle(layoutModel.selectionRect)">
+    <div :class="$style.selectionShell" :style="selectionRectStyle">
       <span :class="$style.componentLabel">{{ componentLabel }}</span>
     </div>
 
