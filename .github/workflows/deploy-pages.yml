@@ -37,7 +37,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: theyangsong/eds-desktop
-          ref: c94eff4
+          ref: c94eff4d558756deb7eaa7b0daf2bc6f304bb475
+          fetch-depth: 0
           path: eds-desktop
 
       - name: Log eds-desktop revision
