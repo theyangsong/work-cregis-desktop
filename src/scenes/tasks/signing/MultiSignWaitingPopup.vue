@@ -113,7 +113,6 @@ function onRemarkDismiss() {
           :title="ui('Miner Fee')"
           :remark="remark"
           :miner-fee-profile="minerFeeProfile"
-          require-miner-fee
           @update:remark="emit('update:remark', $event)"
           @confirm="onReadyConfirm"
           @dismiss="onRemarkDismiss"

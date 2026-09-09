@@ -7,6 +7,7 @@ import {
   inspectPinnedInfo,
   inspectPinnedRect,
 } from './developerInspectSession';
+import { resolveInspectScopeRoot } from './inspectFloatLayerScope';
 import InspectLayoutChrome from './InspectLayoutChrome.vue';
 import InspectEdgeMeasureChrome from './InspectEdgeMeasureChrome.vue';
 import { buildHoverMeasureModel } from './buildLayoutMeasurement';
@@ -18,16 +19,28 @@ import styles from '../ShellDebugPlatform.module.css';
 
 const PREVIEW_SELECTOR = '.app-preview';
 
-const previewRoot = computed(() => {
+function resolveAppPreview(): Element | null {
+  return document.querySelector(PREVIEW_SELECTOR);
+}
+
+/** 布局 chrome 的 scope：preview 内用 preview；teleport 浮层用浮层根（eds-tooltip-v-* 等）。 */
+function resolveInspectChromeRoot(element: Element | null): Element | null {
+  const preview = resolveAppPreview();
+  if (!preview) return null;
+  if (!element) return preview;
+  return resolveInspectScopeRoot(element, preview);
+}
+
+const inspectChromeRoot = computed(() => {
   const pinned = inspectPinnedInfo.value;
   if (pinned) {
-    return pinned.element.closest(PREVIEW_SELECTOR);
+    return resolveInspectChromeRoot(pinned.element);
   }
   const hover = inspectHoverInfo.value;
   if (hover) {
-    return hover.element.closest(PREVIEW_SELECTOR);
+    return resolveInspectChromeRoot(hover.element);
   }
-  return document.querySelector(PREVIEW_SELECTOR);
+  return resolveAppPreview();
 });
 
 const showPinnedChrome = computed(
@@ -35,11 +48,11 @@ const showPinnedChrome = computed(
     developerInspectActive.value
     && inspectPinnedInfo.value
     && inspectPinnedRect.value
-    && previewRoot.value,
+    && inspectChromeRoot.value,
 );
 
 const showHoverChrome = computed(() => {
-  if (!developerInspectActive.value || !inspectHoverInfo.value || !inspectHoverRect.value || !previewRoot.value) {
+  if (!developerInspectActive.value || !inspectHoverInfo.value || !inspectHoverRect.value || !inspectChromeRoot.value) {
     return false;
   }
   const pinned = inspectPinnedInfo.value;
@@ -54,7 +67,7 @@ const compareEdgeMeasures = computed(() => {
     || !inspectPinnedRect.value
     || !inspectHoverInfo.value
     || !inspectHoverRect.value
-    || !previewRoot.value
+    || !inspectChromeRoot.value
   ) {
     return [];
   }
@@ -66,7 +79,7 @@ const compareEdgeMeasures = computed(() => {
   return buildHoverMeasureModel(
     inspectPinnedRect.value,
     inspectHoverRect.value,
-    previewRoot.value,
+    resolveAppPreview() ?? inspectChromeRoot.value,
   );
 });
 </script>
@@ -75,8 +88,8 @@ const compareEdgeMeasures = computed(() => {
   <Teleport to="body">
     <div v-if="developerInspectActive" data-dev-inspect-overlay :class="styles.inspectOverlayRoot">
       <InspectLayoutChrome
-        v-if="showPinnedChrome && inspectPinnedInfo && inspectPinnedRect && previewRoot"
-        :preview="previewRoot"
+        v-if="showPinnedChrome && inspectPinnedInfo && inspectPinnedRect && inspectChromeRoot"
+        :preview="inspectChromeRoot"
         :component-label="inspectPinnedInfo.label"
         :pinned-element="inspectPinnedInfo.element"
         :pinned-rect="inspectPinnedRect"
@@ -89,9 +102,9 @@ const compareEdgeMeasures = computed(() => {
       />
 
       <InspectLayoutChrome
-        v-if="showHoverChrome && inspectHoverInfo && inspectHoverRect && previewRoot"
+        v-if="showHoverChrome && inspectHoverInfo && inspectHoverRect && inspectChromeRoot"
         variant="hover"
-        :preview="previewRoot"
+        :preview="inspectChromeRoot"
         :component-label="inspectHoverInfo.label"
         :pinned-element="inspectHoverInfo.element"
         :pinned-rect="inspectHoverRect"

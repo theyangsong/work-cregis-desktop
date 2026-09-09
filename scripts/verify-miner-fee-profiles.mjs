@@ -32,13 +32,17 @@ const REQUIRED_SOURCE_MARKERS = [
     markers: ['multi-sign-waiting-shell', 'useMultiSignWaitingPopupHost'],
   },
   {
-    file: 'src/scenes/tasks/approval/ApprovalRemarkPopoverPanel.vue',
+    file: 'src/scenes/tasks/approval/ApprovalRemarkPopover.vue',
     markers: [
-      'EgMinerFeeTonPanel',
-      "resolvedProfile.kind === 'ton-xrp'",
-      'EgMinerFeeTronPanel',
+      'EgGasFeePopover',
+      'EgMinerFeeBatchStubPanel',
+      'resolveGasFeeNetworkFromProfile',
       ':transaction-count="minerFeeTransactionCount"',
     ],
+  },
+  {
+    file: 'src/scenes/tasks/shared/resolveGasFeeNetwork.ts',
+    markers: ["profile.kind === 'ton-xrp'", 'GasFeeNetwork'],
   },
   {
     file: 'src/scenes/tasks/shared/minerFeeProfile.ts',

@@ -3,16 +3,19 @@ import {
   EgButton,
   EgCrypto,
   EgDivider,
+  EgIcon,
   EgTag,
   type CryptoName,
 } from '@eds/desktop-components';
 import comboActionStyles from '@eds/desktop-components/molecules/combo/ComboAction.module.css';
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useAppI18n } from '@/composables/useAppI18n';
 import { useScrollChromeScrim } from '@/scenes/tasks/shared/useScrollChromeScrim';
 import { formatGroupedNumber } from '@/utils/formatGroupedDisplay';
 import type { BatchCurrencyGroup } from './types';
 import {
+  BATCH_CURRENCY_PICKER_EMPTY_MAX_HEIGHT,
+  BATCH_CURRENCY_PICKER_EMPTY_WIDTH,
   BATCH_CURRENCY_PICKER_MAX_HEIGHT,
   BATCH_CURRENCY_PICKER_WIDTH,
 } from './batchSigning.constants';
@@ -24,12 +27,24 @@ const props = defineProps<{
   groups: BatchCurrencyGroup[];
 }>();
 
-const pickerShellStyle = {
-  width: `${BATCH_CURRENCY_PICKER_WIDTH}px`,
-  minWidth: `${BATCH_CURRENCY_PICKER_WIDTH}px`,
-  height: `${BATCH_CURRENCY_PICKER_MAX_HEIGHT}px`,
-  maxHeight: `${BATCH_CURRENCY_PICKER_MAX_HEIGHT}px`,
-} as const;
+const isEmpty = computed(() => props.groups.length === 0);
+
+const pickerShellStyle = computed(() => {
+  if (isEmpty.value) {
+    return {
+      width: `${BATCH_CURRENCY_PICKER_EMPTY_WIDTH}px`,
+      minWidth: `${BATCH_CURRENCY_PICKER_EMPTY_WIDTH}px`,
+      height: `${BATCH_CURRENCY_PICKER_EMPTY_MAX_HEIGHT}px`,
+      maxHeight: `${BATCH_CURRENCY_PICKER_EMPTY_MAX_HEIGHT}px`,
+    };
+  }
+  return {
+    width: `${BATCH_CURRENCY_PICKER_WIDTH}px`,
+    minWidth: `${BATCH_CURRENCY_PICKER_WIDTH}px`,
+    height: `${BATCH_CURRENCY_PICKER_MAX_HEIGHT}px`,
+    maxHeight: `${BATCH_CURRENCY_PICKER_MAX_HEIGHT}px`,
+  };
+});
 
 const emit = defineEmits<{
   process: [group: BatchCurrencyGroup];
@@ -59,9 +74,16 @@ function onProcess(group: BatchCurrencyGroup) {
 <template>
   <div
     class="networkPickerRoot desktopTokens effect-flotation-box motion-flotation eds-flotation-inner-backdrop"
+    :class="{ networkPickerRootEmpty: isEmpty }"
     :style="pickerShellStyle"
   >
-    <div class="networkPickerRows">
+    <div v-if="isEmpty" class="networkPickerEmptyInner">
+      <EgIcon class="networkPickerEmptyIcon" name="eds-business-7" fit />
+      <p class="networkPickerEmptyText typography-body-small">
+        {{ ui('No data available for batch processing.') }}
+      </p>
+    </div>
+    <div v-else class="networkPickerRows">
       <header class="networkPickerHeader">
         <div class="networkPickerHeaderContent">
           <p :class="styles.batchSectionTitle">{{ ui('Batch Processing') }}</p>

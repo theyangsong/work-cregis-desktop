@@ -1,5 +1,11 @@
 import { closeAllAnchoredTooltips } from '@eds/desktop-components';
+import { nextTick } from 'vue';
+import type { AppLocale } from '@/composables/useAppLocale';
 import { tasksDataListShellApiRegistry } from '@/scenes/tasks/tasksDataListShellApi';
+import {
+  normalizeTasksMenuLabel,
+  resolveTasksDataListMenuItem,
+} from '@/scenes/tasks/tasksDataListPageData';
 import {
   batchSigningProgressPopupOpen,
   batchSigningStopConfirmOpen,
@@ -17,7 +23,12 @@ import type { MultiSignRoomPhase } from '@/scenes/tasks/signing/types';
 import {
   multiSignWalletShardImported,
 } from '@/scenes/tasks/signing/multiSignInvitation/multiSignInvitationStore';
-import { resetSigningStoreForDemo } from '@/scenes/tasks/signing/signingStore';
+import {
+  resetSigningStoreForDemo,
+  signingIdFromRowIndex,
+  submitSigningAction,
+} from '@/scenes/tasks/signing/signingStore';
+import { DATA_LIST_SIGNING_ROW_COUNT } from '@/scenes/tasks/tasksDataListPageData';
 import { clearQaLoadingTimeout } from './commonScenarioActions';
 
 /** 通过公开 API 恢复演示基线；不修改业务源码。 */
@@ -202,4 +213,76 @@ export function applySigningFailedScenario() {
   flow.detailOpen.value = false;
   flow.progressPhase.value = 'sign-failed';
   flow.progressOpen.value = true;
+}
+
+function readShellDebugAppLocale(): AppLocale {
+  const lang = document.documentElement.lang.trim();
+  if (lang === 'zh-CN' || lang === 'zh-TW') return lang;
+  return 'en';
+}
+
+/** Shell Debug：切到待签名模块（业务 QA 仅在 Tasks:Signing 可见，仍兜底导航）。 */
+function navigateToTasksSigningMenu() {
+  const preview = document.querySelector('.app-preview');
+  if (!preview) return;
+
+  const focusedLabel = preview
+    .querySelector(
+      '.eds-module-menu-item[class*="itemFocused"], .eds-module-menu-item[aria-pressed="true"]',
+    )
+    ?.textContent?.replace(/\s+/g, ' ').trim();
+  if (focusedLabel) {
+    const focusedItem = resolveTasksDataListMenuItem(
+      normalizeTasksMenuLabel(focusedLabel),
+      readShellDebugAppLocale(),
+    );
+    if (focusedItem === 'Signing') return;
+  }
+
+  const locale = readShellDebugAppLocale();
+  const menuItems = preview.querySelectorAll('.eds-module-menu-item');
+  for (const item of menuItems) {
+    const label = item.textContent?.replace(/\s+/g, ' ').trim();
+    if (!label) continue;
+    if (resolveTasksDataListMenuItem(normalizeTasksMenuLabel(label), locale) !== 'Signing') {
+      continue;
+    }
+    (item as HTMLElement).click();
+    return;
+  }
+}
+
+/** 展开工具栏批处理 Flotation（仅 EgFlotation 路径；单币种直进多选无此 trigger）。 */
+function openSigningBatchNetworkPickerFromDom() {
+  const preview = document.querySelector('.app-preview');
+  if (!preview) return;
+
+  const trigger = preview.querySelector(
+    '[class*="batchProTriggerRoot"]:not([class*="batchProTriggerDisabled"])',
+  );
+  if (!(trigger instanceof HTMLElement)) return;
+  trigger.click();
+}
+
+/** 列表有数据但无待签名单签可批处理 → Flotation 列表区显示空态文案。 */
+export async function applySigningBatchNoEligibleDataScenario() {
+  resetShellDebugScenarioBaseline();
+  navigateToTasksSigningMenu();
+  await nextTick();
+
+  tasksDataListShellApiRegistry.value?.setListEmpty(false);
+  tasksDataListShellApiRegistry.value?.setListLoading(false);
+
+  for (let rowIndex = 0; rowIndex < DATA_LIST_SIGNING_ROW_COUNT; rowIndex += 1) {
+    submitSigningAction(signingIdFromRowIndex(rowIndex), rowIndex, 'pass', '111111');
+  }
+
+  await nextTick();
+  await nextTick();
+  await new Promise<void>((resolve) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => resolve());
+    });
+  });
+  openSigningBatchNetworkPickerFromDom();
 }

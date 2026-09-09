@@ -4,24 +4,19 @@ import {
   type ModuleMenuPresetGroup,
   type ModuleMenuPresetItem,
 } from '@eds/desktop-components';
-import {
-  approvalStoreRevision,
-  countPendingApprovals,
-} from '@/scenes/tasks/approval/approvalStore';
 import { formatModuleMenuBadgeCount } from '@/scenes/tasks/approval/formatModuleMenuBadgeCount';
-import {
-  countPendingSignings,
-  signingStoreRevision,
-} from '@/scenes/tasks/signing/signingStore';
-import { DATA_LIST_APPROVAL_ROW_COUNT, DATA_LIST_SIGNING_ROW_COUNT } from '@/scenes/tasks/tasksDataListPageData';
+import { tasksModuleMenuDataVolumes } from '@/scenes/tasks/tasksModuleMenuDataVolume';
+import type { TasksDataListMenuItemLabel } from '@/scenes/tasks/tasksDataListPageData';
 
-const TODO_MENU_BADGE_RESOLVERS: Record<string, () => number> = {
-  Approval: () => countPendingApprovals(DATA_LIST_APPROVAL_ROW_COUNT),
-  Signing: () => countPendingSignings(DATA_LIST_SIGNING_ROW_COUNT),
+const TODO_MENU_BADGE_RESOLVERS: Partial<
+  Record<TasksDataListMenuItemLabel, () => number>
+> = {
+  Approval: () => tasksModuleMenuDataVolumes.value.Approval,
+  Signing: () => tasksModuleMenuDataVolumes.value.Signing,
 };
 
 function withTodoMenuBadge(item: ModuleMenuPresetItem): ModuleMenuPresetItem {
-  const resolveCount = TODO_MENU_BADGE_RESOLVERS[item.label];
+  const resolveCount = TODO_MENU_BADGE_RESOLVERS[item.label as TasksDataListMenuItemLabel];
   if (!resolveCount) return item;
 
   const count = resolveCount();
@@ -46,8 +41,7 @@ function withTodoMenuBadge(item: ModuleMenuPresetItem): ModuleMenuPresetItem {
 
 export function useTasksModuleMenuGroups() {
   return computed<ModuleMenuPresetGroup[]>(() => {
-    void approvalStoreRevision.value;
-    void signingStoreRevision.value;
+    void tasksModuleMenuDataVolumes.value;
 
     return getCregisModuleMenuGroups('Tasks').map((group) => ({
       ...group,

@@ -110,7 +110,7 @@ export const BATCH_INELIGIBLE_REASON_LABELS: Record<BatchIneligibleReason, strin
   'wallet-shard-missing': 'Wallet Shard Not Imported',
   'non-whitelist': 'Non-whitelisted Address',
   blacklist: 'Blacklisted Address',
-  'insufficient-balance': 'Insufficient Balance',
+  'insufficient-balance': 'Insufficient balance',
   'insufficient-miner-fee': 'Insufficient miner fee',
 };
 

@@ -2,9 +2,9 @@
 
 本项目是 **Desktop 客户端**，不是 Showcase / 文档站。
 
-## 工作推进（Agent 必读）
+## 协作方式（Agent 必读）
 
-默认按 **大阶段 + 强逻辑** 与用户协作：定目标 → 摸底 → 实施 → 验证 → 收尾。每阶段先一句短思考、再写做了什么；过程可见，禁止改完再打包汇报。详案：`.cursor/rules/work.mdc` 文首（与 EDS `work.mdc` §0.1 一致）。
+每个动作（读、搜、改、验）都要一两句带逻辑，小环节也要说，不只大阶段才说明；收尾两三句、简单明了，不复述、不啰嗦、不写五段式报告。详案：`.cursor/rules/work.mdc` 文首 = EDS `work.mdc` §0.1。
 
 ## 硬约束（违反即错误）
 
@@ -129,5 +129,5 @@ Showcase 外层是 **Website token 壳**，部分未在 Desktop spec 定义的�
 ## 更多细节
 
 - `README.md` — 集成与脚本
-- `.cursor/rules/work.mdc` — **唯一业务规范**（`alwaysApply`；含 Agent 工作推进文首、场景组件 §4.1、i18n §5、顶底毛玻璃 §6.3、Popup §7.1、批处理 §7.2 等）
+- `.cursor/rules/work.mdc` — **唯一业务规范**（`alwaysApply`；含 Agent 协作方式文首、场景组件 §4.1、i18n §5、顶底毛玻璃 §6.3、Popup §7.1、批处理 §7.2 等）
 - `../eds-desktop/.cursor/rules/work.mdc` — 完整 EDS 约定（在 eds-desktop 仓库）

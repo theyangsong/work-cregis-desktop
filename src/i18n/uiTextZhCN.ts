@@ -409,6 +409,7 @@ export const UI_TEXT_ZH_CN: Record<string, string> = {
     '当前没有可进行批量签名的待签名数据。',
   'No pending signing items available for batch processing.':
     '当前没有可进行批量签名的待签名数据。',
+  'No data available for batch processing.': '暂无可批量处理的数据',
   'Contract Approval': '合约授权',
   'Contract Authorization': '合约授权',
   CSPN: 'CSPN',

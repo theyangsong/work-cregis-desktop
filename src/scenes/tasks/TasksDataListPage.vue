@@ -95,6 +95,8 @@ import { setBatchSigningListRefreshHandler, suspendBatchSigningProgressPopup } f
 import { useSigningBatchFlow } from './signing/batch/useSigningBatchFlow';
 import SigningBatchNetworkPickerMenu from './signing/batch/SigningBatchNetworkPickerMenu.vue';
 import {
+  BATCH_CURRENCY_PICKER_EMPTY_MAX_HEIGHT,
+  BATCH_CURRENCY_PICKER_EMPTY_WIDTH,
   BATCH_CURRENCY_PICKER_MAX_HEIGHT,
   BATCH_CURRENCY_PICKER_WIDTH,
   BATCH_NETWORK_PICKER_CROSS_AXIS_OFFSET_PX,
@@ -120,6 +122,7 @@ import {
 } from './shared/dataListSelectMode';
 import { useTasksDataListPage } from './useTasksDataListPage';
 import { registerTasksDataListShellApi } from './tasksDataListShellApi';
+import { syncTasksModuleMenuDataVolume } from './tasksModuleMenuDataVolume';
 import type {
   TasksDataListActiveSort,
   TasksDataListSortOrder,
@@ -716,8 +719,33 @@ watch(
   },
 );
 
+watch(
+  [menuItem, totalRowCount, () => customize.empty],
+  ([item, rowCount, empty]) => {
+    if (!item || !isTasksDataListMenuItem(item)) return;
+    syncTasksModuleMenuDataVolume(item, empty ? 0 : rowCount);
+  },
+  { immediate: true },
+);
+
 const signingBatchUsesNetworkFlotation = computed(() =>
   isSigningMenu.value && signingBatchFlow.shouldUseNetworkPickerFlotation(),
+);
+
+const signingBatchPickerIsEmpty = computed(
+  () => isSigningMenu.value && signingBatchFlow.currencyGroups.value.length === 0,
+);
+
+const signingBatchPickerFlotationWidth = computed(() =>
+  signingBatchPickerIsEmpty.value
+    ? BATCH_CURRENCY_PICKER_EMPTY_WIDTH
+    : BATCH_CURRENCY_PICKER_WIDTH,
+);
+
+const signingBatchPickerFlotationMaxHeight = computed(() =>
+  signingBatchPickerIsEmpty.value
+    ? BATCH_CURRENCY_PICKER_EMPTY_MAX_HEIGHT
+    : BATCH_CURRENCY_PICKER_MAX_HEIGHT,
 );
 
 /** 空列表：禁用批处理 / 自动化 / 筛选与表头排序。 */
@@ -865,9 +893,9 @@ const displayBatchActions = computed(() => {
               placement="bottom"
               align="end"
               width-mode="fixed"
-              :width="BATCH_CURRENCY_PICKER_WIDTH"
+              :width="signingBatchPickerFlotationWidth"
               height-mode="adaptive"
-              :max-height="BATCH_CURRENCY_PICKER_MAX_HEIGHT"
+              :max-height="signingBatchPickerFlotationMaxHeight"
               :cross-axis-offset="BATCH_NETWORK_PICKER_CROSS_AXIS_OFFSET_PX"
               :show-add="false"
               :show-menu-divider="false"

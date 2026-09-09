@@ -11,6 +11,7 @@ import {
   inspectPinnedRect,
 } from './developerInspectSession';
 
+import { markShellDebugUiInteraction } from '../installShellDebugFloatLayerGuard';
 import { isShellDebugUiElement } from '../shellDebugUiScope';
 import { isInspectFloatLayerElement } from './inspectFloatLayerScope';
 
@@ -235,6 +236,10 @@ function onPointerDown(event: PointerEvent) {
   }
 
   const target = elementFromPreviewPoint(event.clientX, event.clientY, preview);
+
+  if (target && isInspectFloatLayerElement(target)) {
+    markShellDebugUiInteraction();
+  }
 
   event.preventDefault();
   event.stopPropagation();

@@ -540,7 +540,12 @@ pnpm --filter @eds/desktop-components typecheck
 
 cd ../work-cregis-desktop
 pnpm typecheck
-pnpm lint:ds-tokens
+pnpm build
+node scripts/verify-list-field-crypto.mjs
+node scripts/verify-miner-fee-profiles.mjs
+node scripts/verify-shell-debug-inspect-naming.mjs
+node scripts/verify-shell-debug-inspect-catalog.mjs
+node scripts/verify-shell-debug-inspect-effect.mjs
 ```
 
 UI 必须在消费 App 的 `pnpm dev`（4173）下验证，不能只跑 build。

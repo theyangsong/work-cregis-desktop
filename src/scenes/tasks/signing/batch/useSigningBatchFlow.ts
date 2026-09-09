@@ -11,6 +11,7 @@ import {
 import {
   checkSigningPending,
   signingIdFromRowIndex,
+  signingStoreRevision,
 } from '../signingStore';
 import {
   batchSigningProgressPopupOpen,
@@ -56,7 +57,10 @@ export function useSigningBatchFlow(options: {
   const selectCurrencyKey = ref<string | null>(null);
 
   /** 待签名单签按币种+网络分组（供工具栏 Flotation Combo）。 */
-  const currencyGroups = computed(() => groupPendingByCurrency(options.allRowIndexes.value));
+  const currencyGroups = computed(() => {
+    void signingStoreRevision.value;
+    return groupPendingByCurrency(options.allRowIndexes.value);
+  });
 
   const signConfirmOpen = ref(false);
   const stopConfirmOpen = batchSigningStopConfirmOpen;
@@ -193,7 +197,6 @@ export function useSigningBatchFlow(options: {
 
     const groups = currencyGroups.value;
     if (groups.length === 0) {
-      options.showError('No pending signing items available for batch processing.');
       return;
     }
 
@@ -209,12 +212,12 @@ export function useSigningBatchFlow(options: {
     enterSelectMode(group.currencyKey);
   }
 
-  /** 是否由工具栏 Flotation Combo 承载币种选择（多币种且非多选/进度）。 */
+  /** 是否由工具栏 Flotation 承载批处理面板（0 或多种币种；单币种直进多选）。 */
   function shouldUseNetworkPickerFlotation(): boolean {
     if (!options.enabled.value) return false;
     if (activeTask.value) return false;
     if (options.selectMode.value) return false;
-    return currencyGroups.value.length > 1;
+    return currencyGroups.value.length !== 1;
   }
 
   function filterRowIndexesForSelect(rowIndexes: number[]): number[] {

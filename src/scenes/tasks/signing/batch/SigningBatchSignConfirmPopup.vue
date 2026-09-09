@@ -9,11 +9,12 @@ import {
   watch,
 } from 'vue';
 import {
+  EgAnchoredPopover,
+  EgGasFeePopover,
+  EgMinerFeeBatchStubPanel,
   EgPopup,
   EgStreamer,
   EgButton,
-  EgTooltip,
-  EgPopover,
   MOTION_LAYOUT_DEFORM_CONTENT,
   MOTION_LAYOUT_DEFORM_CONTENT_ENTERING,
   MOTION_LAYOUT_DEFORM_CONTENT_EXITING,
@@ -23,15 +24,16 @@ import {
 import { useAppI18n } from '@/composables/useAppI18n';
 import { formatGroupedNumber } from '@/utils/formatGroupedDisplay';
 import { usePopupShellLifecycle } from '../../shared/usePopupShellLifecycle';
-import ApprovalRemarkPopoverPanel from '../../approval/ApprovalRemarkPopoverPanel.vue';
 import DetailToolbarRemarkTrigger from '../../shared/DetailToolbarRemarkTrigger.vue';
 import remarkTriggerStyles from '../../shared/remarkPopoverTrigger.module.css';
 import {
   type MinerFeeProfile,
   type MinerFeeSelection,
+  isMinerFeeBatchStubProfile,
+  resolveMinerFeeBatchTransactionCount,
   resolveMinerFeePopoverTitleKey,
 } from '../../shared/minerFeeProfile';
-import { MINER_FEE_POPOVER_CHROME } from '../../shared/minerFeePopoverChrome';
+import { resolveGasFeeNetworkFromProfile } from '../../shared/resolveGasFeeNetwork';
 import { formatBreakdownLine, buildBatchSummary } from './buildBatchSummary';
 import { splitDetailAmountHeadline } from '../../shared/splitDetailAmountHeadline';
 import { buildWithdrawalQuotaNoticeText } from '../buildWithdrawalQuotaNoticeText';
@@ -85,13 +87,8 @@ const { ui } = useAppI18n();
 
 const summaryContentRef = ref<HTMLElement | null>(null);
 const slotChromeRef = ref<InstanceType<typeof SigningBatchPopupSlotChrome> | null>(null);
-const minerFeePanelRef = ref<InstanceType<typeof ApprovalRemarkPopoverPanel> | null>(null);
-const minerFeeAnchoredRef = ref<{
-  close: () => void;
-  openPanel: () => void;
-  getTriggerElement: () => HTMLElement | null;
-} | null>(null);
-const minerFeePopoverOpen = ref(false);
+const gasFeePopoverRef = ref<{ close?: () => void } | null>(null);
+const batchStubAnchoredRef = ref<{ close?: () => void } | null>(null);
 
 const pageSpecs = reactive<Record<ConfirmPage, MotionLayoutDeformPageSpec>>({
   summary: { shellHeight: 360 },
@@ -168,6 +165,27 @@ const minerFeeSectionTitle = computed(() => {
     return ui('Miner Fee');
   }
   return ui(resolveMinerFeePopoverTitleKey(props.minerFeeProfile));
+});
+
+const minerFeeTransactionCount = computed(() =>
+  resolveMinerFeeBatchTransactionCount(
+    props.eligibility.signable.length,
+    props.pendingTransactionCount ?? 0,
+  ),
+);
+
+const showBatchStubOnly = computed(() => {
+  if (!props.minerFeeProfile) {
+    return false;
+  }
+  return isMinerFeeBatchStubProfile(props.minerFeeProfile, minerFeeTransactionCount.value);
+});
+
+const gasFeeNetwork = computed(() => {
+  if (!props.minerFeeProfile || showBatchStubOnly.value) {
+    return null;
+  }
+  return resolveGasFeeNetworkFromProfile(props.minerFeeProfile);
 });
 const subPageTitle = computed(() => {
   if (isDetailPage.value) {
@@ -310,39 +328,23 @@ function onSubPageBack() {
   void goBack();
 }
 
-function onMinerFeePopoverTopToolClose() {
-  minerFeeAnchoredRef.value?.close();
-}
-
-function onMinerFeePopoverOpen() {
-  minerFeePopoverOpen.value = true;
-  void nextTick(() => {
-    minerFeeAnchoredRef.value?.getTriggerElement()?.blur();
-  });
-}
-
-function onMinerFeePopoverClose() {
-  minerFeePopoverOpen.value = false;
-}
-
-function onMinerFeeConfirmTriggerClick(event: MouseEvent) {
-  event.stopPropagation();
+function onMinerFeeToolbarClick(anchorClick: () => void) {
   if (toolbarConfirmDisabled.value) {
     return;
   }
-  if (minerFeePopoverOpen.value) {
-    minerFeeAnchoredRef.value?.close();
-    return;
-  }
-  minerFeeAnchoredRef.value?.openPanel();
+  anchorClick();
 }
 
-function onMinerFeePanelConfirm(selection: MinerFeeSelection | null) {
-  if (!selection) {
+function onGasFeeConfirm(payload: { displayValue: string }) {
+  if (!props.minerFeeProfile) {
     return;
   }
-  minerFeeAnchoredRef.value?.close();
-  emit('confirm', selection);
+  gasFeePopoverRef.value?.close?.();
+  batchStubAnchoredRef.value?.close?.();
+  emit('confirm', {
+    profileKind: props.minerFeeProfile.kind,
+    displayValue: payload.displayValue,
+  });
 }
 
 function onToolbarConfirm() {
@@ -388,55 +390,76 @@ useBatchSignConfirmEscape({
           @update:model-value="emit('update:remark', $event)"
         />
       </template>
-      <template v-if="minerFeeProfile" #toolbar-confirm>
-        <EgTooltip
-          ref="minerFeeAnchoredRef"
-          placement="top"
-          align="center"
-          trigger="click"
-          :click-toggle="false"
-          :wrap-tooltip="false"
+      <template v-if="minerFeeProfile && gasFeeNetwork" #toolbar-confirm>
+        <EgGasFeePopover
+          ref="gasFeePopoverRef"
+          :network="gasFeeNetwork"
+          :translate="ui"
+          :symbol="minerFeeProfile.symbol"
+          :title="minerFeeSectionTitle"
+          :transaction-count="minerFeeTransactionCount"
           boundary-selector=".eds-popup"
-          token-scope-class="desktopTokens"
-          @open="onMinerFeePopoverOpen"
-          @close="onMinerFeePopoverClose"
+          @confirm="onGasFeeConfirm"
         >
-          <span
-            :class="[
-              remarkTriggerStyles.remarkTrigger,
-              minerFeePopoverOpen && remarkTriggerStyles.remarkTriggerPassPressed,
-            ]"
-          >
-            <EgButton
-              tone="decor"
-              variant="solid"
-              size="md"
-              :disabled="toolbarConfirmDisabled"
-              :aria-expanded="minerFeePopoverOpen"
-              @click.stop="onMinerFeeConfirmTriggerClick"
+          <template #trigger="{ active, onClick }">
+            <span
+              :class="[
+                remarkTriggerStyles.remarkTrigger,
+                active && remarkTriggerStyles.remarkTriggerPassPressed,
+              ]"
             >
-              {{ ui('Confirm') }}
-            </EgButton>
-          </span>
-          <template #content>
-            <EgPopover
-              v-bind="MINER_FEE_POPOVER_CHROME"
-              :top-tool-title="minerFeeSectionTitle"
-              @top-tool-close="onMinerFeePopoverTopToolClose"
-            >
-              <ApprovalRemarkPopoverPanel
-                ref="minerFeePanelRef"
-                :selected-count="eligibility.signable.length"
-                :pending-transaction-count="pendingTransactionCount ?? 0"
-                :remark="remark"
-                :miner-fee-profile="minerFeeProfile"
-                :reset-remark-on-mount="false"
-                @update:remark="emit('update:remark', $event)"
-                @confirm="onMinerFeePanelConfirm"
-              />
-            </EgPopover>
+              <EgButton
+                tone="decor"
+                variant="solid"
+                size="md"
+                :disabled="toolbarConfirmDisabled"
+                :aria-expanded="active"
+                @click.stop="onMinerFeeToolbarClick(onClick)"
+              >
+                {{ ui('Confirm') }}
+              </EgButton>
+            </span>
           </template>
-        </EgTooltip>
+        </EgGasFeePopover>
+      </template>
+      <template v-else-if="minerFeeProfile && showBatchStubOnly" #toolbar-confirm>
+        <EgAnchoredPopover
+          ref="batchStubAnchoredRef"
+          boundary-selector=".eds-popup"
+          :top-tool-title="minerFeeSectionTitle"
+          top-tool
+          top-tool-closable
+          width-mode="fixed"
+          height-mode="adaptive"
+        >
+          <template #trigger="{ active, onClick }">
+            <span
+              :class="[
+                remarkTriggerStyles.remarkTrigger,
+                active && remarkTriggerStyles.remarkTriggerPassPressed,
+              ]"
+            >
+              <EgButton
+                tone="decor"
+                variant="solid"
+                size="md"
+                :disabled="toolbarConfirmDisabled"
+                :aria-expanded="active"
+                @click.stop="onMinerFeeToolbarClick(onClick)"
+              >
+                {{ ui('Confirm') }}
+              </EgButton>
+            </span>
+          </template>
+          <EgMinerFeeBatchStubPanel
+            v-if="minerFeeProfile"
+            :translate="ui"
+            :symbol="minerFeeProfile.symbol"
+            :profile-kind="minerFeeProfile.kind"
+            :transaction-count="minerFeeTransactionCount"
+            @confirm="onGasFeeConfirm"
+          />
+        </EgAnchoredPopover>
       </template>
       <div
         :class="[

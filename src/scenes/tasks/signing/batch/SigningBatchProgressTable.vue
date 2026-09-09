@@ -58,7 +58,7 @@ const createdTimeSortOrder = ref<TasksDataListSortOrder | ''>('');
 const FAIL_REASON_LABELS: Record<BatchSigningFailReason, string> = {
   'already-processed': 'Transaction Already Processed',
   'quota-insufficient': 'Insufficient Withdrawal Limit',
-  'balance-insufficient': 'Insufficient Balance',
+  'balance-insufficient': 'Insufficient balance',
   'miner-fee-insufficient': 'Insufficient miner fee',
   'sign-failed': 'Signing failed',
   'broadcast-failed': 'Broadcast failed',

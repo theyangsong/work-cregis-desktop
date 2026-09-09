@@ -2,6 +2,8 @@ import {
   isShellDebugUiInteractionPending,
   markShellDebugUiInteraction,
 } from './shellDebugFloatInteraction';
+import { developerInspectActive } from './inspect/developerInspectSession';
+import { isInspectFloatLayerElement } from './inspect/inspectFloatLayerScope';
 import { isShellDebugUiElement } from './shellDebugUiScope';
 
 let installed = false;
@@ -29,7 +31,13 @@ function isShellDebugFloatInteraction(event: Event): boolean {
 }
 
 function shouldSkipAnchoredOutsideDismiss(event: Event): boolean {
-  return isShellDebugUiInteractionPending() || isShellDebugFloatInteraction(event);
+  if (isShellDebugUiInteractionPending() || isShellDebugFloatInteraction(event)) {
+    return true;
+  }
+  if (!developerInspectActive.value) return false;
+  const target = event.target;
+  if (!(target instanceof Element)) return false;
+  return isInspectFloatLayerElement(target);
 }
 
 type EventTargetLike = {

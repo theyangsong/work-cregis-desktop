@@ -11,6 +11,9 @@ export const BATCH_SIGN_PROGRESS_POPUP_HEIGHT = POPUP_CUSTOM_BOX_MD_HEIGHT;
 /** 批处理网络选择 Flotation 默认宽 / 最大高（标注定稿）。 */
 export const BATCH_CURRENCY_PICKER_WIDTH = 360;
 export const BATCH_CURRENCY_PICKER_MAX_HEIGHT = 440;
+/** 无可批处理数据时空态 Flotation（无标题、随内容收缩）。 */
+export const BATCH_CURRENCY_PICKER_EMPTY_WIDTH = 320;
+export const BATCH_CURRENCY_PICKER_EMPTY_MAX_HEIGHT = 168;
 /** 相对工具栏批处理触发器的交叉轴偏移（标注定稿）。 */
 export const BATCH_NETWORK_PICKER_CROSS_AXIS_OFFSET_PX = 133;
 

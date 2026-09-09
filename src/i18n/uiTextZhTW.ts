@@ -155,6 +155,7 @@ export const UI_TEXT_ZH_TW: Record<string, string> = {
   'Non-whitelist address': '非白名單地址',
   'No pending signing items available for batch processing.':
     '當前沒有可進行批量簽名的待簽名數據。',
+  'No data available for batch processing.': '暫無可批量處理的數據',
   'Contract Authorization': '合約授權',
   'Revoke Authorization': '撤銷授權',
   'MPC network error': 'MPC網絡異常',

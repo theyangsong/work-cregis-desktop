@@ -11,23 +11,15 @@ alwaysApply: true
 > **EDS 权威**：`../eds-desktop/.cursor/rules/work.mdc`、`packages/tokens/spec/**`。  
 > **Showcase 无兜底**：Showcase 外层 Website 壳会继承无效 token；本仓库无效 token 直接失效。
 
-## Agent 工作推进（大阶段 · 强逻辑）
+## Agent 协作方式
 
-与 EDS `work.mdc` §0.1 一致。与用户协作时**默认按大阶段推进并在过程中写清楚逻辑**；禁止闷头改完再打包汇报。
+与 EDS `work.mdc` §0.1 一致。
 
-**粒度**：只在大阶段写；阶段内不逐文件、不逐命令啰嗦。
+**过程中**：**每个动作**（读、搜、改、验）动手前或同时一两句——为什么、依据什么 §、边界（业务 / EDS / 不改什么）；**小环节也要带逻辑**，不只大阶段才说明。约束与风险随进度带出。**禁止**闷头改完再汇报；**禁止**五段式模板。
 
-**每阶段格式**：`*思考：…*` → **做了什么**（1–3 句，因果清楚，必要时点出依据哪条 §）。
+**收尾**：两三句，简单明了——做了什么、还需什么、验证过没过。**禁止**复述全过程、禁止啰嗦总结。
 
-| 阶段 | 思考要点 | 交付 |
-|------|----------|------|
-| **定目标** | 解决什么；边界（业务 / EDS / 不改什么） | 目标一句 |
-| **摸底** | 先读 `AGENTS.md`、本文、EDS §0–§9；对照引用库再改业务 | 关键发现、风险、是否阻塞 |
-| **实施** | 最小 diff；**EDS 行为改引用库**，业务只迁 `Eg*` 场景入口 | 改了哪一层、为何这样改 |
-| **验证** | 没过校验不算完成（§8） | typecheck / verify / build；**区分「本次引入」与「预先存在」** |
-| **收尾** | 不重复过程 | 2–3 句：完成项 + 待办（含 Pages pin、dev 重启等） |
-
-**业务侧附加逻辑**：含 EDS 改动 → 远程 eds-desktop 已推 + CI pin 对齐（§2.5）；说「同步」→ EDS build + consumer install（EDS §8）。
+**业务侧须心里有数**：改 EDS 行为 → 引用库；业务只迁 `Eg*` 场景入口。含 EDS 改动 → 远程已推 + CI pin（§2.5）。「同步」→ EDS §8。验证 §8；区分本次引入与预先存在。
 
 ---
 
@@ -35,7 +27,7 @@ alwaysApply: true
 
 | 主题 | 章节 |
 |------|------|
-| Agent 工作推进（大阶段 · 强逻辑） | 文首 |
+| Agent 协作方式 | 文首 |
 | 禁止复制、Desktop-only | §1 |
 | 本仓库 vs eds-desktop、同步、dev HMR、Git 推送 | §2 |
 | DOM、EgPopup 挂载位置 | §3 |
@@ -81,7 +73,7 @@ alwaysApply: true
 
 **【禁止】** 裸 `px`/hex/`font-weight: 数字`；私造 `--*`；用 `--scale-*` 冒充 `--radius-md` 等语义 token；覆盖 `Eg*` 根节点 `class`/`style` 或内部 DOM。
 
-**【必须】** `var(--*)` 仅在 `@eds/desktop-tokens/json` 白名单或 `token-allowlist.business.json` 已批条目内；否则 `pnpm lint:ds-tokens` 失败。缺 token → 向 eds-desktop 申请，**不得**私造。
+**【必须】** `var(--*)` 仅在 `@eds/desktop-tokens/json` 白名单或 `token-allowlist.business.json` 已批条目内。缺 token → 向 eds-desktop 申请，**不得**私造。
 
 ---
 
@@ -655,7 +647,17 @@ usePopupShellLifecycle({
 
 ## 8. 校验与 PR
 
-**【必须】** `pnpm lint:ds-tokens`（脚本 `scripts/lint-ds-tokens.mjs`）。
+**【必须】** 每次 EDS 或业务 UI 变更后跑通：
+
+```shell
+pnpm typecheck
+pnpm build                    # 含 prebuild：5 个 verify-*.mjs + EDS tokens/animations/components
+node scripts/verify-list-field-crypto.mjs
+node scripts/verify-miner-fee-profiles.mjs
+node scripts/verify-shell-debug-inspect-naming.mjs
+node scripts/verify-shell-debug-inspect-catalog.mjs
+node scripts/verify-shell-debug-inspect-effect.mjs
+```
 
 **PR 核心项**
 
@@ -712,7 +714,8 @@ usePopupShellLifecycle({
 | 术语 DS→EDS 全量清洗；EDS 原子名迁移（`EgTooltip` 现指浮层，面板为 `EgTooltipPanel`）；EDS 规范路径改指 `work.mdc` | 2026-09-09 |
 | 增补 §4.1 场景组件优先（`Eg*` 场景封装对齐 EDS §17）、§4.2 已删除的 EDS 公共 API | 2026-09-09 |
 | §4.1 对齐 EDS 真封装：`EgCregisNavBar` / `EgCregisModuleMenu`；Tasks badge 仅 `:groups` 覆盖 | 2026-09-09 |
-| 文首 Agent 工作推进（大阶段 · 强逻辑），对齐 EDS `work.mdc` §0.1 | 2026-09-09 |
+| 文首 Agent 协作方式，对齐 EDS §0.1（小环节也带逻辑、收尾简短不啰嗦） | 2026-09-09 |
+| 文首 Agent 协作方式，对齐 EDS §0.1（过程写逻辑、收尾简短） | 2026-09-09 |
 | 维护 | EDS Desktop 维护者 |
 
 **本规范为业务项目强制约束。违反项须在 PR 修正或取得维护者书面例外。**

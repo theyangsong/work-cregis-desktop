@@ -9,6 +9,7 @@ import {
   applyMultiSignParticipantWaitingScenario,
   applyMultiSignReadyScenario,
   applyMultiSignWaitingScenario,
+  applySigningBatchNoEligibleDataScenario,
   applySigningBatchQuotaAlertScenario,
   applySigningFailedScenario,
   applyWalletShardMissingScenario,
@@ -44,6 +45,14 @@ export function registerSigningScenarioPack() {
       label: '多签签名人（额度告警）',
       description: '签名人视角：批签确认弹窗 · 提现额度告警。',
       apply: applySigningBatchQuotaAlertScenario,
+    },
+    {
+      id: 'signing-batch-no-eligible',
+      pageKey: 'Tasks:Signing',
+      label: '批处理（无可处理数据）',
+      description:
+        '待签名列表仍有行，但无待签名单签可批处理；执行后自动展开工具栏「批处理」Flotation，列表区显示空态文案。',
+      apply: applySigningBatchNoEligibleDataScenario,
     },
 
     // —— 多签 · 参与人（全流程在前，分态在后）——
