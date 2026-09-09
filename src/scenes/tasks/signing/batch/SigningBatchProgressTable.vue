@@ -8,7 +8,7 @@ import {
   EgFormSubmission,
   EgListFieldHashLikeLine,
   EgListFieldOverflowText,
-  EgTag,
+  EgStatusTag,
   type DataListItem,
   type TagStatus,
 } from '@eds/desktop-components';
@@ -296,14 +296,13 @@ function rowIndexFromData(data: DataListItem) {
         <template #default="{ data }">
           <div :class="styles.batchProgressStatusCell">
             <div :class="styles.batchProgressStatusField">
-              <EgTag
-                family="status"
+              <EgStatusTag
                 size="lg"
                 truncate
                 :status="resolveRowTagStatus(data.status as BatchSigningTaskRow['status'])"
               >
                 {{ String(data.statusLabel ?? '') }}
-              </EgTag>
+              </EgStatusTag>
               <EgFormSubmission
                 v-if="data.status === 'failed' && data.failFeedbackLabel"
                 type="danger"

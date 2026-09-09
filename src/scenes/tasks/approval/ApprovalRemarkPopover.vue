@@ -2,11 +2,14 @@
 import { computed, nextTick, ref } from 'vue';
 import {
   EgAnchoredPopover,
-  EgAnchoredTooltip,
+  EgGasFeePopover,
+  EgRemarkPopover,
+  EgTooltip,
   EgPopover,
   POPOVER_PRESET_WIDTH_BASE,
   REMARK_POPOVER_MAX_LENGTH,
   type ButtonTone,
+  type GasFeeNetwork,
 } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
 import {
@@ -14,8 +17,12 @@ import {
   type MinerFeeProfile,
   type MinerFeeSelection,
 } from '../shared/minerFeeProfile';
+import {
+  isMinerFeeBatchStubProfile,
+  resolveMinerFeeBatchTransactionCount,
+} from '../shared/minerFeeProfile';
+import { resolveGasFeeNetworkFromProfile } from '../shared/resolveGasFeeNetwork';
 import { MINER_FEE_POPOVER_CHROME } from '../shared/minerFeePopoverChrome';
-import ApprovalRemarkFormPanel from './ApprovalRemarkFormPanel.vue';
 import ApprovalRemarkPopoverPanel from './ApprovalRemarkPopoverPanel.vue';
 
 type MinerFeeScreen = 'list' | 'custom';
@@ -33,11 +40,8 @@ const props = withDefaults(
     placeholderKey?: string;
     feedbackKey?: string;
     requireMinerFee?: boolean;
-    /** 备注 Popover 内「确定」按钮 tone；驳回等破坏性操作用 danger。 */
     confirmTone?: ButtonTone;
-    /** 矿工费 Popover 内「确定」按钮 tone。 */
     minerFeeConfirmTone?: ButtonTone;
-    /** 有矿工费时跳过备注步，点击触发器直接进入矿工费（详情签名等）。 */
     skipRemarkStep?: boolean;
   }>(),
   {
@@ -61,11 +65,12 @@ const emit = defineEmits<{
 
 const { ui } = useAppI18n();
 
-const remarkPanelRef = ref<{ resetRemark: () => void } | null>(null);
 const minerFeePanelRef = ref<InstanceType<typeof ApprovalRemarkPopoverPanel> | null>(null);
-const minerFeeAnchoredRef = ref<{ close: () => void; openPanel: () => void } | null>(null);
+const gasFeePopoverRef = ref<{ close?: () => void; open?: () => void } | null>(null);
+const minerFeeAnchoredRef = ref<{ close?: () => void; openPanel?: () => void } | null>(null);
 const minerFeeScreen = ref<MinerFeeScreen>('list');
 const minerFeeExpanded = ref(false);
+const draftRemark = ref('');
 
 const resolvedMinerFeeProfile = computed<MinerFeeProfile | null>(() => {
   if (props.minerFeeProfile) {
@@ -84,6 +89,25 @@ const resolvedMinerFeeProfile = computed<MinerFeeProfile | null>(() => {
 
 const hasMinerFeeStep = computed(() => resolvedMinerFeeProfile.value != null);
 
+const minerFeeTransactionCount = computed(() =>
+  resolveMinerFeeBatchTransactionCount(
+    props.selectedCount ?? 1,
+    0,
+  ),
+);
+
+const showBatchStubOnly = computed(() => {
+  const profile = resolvedMinerFeeProfile.value;
+  if (!profile) return false;
+  return isMinerFeeBatchStubProfile(profile, minerFeeTransactionCount.value);
+});
+
+const gasFeeNetwork = computed<GasFeeNetwork | null>(() => {
+  const profile = resolvedMinerFeeProfile.value;
+  if (!profile || showBatchStubOnly.value) return null;
+  return resolveGasFeeNetworkFromProfile(profile);
+});
+
 const remarkModel = computed({
   get: () => props.remark,
   set: (value: string) => emit('update:remark', value.slice(0, REMARK_POPOVER_MAX_LENGTH)),
@@ -96,8 +120,9 @@ const minerFeeTopToolTitle = computed(() => {
   return ui(resolveMinerFeePopoverTitleKey(resolvedMinerFeeProfile.value));
 });
 
-/** 矿工费列表 / 自定义子页均复用 Popover topTool（「矿工费」+ 关闭）；返回键由子页注入 topTool 行。 */
-const showTopTool = computed(() => true);
+const gasFeeSymbol = computed(
+  () => resolvedMinerFeeProfile.value?.symbol,
+);
 
 function resetMinerFeeFlow() {
   minerFeePanelRef.value?.resetMinerFeeFlow();
@@ -105,9 +130,9 @@ function resetMinerFeeFlow() {
 }
 
 function onDismiss() {
-  remarkPanelRef.value?.resetRemark();
   resetMinerFeeFlow();
-  minerFeeAnchoredRef.value?.close();
+  minerFeeAnchoredRef.value?.close?.();
+  gasFeePopoverRef.value?.close?.();
   emit('update:remark', '');
   emit('dismiss');
 }
@@ -116,29 +141,48 @@ function onMinerFeeScreenChange(screen: MinerFeeScreen) {
   minerFeeScreen.value = screen;
 }
 
-function onRemarkStepConfirm(close: () => void) {
-  close();
+function prepareRemarkDraft() {
+  draftRemark.value = props.remark;
+}
+
+function onRemarkStepConfirm() {
+  remarkModel.value = draftRemark.value;
   void nextTick(() => {
-    minerFeeAnchoredRef.value?.openPanel();
+    if (showBatchStubOnly.value) {
+      minerFeeAnchoredRef.value?.openPanel?.();
+      return;
+    }
+    gasFeePopoverRef.value?.open?.();
   });
 }
 
 function onMinerFeeStepConfirm(selection: MinerFeeSelection | null) {
-  minerFeeAnchoredRef.value?.close();
+  minerFeeAnchoredRef.value?.close?.();
+  gasFeePopoverRef.value?.close?.();
   emit('confirm', selection);
 }
 
 function onMinerFeePopoverTopToolClose() {
-  minerFeeAnchoredRef.value?.close();
+  minerFeeAnchoredRef.value?.close?.();
+  gasFeePopoverRef.value?.close?.();
 }
 
 function onMinerFeePopoverDismiss() {
   resetMinerFeeFlow();
 }
 
+function onGasFeeConfirm(payload: { displayValue: string }) {
+  if (!resolvedMinerFeeProfile.value) return;
+  onMinerFeeStepConfirm({
+    profileKind: resolvedMinerFeeProfile.value.kind,
+    displayValue: payload.displayValue,
+  });
+}
+
 async function onDirectMinerFeeTriggerClick() {
   if (minerFeeExpanded.value) {
-    minerFeeAnchoredRef.value?.close();
+    minerFeeAnchoredRef.value?.close?.();
+    gasFeePopoverRef.value?.close?.();
     return;
   }
   if (props.onBeforeOpen) {
@@ -148,7 +192,11 @@ async function onDirectMinerFeeTriggerClick() {
       return;
     }
   }
-  minerFeeAnchoredRef.value?.openPanel();
+  if (showBatchStubOnly.value) {
+    minerFeeAnchoredRef.value?.openPanel?.();
+    return;
+  }
+  gasFeePopoverRef.value?.open?.();
 }
 
 function onDirectMinerFeeTooltipClose() {
@@ -160,11 +208,19 @@ function onDirectMinerFeeTooltipClose() {
 function onDirectMinerFeeTooltipOpen() {
   minerFeeExpanded.value = true;
 }
+
+function onRemarkDismissRestore() {
+  draftRemark.value = props.remark;
+}
+
+function onRemarkOnlyConfirm() {
+  emit('confirm', null);
+}
 </script>
 
 <template>
-  <EgAnchoredTooltip
-    v-if="hasMinerFeeStep && skipRemarkStep"
+  <EgTooltip
+    v-if="hasMinerFeeStep && skipRemarkStep && showBatchStubOnly"
     ref="minerFeeAnchoredRef"
     placement="top"
     align="center"
@@ -204,9 +260,27 @@ function onDirectMinerFeeTooltipOpen() {
         />
       </EgPopover>
     </template>
-  </EgAnchoredTooltip>
+  </EgTooltip>
 
-  <EgAnchoredTooltip
+  <EgGasFeePopover
+    v-else-if="hasMinerFeeStep && skipRemarkStep && gasFeeNetwork"
+    ref="gasFeePopoverRef"
+    :network="gasFeeNetwork"
+    :translate="ui"
+    :symbol="gasFeeSymbol"
+    :title="minerFeeTopToolTitle"
+    :transaction-count="minerFeeTransactionCount"
+    :boundary-selector="boundarySelector"
+    :on-before-open="onBeforeOpen"
+    @confirm="onGasFeeConfirm"
+    @dismiss="onMinerFeePopoverDismiss"
+  >
+    <template #trigger="triggerSlot">
+      <slot name="trigger" v-bind="triggerSlot" />
+    </template>
+  </EgGasFeePopover>
+
+  <EgTooltip
     v-else-if="hasMinerFeeStep"
     ref="minerFeeAnchoredRef"
     placement="top"
@@ -219,35 +293,21 @@ function onDirectMinerFeeTooltipOpen() {
     token-scope-class="desktopTokens"
     @close="onMinerFeePopoverDismiss"
   >
-    <EgAnchoredPopover
+    <EgRemarkPopover
+      v-model="draftRemark"
+      :title="title"
+      :placeholder="ui(placeholderKey)"
+      :feedback-text="feedbackKey"
+      :confirm-label="ui('Confirm')"
       :boundary-selector="boundarySelector"
-      teleport-to=".app-preview"
-      placement="top"
-      width-mode="fixed"
-      :width="POPOVER_PRESET_WIDTH_BASE"
-      :top-tool="showTopTool"
-      :top-tool-title="title"
-      top-tool-closable
-      :on-before-open="onBeforeOpen"
-      @dismiss="onDismiss"
+      :on-before-open="prepareRemarkDraft"
+      @confirm="onRemarkStepConfirm"
+      @dismiss="onRemarkDismissRestore"
     >
       <template #trigger="triggerSlot">
         <slot name="trigger" v-bind="triggerSlot" />
       </template>
-      <template #default="{ close }">
-        <ApprovalRemarkFormPanel
-          ref="remarkPanelRef"
-          v-model="remarkModel"
-          :label="ui('Remark')"
-          :placeholder-key="placeholderKey"
-          :feedback-text="feedbackKey"
-          :confirm-label="ui('Confirm')"
-          :confirm-tone="confirmTone"
-          hide-label
-          @confirm="onRemarkStepConfirm(close)"
-        />
-      </template>
-    </EgAnchoredPopover>
+    </EgRemarkPopover>
     <template #content>
       <EgPopover
         v-bind="MINER_FEE_POPOVER_CHROME"
@@ -270,37 +330,22 @@ function onDirectMinerFeeTooltipOpen() {
         />
       </EgPopover>
     </template>
-  </EgAnchoredTooltip>
+  </EgTooltip>
 
-  <EgAnchoredPopover
+  <EgRemarkPopover
     v-else
+    v-model="remarkModel"
+    :title="title"
+    :placeholder="ui(placeholderKey)"
+    :feedback-text="feedbackKey"
+    :confirm-label="ui('Confirm')"
     :boundary-selector="boundarySelector"
-    teleport-to=".app-preview"
-    placement="top"
-    width-mode="fixed"
-    :width="POPOVER_PRESET_WIDTH_BASE"
-    :top-tool="showTopTool"
-    :top-tool-title="title"
-    top-tool-closable
     :on-before-open="onBeforeOpen"
+    @confirm="onRemarkOnlyConfirm"
     @dismiss="onDismiss"
   >
     <template #trigger="triggerSlot">
       <slot name="trigger" v-bind="triggerSlot" />
     </template>
-    <template #default="{ close }">
-      <ApprovalRemarkPopoverPanel
-        ref="minerFeePanelRef"
-        :selected-count="selectedCount"
-        :remark="remark"
-        :confirm-tone="confirmTone"
-        :placeholder-key="placeholderKey"
-        :feedback-key="feedbackKey"
-        @update:remark="emit('update:remark', $event)"
-        @miner-fee-screen-change="onMinerFeeScreenChange"
-        @confirm="(selection) => { emit('confirm', selection); close(); }"
-        @cancel="close"
-      />
-    </template>
-  </EgAnchoredPopover>
+  </EgRemarkPopover>
 </template>

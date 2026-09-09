@@ -1,5 +1,5 @@
 :root {
-  /* 客户端窗口尺寸（业务约定，非 DS token） */
+  /* 客户端窗口尺寸（业务约定，非 EDS token） */
   --app-preview-width: 1280px;
   --app-preview-height: 800px;
   --app-preview-min-width: 960px;
@@ -62,7 +62,7 @@ body::after {
   margin: 0;
 }
 
-/* ── 容器层：EgTooltip → effect-container-box ── */
+/* ── 容器层：EgTooltipPanel → effect-container-box ── */
 #app > .app-preview {
   position: relative;
   z-index: 1;
@@ -122,7 +122,7 @@ body > [id^='eds-tooltip-v-'],
   -webkit-user-select: none;
 }
 
-/* 仅根容器 EgTooltip 的面板；勿用后代选择器，否则会覆盖 BatchBar 等嵌套 flotation 面板 */
+/* 仅根容器 EgTooltipPanel 的面板；勿用后代选择器，否则会覆盖 BatchBar 等嵌套 flotation 面板 */
 .app-preview > .eds-tooltip-panel {
   display: flex;
   flex-direction: column;
@@ -255,7 +255,7 @@ body > [id^='eds-tooltip-v-'] > div:first-child:has(> :not([class*='floatingInne
 }
 
 /*
- * 可点击态：默认箭头指针，不用手型（对齐 DS EgButton / motion-ease.is-paint）。
+ * 可点击态：默认箭头指针，不用手型（对齐 EDS EgButton / motion-ease.is-paint）。
  */
 .app-preview
   :is(

@@ -51,7 +51,7 @@ if (!specSource.includes('parseEffectSemanticClassFromStyleLine')) {
 }
 
 const panelSource = readFileSync(join(inspectDir, 'InspectDetailPanel.vue'), 'utf8');
-if (!panelSource.includes('EgAnchoredTooltip')) {
+if (!/\bEgTooltip\b/.test(panelSource)) {
   fail('E2', 'InspectDetailPanel 须用 Tooltip 展示 Effect 参数');
 }
 

@@ -38,7 +38,7 @@ import { resolveInspectPropLabel } from './inspectPropLabels';
 import {
   findComponentRootOwner,
   findDirectDomCatalogEntry,
-  findDsComponentRootInstance,
+  findEdsComponentRootInstance,
 } from './inspectIdentity';
 import {
   resolveEdsComponentRegion,
@@ -169,8 +169,8 @@ function walkVueChain(element: Element): VueComponentInternal[] {
   return chain;
 }
 
-/** DS 组件 Vue 名 → 展示名（`EgFoo` / `Foo` 统一去前缀）。 */
-function formatDsComponentDisplayName(vueName: string): string {
+/** EDS 组件 Vue 名 → 展示名（`EgFoo` / `Foo` 统一去前缀）。 */
+function formatEdsComponentDisplayName(vueName: string): string {
   return vueName.startsWith('Eg') ? vueName.slice(2) : vueName;
 }
 
@@ -214,10 +214,10 @@ function resolveAtomicGraphicCandidate(element: Element): ResolvedCandidate | nu
 /**
  * R2 组件根，三级：
  * 1. 节点自身带 catalog `eds-*` 根类 → catalog 组件 + 精选 props
- * 2. 节点就是已入 catalog 的 DS 组件的 Vue DOM 根 → 同上
- * 3. 节点就是**任意** DS 包组件的 Vue DOM 根 → 组件自己的名字 + 通用 props
+ * 2. 节点就是已入 catalog 的 EDS 组件的 Vue DOM 根 → 同上
+ * 3. 节点就是**任意** EDS 包组件的 Vue DOM 根 → 组件自己的名字 + 通用 props
  *
- * 第 3 级保证「未入 catalog 的 DS 组件」也有自己的名字，不会退化成继承祖先名。
+ * 第 3 级保证「未入 catalog 的 EDS 组件」也有自己的名字，不会退化成继承祖先名。
  */
 function resolveComponentRootCandidate(element: Element): ResolvedCandidate | null {
   const domMatch = findDirectDomCatalogEntry(element);
@@ -237,19 +237,19 @@ function resolveComponentRootCandidate(element: Element): ResolvedCandidate | nu
     };
   }
 
-  const dsRoot = findDsComponentRootInstance(element);
-  if (dsRoot) {
-    const inspect = buildGenericEdsInspect(dsRoot.vueName, dsRoot.instance)
-      ?? buildNamedLayerInspect(formatDsComponentDisplayName(dsRoot.vueName), element);
+  const edsRoot = findEdsComponentRootInstance(element);
+  if (edsRoot) {
+    const inspect = buildGenericEdsInspect(edsRoot.vueName, edsRoot.instance)
+      ?? buildNamedLayerInspect(formatEdsComponentDisplayName(edsRoot.vueName), element);
     return {
       entry: {
         displayName: inspect.displayName,
         priority: 2,
-        vueNames: [dsRoot.vueName],
+        vueNames: [edsRoot.vueName],
         props: [],
       },
-      vueName: dsRoot.vueName,
-      instance: dsRoot.instance,
+      vueName: edsRoot.vueName,
+      instance: edsRoot.instance,
       rootElement: element,
       genericInspect: inspect,
     };
@@ -436,7 +436,7 @@ function buildGenericEdsInspect(
   const catalogEntry = resolveCatalogForVueName(vueName);
   const displayName = catalogEntry
     ? resolveEntryDisplayName(catalogEntry, vueProps)
-    : formatDsComponentDisplayName(vueName);
+    : formatEdsComponentDisplayName(vueName);
   const propItems: InspectPropertyItem[] = keys
     .filter((key) => !isInspectLayoutStylePropKey(key) && !DERIVED_PROPERTY_KEYS.has(key))
     .sort()

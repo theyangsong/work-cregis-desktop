@@ -3,7 +3,7 @@
 **日期：** 2026-08-25  
 **提出方：** work-cregis-desktop（Desktop 客户端集成）  
 **现象：** `uses="detail"` 审批/签名 Detail 弹窗（880×620）四角呈直角，与 Figma Popup Box（`radius-lg` + squircle）不一致。  
-**业务侧：** 不在 work-cregis-desktop 打补丁；须 DS 修组件/token 语义。
+**业务侧：** 不在 work-cregis-desktop 打补丁；须 EDS 修组件/token 语义。
 
 ---
 
@@ -30,7 +30,7 @@
 
 | 层 | 圆角 | 真源 |
 |----|------|------|
-| `EgPopup` → `EgTooltip` `panel-kind="popup"` | `panel-radius="radius-lg"` | `Popup.vue` |
+| `EgPopup` → `EgTooltipPanel` `panel-kind="popup"` | `panel-radius="radius-lg"` | `Popup.vue` |
 | `.effect-popup-box` 语义 | `border-radius: var(--radius-lg)` | `tokens/spec/effect/semantic.json` |
 | inline style | `borderRadius: var(--radius-lg)` | `Tooltip.vue` → `shellStyle` |
 
@@ -70,7 +70,7 @@ Dev Inspect 可验证：点 `effect-popup-box` 有 `border-radius: var(--radius-
 | 可见轮廓 | Detail 弹窗四角与 Figma **Popup Box** 一致（`radius-lg`） |
 | 顶栏/工具栏 | sticky 底栏底角与外壳同半径，无「内框方、外框圆」 |
 | Squircle | 与 Container / Flotation 一致，或文档明确 Popup Detail 是否 opt-out |
-| 业务集成 | **零** business CSS；仅消费 DS 组件 |
+| 业务集成 | **零** business CSS；仅消费 EDS 组件 |
 | 其它 uses | `dialog` / `verify` / `custom` 不被 Detail 改动误伤 |
 
 ---
@@ -97,7 +97,7 @@ Dev Inspect 可验证：点 `effect-popup-box` 有 `border-radius: var(--radius-
 }
 ```
 
-**可选增强：** `EgTooltip` shell 显式下发 token，供子 organism 消费（避免 `inherit` 链被中间层打断）：
+**可选增强：** `EgTooltipPanel` shell 显式下发 token，供子 organism 消费（避免 `inherit` 链被中间层打断）：
 
 ```css
 /* Tooltip.vue shellStyle 已有 borderRadius，可同步： */
@@ -165,14 +165,14 @@ Detail 改用 `border-radius: var(--eds-popup-panel-radius, inherit)`。
 ### 5.2 可选
 
 4. **`Tooltip.vue`**
-   - Detail / popup 场景评估是否移除 `data-no-corner-smoothing`，或仅 `uses="detail"` 的 EgPopup 内 EgTooltip 启用 squircle
+   - Detail / popup 场景评估是否移除 `data-no-corner-smoothing`，或仅 `uses="detail"` 的 EgPopup 内 EgTooltipPanel 启用 squircle
 
 5. **CSS 变量**
    - 新增 `--eds-popup-panel-radius`（panelRadius prop 解析结果），Detail / 未来 Popup 插槽统一引用
 
 ### 5.3 不建议业务侧
 
-- work-cregis-desktop `detailPopupChrome.module.css` 等处 **禁止** 私设圆角/overflow 绕过 DS
+- work-cregis-desktop `detailPopupChrome.module.css` 等处 **禁止** 私设圆角/overflow 绕过 EDS
 
 ---
 
@@ -264,13 +264,13 @@ work-cregis-desktop 在 `EgPopup` 插槽外包了一层 **`detailHost`**（`deta
 }
 ```
 
-业务侧 **禁止** 在 `detailPopupChrome.module.css` 私打圆角；须 DS 侧上述规则进 remote。
+业务侧 **禁止** 在 `detailPopupChrome.module.css` 私打圆角；须 EDS 侧上述规则进 remote。
 
 ---
 
 ## 11. 本地同步（work-cregis-desktop + 同级 eds-desktop）
 
-dev/build 通过 `link:../eds-desktop` + Vite alias 读 **DS 源码**；4173 须本地 eds 含 §10 补链后再验。
+dev/build 通过 `link:../eds-desktop` + Vite alias 读 **EDS 源码**；4173 须本地 eds 含 §10 补链后再验。
 
 **完整 inherit 链：**
 
@@ -282,4 +282,4 @@ dev/build 通过 `link:../eds-desktop` + Vite alias 读 **DS 源码**；4173 须
 | **`detailHost`（业务 wrapper）** | **`Popup.module.css` `> *`（§10 必补）** |
 | `EgDetail.root` / `.toolbar` | `Detail.module.css` |
 
-改完 DS 后重启 `pnpm dev` 并硬刷新 4173。Pages CI pin 须含 `c5e577c` + `9843744`（detailHost `> *` 补链）。
+改完 EDS 后重启 `pnpm dev` 并硬刷新 4173。Pages CI pin 须含 `c5e577c` + `9843744`（detailHost `> *` 补链）。

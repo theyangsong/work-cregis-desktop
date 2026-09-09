@@ -1,4 +1,4 @@
-/** DS 矿工费 ComboAction 仅支持 decor；业务二次确认须对齐 EgButton danger solid。 */
+/** EDS 矿工费 ComboAction 仅支持 decor；业务二次确认须对齐 EgButton danger solid。 */
 .minerFeeConfirmDanger :global([class*='popupRoot'] .eds-button._solid_),
 .minerFeeConfirmDanger :global([class*='minerFeeFooter'] .eds-button._solid_) {
   background-color: var(--status-danger);

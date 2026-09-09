@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { toRef } from 'vue';
-import { EgDialog, EgPopup } from '@eds/desktop-components';
+import { EgDialog, EgDialogPopup } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
 import { usePopupShellLifecycle } from '../../shared/usePopupShellLifecycle';
 
@@ -39,10 +39,9 @@ function onCancel() {
 </script>
 
 <template>
-  <EgPopup
+  <EgDialogPopup
     v-if="popupMounted"
     v-model:open="popupOpen"
-    uses="dialog"
     dialog-type="standard"
     alert-vertical-align="offset-top"
     @close="onPopupClosed"
@@ -57,5 +56,5 @@ function onCancel() {
       @confirm="onConfirm"
       @cancel="onCancel"
     />
-  </EgPopup>
+  </EgDialogPopup>
 </template>

@@ -1,15 +1,15 @@
 /**
- * R4 具名区域表 —— DS 组件内部**确实是 Figma 组件**、但渲染成无 `eds-*` 类的普通容器。
+ * R4 具名区域表 —— EDS 组件内部**确实是 Figma 组件**、但渲染成无 `eds-*` 类的普通容器。
  *
  * 收录门槛（四条全中才可加）：
  * 1. Figma 组件库里确实存在同名组件；
- * 2. DS 未给它独立 Vue 组件（否则 R2 的 Vue DOM 根已能命中，如 `ModuleMenuTitle`）；
- * 3. DS 未给它 `eds-*` 根类（否则 R2 的 catalog 已能命中）；
+ * 2. EDS 未给它独立 Vue 组件（否则 R2 的 Vue DOM 根已能命中，如 `ModuleMenuTitle`）；
+ * 3. EDS 未给它 `eds-*` 根类（否则 R2 的 catalog 已能命中）；
  * 4. 名字不与 catalog 里任何组件重名 —— 否则同一条 DOM 链上会出现两层同名
  *    （曾因 `raw` → `Paginer` 导致 footer 与内层 div 都叫 Paginer）。
  *
  * **【禁止】** 为普通 auto-layout 容器编造名字（`ToolBarFunctional`、`SkidPanel` 之类）——
- * 它们在 DS 里只是 `<div>`，应按 R5 显示 `Div`。
+ * 它们在 EDS 里只是 `<div>`，应按 R5 显示 `Div`。
  *
  * 真源：`../eds-desktop/packages/components/src/**\/*.module.css`
  * 校验：`node scripts/verify-shell-debug-inspect-naming.mjs`
@@ -19,7 +19,7 @@ import { buildDetailApplyItemProps } from './buildDetailApplyItemInspect';
 import { classListHasModuleFragment } from './inspectNamingRules';
 
 export type EdsComponentRegionSpec = {
-  /** 所属 DS 组件的根 `eds-*` 类 */
+  /** 所属 EDS 组件的根 `eds-*` 类 */
   parentDomClass: string;
   /** 该组件 `*.module.css` 里的容器名（编译后类名仍含此片段） */
   cssModuleFragment: string;

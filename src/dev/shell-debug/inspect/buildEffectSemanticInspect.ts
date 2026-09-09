@@ -32,7 +32,7 @@ export function buildEffectSemanticCodeSections(element: Element): InspectCodeSe
   return sections;
 }
 
-/** EgTooltip 用法：始终带上 panelKind（对应 effect 语义类）。 */
+/** EgTooltipPanel 用法：始终带上 panelKind（对应 effect 语义类）。 */
 export function buildTooltipUsageSnippet(vueProps: Record<string, unknown>): string {
   const panelKind = String(vueProps.panelKind ?? 'flotation').trim() || 'flotation';
   const attrs: string[] = [`panelKind="${panelKind}"`];
@@ -55,5 +55,5 @@ export function buildTooltipUsageSnippet(vueProps: Record<string, unknown>): str
   if (vueProps.panelMicroFloat === true) attrs.push('panel-micro-float');
   if (vueProps.panelLayoutMotion === true) attrs.push('panel-layout-motion');
 
-  return `<EgTooltip ${attrs.join(' ')} />`;
+  return `<EgTooltipPanel ${attrs.join(' ')} />`;
 }

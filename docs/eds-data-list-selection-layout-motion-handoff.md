@@ -19,7 +19,7 @@
 
 独立视觉组件无法只靠 props 安全控制这些结构。若业务在 `EgDataList` 外再包一层
 `EgSelectionMotion`，它既拿不到合法的 `<colgroup>` 位置，也无法保证 header/body
-列数一致，最终会把 DS 内部布局协议泄漏到业务。
+列数一致，最终会把 EDS 内部布局协议泄漏到业务。
 
 正确封装边界：
 
@@ -28,7 +28,7 @@
 └─ EgDataList（唯一公开 API）
    ├─ DataList responsive-column policy
    ├─ DataList selection state / snapshot
-   └─ selection-layout motion controller（DS 内部，可复用）
+   └─ selection-layout motion controller（EDS 内部，可复用）
       ├─ 常驻 key 集
       ├─ idle / active 两套目标宽度
       ├─ CSS transition phase
@@ -289,7 +289,7 @@ DATA_LIST_LAYOUT_SETTLE_MS        = 320ms
 
 任一值变更都必须同步检查另外两项。
 
-## 5. DS 内部复用抽取建议
+## 5. EDS 内部复用抽取建议
 
 ### 5.1 本次即可做的 DataList 内部拆分
 
@@ -370,7 +370,7 @@ type UseDataListSelectLayoutReturn = {
 
 ### 5.3 第二个消费方出现后的通用抽取
 
-只有当 DS 内出现第二个真实的 table/grid 消费方时，才进一步从
+只有当 EDS 内出现第二个真实的 table/grid 消费方时，才进一步从
 `useDataListSelectLayout` 提取通用：
 
 ```text

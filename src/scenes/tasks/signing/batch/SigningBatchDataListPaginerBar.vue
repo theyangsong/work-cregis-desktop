@@ -3,7 +3,7 @@ import { computed, useSlots, watch } from 'vue';
 import {
   EgIcon,
   EgPaginer,
-  EgPaginationItem,
+  EgPaginationGroupButton,
 } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
 import { formatGroupedNumber } from '@/utils/formatGroupedDisplay';
@@ -86,24 +86,24 @@ watch(
     :settings-jump-placeholder="ui('Please Enter')"
     @settings-jump="onSettingsJump"
   >
-    <EgPaginationItem
+    <EgPaginationGroupButton
       :kind="firstPagination.kind"
       :tone="firstPagination.tone"
       :disabled="prevNavDisabled || firstPagination.disabled"
       @click="goFirstPage"
     >
       <EgIcon name="eds-arrow-go-first" fit />
-    </EgPaginationItem>
-    <EgPaginationItem
+    </EgPaginationGroupButton>
+    <EgPaginationGroupButton
       :kind="prevPagination.kind"
       :tone="prevPagination.tone"
       :disabled="prevNavDisabled || prevPagination.disabled"
       @click="goPrevPage"
     >
       <EgIcon name="eds-arrow-left-mini-ios" fit />
-    </EgPaginationItem>
+    </EgPaginationGroupButton>
     <template v-if="!isManyPagination">
-      <EgPaginationItem
+      <EgPaginationGroupButton
         :kind="pagePagination.kind"
         :tone="pagePagination.tone"
         selected
@@ -112,7 +112,7 @@ watch(
       />
     </template>
     <template v-else>
-      <EgPaginationItem
+      <EgPaginationGroupButton
         v-for="(item, index) in manyPageItems"
         :key="`${item.kind}-${item.label}-${index}`"
         :kind="pagePagination.kind"
@@ -124,22 +124,22 @@ watch(
         @click="onManyPageItemClick(item)"
       />
     </template>
-    <EgPaginationItem
+    <EgPaginationGroupButton
       :kind="nextPagination.kind"
       :tone="nextPagination.tone"
       :disabled="nextNavDisabled || nextPagination.disabled"
       @click="goNextPage"
     >
       <EgIcon name="eds-arrow-right-mini-ios" fit />
-    </EgPaginationItem>
-    <EgPaginationItem
+    </EgPaginationGroupButton>
+    <EgPaginationGroupButton
       :kind="lastPagination.kind"
       :tone="lastPagination.tone"
       :disabled="nextNavDisabled || lastPagination.disabled"
       @click="goLastPage"
     >
       <EgIcon name="eds-arrow-go-last" fit />
-    </EgPaginationItem>
+    </EgPaginationGroupButton>
 
     </EgPaginer>
 

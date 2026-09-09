@@ -3,7 +3,7 @@ import { computed, onBeforeUnmount, ref, useSlots, watch } from 'vue';
 import {
   EgDivider,
   EgIcon,
-  EgPaginationItem,
+  EgPaginationGroupButton,
   formatGroupedNumber,
 } from '@eds/desktop-components';
 import comboActionStyles from '@eds/desktop-components/molecules/combo/ComboAction.module.css';
@@ -114,7 +114,7 @@ onBeforeUnmount(() => {
             <span :class="styles.toolbarCounterCurrent">{{ toolbarCounterCurrentText }}</span>
             <span :class="styles.toolbarCounterRest">/ {{ toolbarCounterTotalText }}</span>
           </span>
-          <EgPaginationItem
+          <EgPaginationGroupButton
             kind="borderArrow"
             :label="ui('Next item')"
             :disabled="toolbarNextDisabled"
@@ -122,7 +122,7 @@ onBeforeUnmount(() => {
             @click="emit('toolbar-next')"
           >
             <EgIcon name="eds-arrow-right" fit />
-          </EgPaginationItem>
+          </EgPaginationGroupButton>
         </div>
       </div>
       <div

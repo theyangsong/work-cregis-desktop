@@ -1,5 +1,5 @@
 /**
- * DS 外壳 internal structural `eds-*` 类：仅 chrome / scroll / glass。
+ * EDS 外壳 internal structural `eds-*` 类：仅 chrome / scroll / glass。
  * 全局外壳借名 **只认节点自身** 命中此表；禁止 CSS Module 类名片段匹配。
  */
 const SHELL_STRUCTURAL_EDS_DOM_CLASSES = new Set([

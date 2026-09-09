@@ -207,7 +207,7 @@ function resolveFullInspectTextContent(element: Element): string | null {
   return readDomTextContent(element);
 }
 
-/** 选中 typography 叶子时返回 Text；td/div/button 等容器走 DS 组件或元素属性。 */
+/** 选中 typography 叶子时返回 Text；td/div/button 等容器走 EDS 组件或元素属性。 */
 export function canInspectAsText(element: Element): boolean {
   if (isShellDebugUiElement(element)) {
     return false;

@@ -1,5 +1,5 @@
 /**
- * 待处理多签邀请 — Flotation Box 内容区（外层 effect-flotation-box 由 EgAnchoredTooltip panel-kind=flotation 承担）。
+ * 待处理多签邀请 — Flotation Box 内容区（外层 effect-flotation-box 由 EgTooltip panel-kind=flotation 承担）。
  */
 
 /* 高于 [data-app-client-float-host] overlay（1101），否则展开面板可能被遮挡或点不中 */

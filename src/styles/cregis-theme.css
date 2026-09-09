@@ -1,5 +1,5 @@
 /**
- * Cregis 业务主题 — 覆盖 DS 基色变量（Display P3 双声明）。
+ * Cregis 业务主题 — 覆盖 EDS 基色变量（Display P3 双声明）。
  * --eds-brand 对齐 Cregis 品牌绿 #1FC35A（与 eds-success 同源）。
  */
 :root,
@@ -10,7 +10,7 @@
 }
 
 /**
- * 浏览器外壳背景 — 模拟客户端窗口外的宿主环境（业务约定，非 DS token）。
+ * 浏览器外壳背景 — 模拟客户端窗口外的宿主环境（业务约定，非 EDS token）。
  */
 :root {
   --cregis-shell-bg: #eff4fa;

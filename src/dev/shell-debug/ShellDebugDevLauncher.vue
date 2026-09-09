@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import {
-  EgAnchoredTooltip,
+  EgTooltip,
   EgIcon,
   EgPopover,
-  EgTooltip,
+  EgTooltipPanel,
 } from '@eds/desktop-components';
 import InspectDetailPanel from './inspect/InspectDetailPanel.vue';
 import {
@@ -240,7 +240,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div ref="triggerRef">
-    <EgAnchoredTooltip
+    <EgTooltip
       placement="top"
       :align="hintPopoverAlign"
       trigger="hover"
@@ -257,7 +257,7 @@ onBeforeUnmount(() => {
           developerInspectActive && styles.triggerMetricsDevActive,
         ]"
       >
-        <EgAnchoredTooltip
+        <EgTooltip
           ref="anchorRef"
           placement="top"
           :align="popoverAlign"
@@ -270,7 +270,7 @@ onBeforeUnmount(() => {
           @open="onPopoverOpen"
           @close="onPopoverClose"
         >
-          <EgTooltip
+          <EgTooltipPanel
             :class="styles.launcherShell"
             panel-kind="popup"
             panel-radius="radius-full"
@@ -295,7 +295,7 @@ onBeforeUnmount(() => {
               </span>
               <span :class="styles.launcherLabel">Dev</span>
             </button>
-          </EgTooltip>
+          </EgTooltipPanel>
 
           <template #content>
             <EgPopover
@@ -320,7 +320,7 @@ onBeforeUnmount(() => {
               </div>
             </EgPopover>
           </template>
-        </EgAnchoredTooltip>
+        </EgTooltip>
       </span>
 
       <template #content>
@@ -338,6 +338,6 @@ onBeforeUnmount(() => {
           </div>
         </EgPopover>
       </template>
-    </EgAnchoredTooltip>
+    </EgTooltip>
   </div>
 </template>

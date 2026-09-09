@@ -18,7 +18,7 @@ import { resolveInspectPropLabel } from './inspectPropLabels';
 export type EdsPropSpec = {
   key: string;
   label: string;
-  /** Figma / DS API 字段说明 */
+  /** Figma / EDS API 字段说明 */
   figmaLabel?: string;
   defaultValue?: unknown;
   when?: (props: Record<string, unknown>) => boolean;
@@ -40,7 +40,7 @@ export type EdsInspectCatalogEntry = {
   /** eds-* root class on rendered DOM */
   domClass?: string;
   /**
-   * 同一 DS 组件承担多个 Figma 角色时按 props 派生名字（如 Tooltip 的 `panelKind`）。
+   * 同一 EDS 组件承担多个 Figma 角色时按 props 派生名字（如 Tooltip 的 `panelKind`）。
    * 返回 null 用 `displayName`。**【禁止】** 在 resolver 里写逐组件 `if` 代替本 hook。
    */
   resolveDisplayName?: (props: Record<string, unknown>) => string | null;
@@ -103,7 +103,7 @@ function normalizeButtonVariant(value: unknown): string {
   }
 }
 
-/** DS 组件 inspect 目录 — 对齐 eds-desktop props / Figma 变体命名。 */
+/** EDS 组件 inspect 目录 — 对齐 eds-desktop props / Figma 变体命名。 */
 export const EDS_INSPECT_CATALOG: EdsInspectCatalogEntry[] = [
   {
     displayName: 'Icon',
@@ -163,7 +163,7 @@ export const EDS_INSPECT_CATALOG: EdsInspectCatalogEntry[] = [
   {
     displayName: 'IconButtonPro',
     priority: 85,
-    vueNames: ['IconButtonPro', 'EgIconButtonPro'],
+    vueNames: ['IconButtonPro', 'EgIconProButton'],
     domClass: 'eds-icon-button-pro',
     props: [
       { key: 'label', label: '标签' },
@@ -209,7 +209,7 @@ export const EDS_INSPECT_CATALOG: EdsInspectCatalogEntry[] = [
   {
     displayName: 'Link',
     priority: 70,
-    vueNames: ['Link', 'EgLink'],
+    vueNames: ['Link', 'EgLinkButton'],
     domClass: 'eds-link',
     props: [
       { key: 'tone', label: '色调', defaultValue: 'brand' },
@@ -340,7 +340,7 @@ export const EDS_INSPECT_CATALOG: EdsInspectCatalogEntry[] = [
   {
     displayName: 'ComboTextareaItem',
     priority: 68,
-    vueNames: ['ComboTextareaItem', 'EgComboTextareaItem'],
+    vueNames: ['ComboTextareaItem', 'EgComboTextarea'],
     props: [
       { key: 'label', label: '标签', format: formatOptionalText },
       { key: 'feedback', label: '反馈区', defaultValue: false, format: formatBoolean },
@@ -385,7 +385,7 @@ export const EDS_INSPECT_CATALOG: EdsInspectCatalogEntry[] = [
   {
     displayName: 'Tooltip',
     priority: 60,
-    vueNames: ['Tooltip', 'EgTooltip', 'AnchoredTooltip', 'EgAnchoredTooltip'],
+    vueNames: ['Tooltip', 'EgTooltipPanel', 'AnchoredTooltip', 'EgTooltip'],
     resolveDisplayName: (props) =>
       TOOLTIP_PANEL_ROLE_NAMES[String(props.panelKind ?? '')] ?? null,
     buildUsageSnippet: buildTooltipUsageSnippet,
@@ -402,7 +402,7 @@ export const EDS_INSPECT_CATALOG: EdsInspectCatalogEntry[] = [
   {
     displayName: 'TextOverflowTooltip',
     priority: 55,
-    vueNames: ['TextOverflowTooltip', 'EgTextOverflowTooltip'],
+    vueNames: ['TextOverflowTooltip', 'EgTooltipOverflow'],
     props: [
       { key: 'content', label: '内容', format: formatOptionalText },
       { key: 'placement', label: '位置' },
@@ -518,7 +518,7 @@ export const EDS_INSPECT_CATALOG: EdsInspectCatalogEntry[] = [
   {
     displayName: 'PaginationItem',
     priority: 39,
-    vueNames: ['PaginationItem', 'EgPaginationItem'],
+    vueNames: ['PaginationItem', 'EgPaginationGroupButton'],
     domClass: 'eds-pagination-item',
     props: [
       { key: 'kind', label: '类型', defaultValue: 'number' },

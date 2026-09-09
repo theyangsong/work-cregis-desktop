@@ -1,6 +1,6 @@
 import { nextTick, onBeforeUnmount, ref } from 'vue';
 
-/** 与 MultiSignInvitationFloatHost / DS flotation Toast 演示一致的可读停留时长。 */
+/** 与 MultiSignInvitationFloatHost / EDS flotation Toast 演示一致的可读停留时长。 */
 export const EDS_TOAST_VISIBLE_MS = 2400;
 
 export function readEdsFlotationLeaveMs(

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { EgButton } from '@eds/desktop-components';
+import { EgButton, EgConfirmPopover, POPOVER_PRESET_WIDTH_BASE } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
 import {
   getActiveBatchSigningTask,
@@ -10,7 +10,6 @@ import {
 import SigningBatchDataListPaginerBar from './SigningBatchDataListPaginerBar.vue';
 import SigningBatchPopupSlotChrome from './SigningBatchPopupSlotChrome.vue';
 import SigningBatchProgressPage from './SigningBatchProgressPage.vue';
-import SigningBatchStopConfirmPopover from './SigningBatchStopConfirmPopover.vue';
 import type { BatchSigningTask, BatchSigningTaskRow } from './types';
 
 const props = withDefaults(
@@ -83,7 +82,19 @@ function onConfirmStopSigning() {
         @paginated-change="onPaginatedChange"
       >
         <template v-if="isRunning" #actions>
-          <SigningBatchStopConfirmPopover @confirm="onConfirmStopSigning">
+          <EgConfirmPopover
+            :title="ui('Stop Signing')"
+            :message="
+              ui(
+                'After stopping, transactions that have not yet been signed will no longer be signed, while transactions that have already been signed will not be affected. Are you sure you want to stop the current batch signing task?',
+              )
+            "
+            :confirm-label="ui('Confirm')"
+            :close-label="ui('Close')"
+            placement="top"
+            :width="POPOVER_PRESET_WIDTH_BASE"
+            @confirm="onConfirmStopSigning"
+          >
             <template #trigger="{ onClick }">
               <EgButton
                 tone="danger"
@@ -94,7 +105,7 @@ function onConfirmStopSigning() {
                 {{ ui('Stop Signing') }}
               </EgButton>
             </template>
-          </SigningBatchStopConfirmPopover>
+          </EgConfirmPopover>
         </template>
         <template v-else #actions>
           <EgButton

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { EgAnchoredTooltip, EgIcon, EgIconButton } from '@eds/desktop-components';
+import { EgTooltip, EgIcon, EgIconButton } from '@eds/desktop-components';
 import styles from './DetailValueActionIcon.module.css';
 
 withDefaults(
@@ -19,7 +19,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <EgAnchoredTooltip
+  <EgTooltip
     trigger="hover"
     placement="bottom"
     align="center"
@@ -44,5 +44,5 @@ const emit = defineEmits<{
     <template #content>
       <span :class="styles.tooltipLabel">{{ label }}</span>
     </template>
-  </EgAnchoredTooltip>
+  </EgTooltip>
 </template>

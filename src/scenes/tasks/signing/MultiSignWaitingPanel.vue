@@ -2,10 +2,12 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, watch, withDefaults } from 'vue';
 import {
   EgAvatar,
+  EgConfirmPopover,
   EgDivider,
   EgIcon,
   EgIconButton,
   EgRipplePulse,
+  EgStatusTag,
   EgTag,
 } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
@@ -14,7 +16,6 @@ import './multiSignWaitingPopupHost.css';
 import type { MultiSignWaitingPanelModel } from './buildMultiSignWaitingPanelModel';
 import type { MultiSignRoomPhase, MultiSignWaitingPerspective } from './types';
 import SigningFooterLatencyToolbar from './SigningFooterLatencyToolbar.vue';
-import MultiSignWaitingExitConfirmPopover from './MultiSignWaitingExitConfirmPopover.vue';
 import { useMultiSignWaitingPopupHost } from './useMultiSignWaitingPopupHost';
 import styles from './MultiSignWaitingPanel.module.css';
 
@@ -165,7 +166,18 @@ watch([memberListRef, () => props.model.members.length], () => {
   >
     <div :class="styles.root">
       <div :class="styles.systemBarClose">
-        <MultiSignWaitingExitConfirmPopover @confirm="emit('close')">
+        <EgConfirmPopover
+          :title="ui('Warm reminder')"
+          :message="
+            ui(
+              'If you exit, this signing will fail. Are you sure you want to exit?',
+            )
+          "
+          :confirm-label="ui('Confirm')"
+          :close-label="ui('Close')"
+          placement="bottom"
+          @confirm="emit('close')"
+        >
           <template #trigger="{ onClick, active }">
             <span
               :class="[
@@ -185,7 +197,7 @@ watch([memberListRef, () => props.model.members.length], () => {
               </EgIconButton>
             </span>
           </template>
-        </MultiSignWaitingExitConfirmPopover>
+        </EgConfirmPopover>
       </div>
 
       <div :class="styles.body">
@@ -350,14 +362,13 @@ watch([memberListRef, () => props.model.members.length], () => {
                 <span :class="styles.memberEmail">{{ member.emailMasked }}</span>
               </div>
 
-              <EgTag
+              <EgStatusTag
                 :class="styles.memberStatusTag"
-                family="status"
                 size="lg"
                 status="success"
               >
                 {{ ui('Joined') }}
-              </EgTag>
+              </EgStatusTag>
             </div>
           </div>
 

@@ -169,7 +169,7 @@
   box-sizing: border-box;
 }
 
-/* placement=top 且无 topTool 时 DS contentSlot 顶 padding 为 0；reminder 补回 spacing-3。 */
+/* placement=top 且无 topTool 时 EDS contentSlot 顶 padding 为 0；reminder 补回 spacing-3。 */
 :global(.eds-popover:has(.shell-debug-dev-inspect-hint) [class*='contentSlot']) {
   padding: var(--spacing-3) var(--spacing-4) var(--spacing-4);
 }

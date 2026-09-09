@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { EgIcon, EgMotionProcessing, EgTag, EgTextOverflowTooltip } from '@eds/desktop-components';
+import { EgIcon, EgMotionProcessing, EgTag, EgTooltipOverflow } from '@eds/desktop-components';
 import { copyToClipboard } from '@eds/desktop-components/utils/copyToClipboard';
 import { useAppI18n } from '@/composables/useAppI18n';
 import DetailApprovalProgressMemberRows from './DetailApprovalProgressMemberRows.vue';
@@ -136,7 +136,7 @@ async function onCopyAutomationRule(
             @keydown.enter.prevent="onCopyAutomationRule(step)"
             @keydown.space.prevent="onCopyAutomationRule(step)"
           >
-            <EgTextOverflowTooltip
+            <EgTooltipOverflow
               :tooltip-text="automationSignatureRuleDisplay(step.automationSignatureRule!)"
               :typography-class="styles.automationRuleTextTypography"
               :host-class="styles.automationRuleTextHost"
@@ -144,7 +144,7 @@ async function onCopyAutomationRule(
               target-tone="secondary"
             >
               {{ automationSignatureRuleDisplay(step.automationSignatureRule!) }}
-            </EgTextOverflowTooltip>
+            </EgTooltipOverflow>
             <span
               :class="[
                 styles.automationRuleCopyButton,

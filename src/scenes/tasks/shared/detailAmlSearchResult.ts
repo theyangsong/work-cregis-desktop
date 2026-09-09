@@ -1,6 +1,6 @@
 import type { TagCustomStyle } from '@eds/desktop-components';
 
-/** AML 结果 Tag：DS 四种 aml-* 样式，文案走 ui() 短 label。 */
+/** AML 结果 Tag：EDS 四种 aml-* 样式，文案走 ui() 短 label。 */
 export const DETAIL_AML_SEARCH_RESULT_VARIANTS = [
   { labelKey: 'Danger', customStyle: 'aml-danger' },
   { labelKey: 'Safe', customStyle: 'aml-safe' },

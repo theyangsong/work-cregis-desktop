@@ -3,7 +3,7 @@ import {
   EgAvatar,
   EgButton,
   EgTag,
-  EgTextOverflowTooltip,
+  EgTooltipOverflow,
 } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
 import batchStyles from '../batch/batchSigning.shared.module.css';
@@ -108,7 +108,7 @@ function addressCopyLabel(address: string): string {
                   >
                     {{ invitation.sender.alias }}
                   </EgTag>
-                  <EgTextOverflowTooltip
+                  <EgTooltipOverflow
                     :tooltip-text="invitation.sender.address"
                     :copy-value="invitation.sender.address"
                     :copy-label="addressCopyLabel(invitation.sender.address)"
@@ -131,7 +131,7 @@ function addressCopyLabel(address: string): string {
                     >
                       {{ truncateAddressMiddle(invitation.sender.address) }}
                     </span>
-                  </EgTextOverflowTooltip>
+                  </EgTooltipOverflow>
                 </span>
               </span>
             </div>
@@ -151,7 +151,7 @@ function addressCopyLabel(address: string): string {
                   >
                     {{ invitation.receiver.alias }}
                   </EgTag>
-                  <EgTextOverflowTooltip
+                  <EgTooltipOverflow
                     :tooltip-text="invitation.receiver.address"
                     :copy-value="invitation.receiver.address"
                     :copy-label="addressCopyLabel(invitation.receiver.address)"
@@ -174,7 +174,7 @@ function addressCopyLabel(address: string): string {
                     >
                       {{ truncateAddressMiddle(invitation.receiver.address) }}
                     </span>
-                  </EgTextOverflowTooltip>
+                  </EgTooltipOverflow>
                 </span>
               </span>
             </div>

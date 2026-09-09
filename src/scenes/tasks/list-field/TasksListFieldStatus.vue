@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { EgTag, type TagStatus } from '@eds/desktop-components';
+import { EgStatusTag, type TagStatus } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
 import styles from './TasksListFieldStatus.module.css';
 
@@ -36,8 +36,8 @@ const alignEnd = computed(() => Boolean(props.alignEnd));
     :class="[styles.statusPreview, alignEnd && styles.statusPreviewAlignEnd]"
     :style="cellMinWidthStyle"
   >
-    <EgTag family="status" :status="tagStatus" size="lg" :truncate="tagTruncate">
+    <EgStatusTag :status="tagStatus" size="lg" :truncate="tagTruncate">
       {{ tagLabel }}
-    </EgTag>
+    </EgStatusTag>
   </div>
 </template>

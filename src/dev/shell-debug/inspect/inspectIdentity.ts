@@ -1,7 +1,7 @@
 /**
  * R2 组件根判定 —— 见 `inspectNamingRules.ts` 的五条统一规则。
  *
- * **【禁止】** 子树借名：DS 组件只在「节点自身带 catalog `eds-*` 根类」或
+ * **【禁止】** 子树借名：EDS 组件只在「节点自身带 catalog `eds-*` 根类」或
  * 「节点就是该组件的 Vue DOM 根」时才算 owner。内层普通容器走 R4 / R5。
  */
 import {
@@ -122,7 +122,7 @@ export function findDirectDomCatalogEntry(
 }
 
 /**
- * 节点**就是**某已入 catalog 的 DS 组件的 Vue DOM 根时返回该组件。
+ * 节点**就是**某已入 catalog 的 EDS 组件的 Vue DOM 根时返回该组件。
  * 子树内节点一律不匹配 —— 这是全站统一「点谁是谁」的关键约束。
  */
 export function findComponentRootOwner(element: Element): VueCatalogOwnerMatch | null {
@@ -135,29 +135,29 @@ export function findComponentRootOwner(element: Element): VueCatalogOwnerMatch |
   return null;
 }
 
-/** DS 组件源码位置标记（dev 下 plugin-vue 注入 `__file`）。 */
-const DS_COMPONENT_FILE_MARKER = 'eds-desktop/packages/components/';
+/** EDS 组件源码位置标记（dev 下 plugin-vue 注入 `__file`）。 */
+const EDS_COMPONENT_FILE_MARKER = 'eds-desktop/packages/components/';
 
-/** 该实例是否为 DS 包组件（build 下 `__file` 缺失时回退 catalog 名）。 */
-function isDsPackageInstance(instance: VueComponentInternal): boolean {
+/** 该实例是否为 EDS 包组件（build 下 `__file` 缺失时回退 catalog 名）。 */
+function isEdsPackageInstance(instance: VueComponentInternal): boolean {
   const file = (instance.type as { __file?: unknown } | undefined)?.__file;
-  if (typeof file === 'string') return file.includes(DS_COMPONENT_FILE_MARKER);
+  if (typeof file === 'string') return file.includes(EDS_COMPONENT_FILE_MARKER);
   return Boolean(resolveCatalogForVueName(resolveVueComponentName(instance)));
 }
 
 /**
- * 节点是否为**任意** DS 包组件的 Vue DOM 根（含未入 catalog 的 33 个内部组件）。
+ * 节点是否为**任意** EDS 包组件的 Vue DOM 根（含未入 catalog 的 33 个内部组件）。
  * 未入 catalog 只意味着「没有精选 props」，**不应**让它退化成继承祖先名 —— 那会
  * 让 `CryptoAddress` / `Verify` / `MinerFee*Panel` 等与外层弹窗重名。
  */
-export function findDsComponentRootInstance(
+export function findEdsComponentRootInstance(
   element: Element,
 ): { vueName: string; instance: VueComponentInternal } | null {
   // root !== element：委托 findVueInstancesWithDomRoot，只在 root === target 时命中。
   for (const instance of findVueInstancesWithDomRoot(element)) {
     const vueName = resolveVueComponentName(instance);
     if (!vueName) continue;
-    if (!isDsPackageInstance(instance) && !vueName.startsWith('Eg')) continue;
+    if (!isEdsPackageInstance(instance) && !vueName.startsWith('Eg')) continue;
 
     return { vueName, instance };
   }

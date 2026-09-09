@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { EgAnchoredTooltip, EgIcon, EgIconButton } from '@eds/desktop-components';
+import { EgTooltip, EgIcon, EgIconButton } from '@eds/desktop-components';
 import { copyToClipboard } from '@eds/desktop-components/utils/copyToClipboard';
 import { useAppI18n } from '@/composables/useAppI18n';
 import type { DetailProgressMemberDeviceInfo } from './detailProgressMemberDeviceInfo.types';
@@ -40,7 +40,7 @@ async function onCopyRow(
 </script>
 
 <template>
-  <EgAnchoredTooltip
+  <EgTooltip
     :class="styles.deviceInfoTooltip"
     trigger="hover"
     placement="bottom"
@@ -101,5 +101,5 @@ async function onCopyRow(
         </div>
       </div>
     </template>
-  </EgAnchoredTooltip>
+  </EgTooltip>
 </template>

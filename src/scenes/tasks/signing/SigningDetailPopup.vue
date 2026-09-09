@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, toRef, watch } from 'vue';
-import { EgButton, EgDetail, EgPopup, type TagStatus } from '@eds/desktop-components';
+import { EgButton, EgDetail, EgDetailPopup, type TagStatus } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
 import {
   formatGroupedAmountText,
@@ -215,10 +215,9 @@ function onDetailClose() {
 </script>
 
 <template>
-  <EgPopup
+  <EgDetailPopup
     v-if="popupMounted"
     v-model:open="popupOpen"
-    uses="detail"
     @close="onPopupClosed"
   >
     <div ref="detailHostRef" :class="detailChromeStyles.detailHost">
@@ -358,5 +357,5 @@ function onDetailClose() {
       :text="amlToastText"
     />
     </div>
-  </EgPopup>
+  </EgDetailPopup>
 </template>

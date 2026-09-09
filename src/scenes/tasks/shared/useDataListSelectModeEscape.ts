@@ -19,7 +19,7 @@ function isDataListSelectModeDomActive(
 
 /**
  * 批处理 Esc 退出：与 EgDataList `onSelectModeEscape` 同链。
- * 兜底父级 `v-model:select-mode` 已与 DS 内部态不同步时仍可退出。
+ * 兜底父级 `v-model:select-mode` 已与 EDS 内部态不同步时仍可退出。
  */
 export function useDataListSelectModeEscape(options: {
   selectMode: MaybeRefOrGetter<boolean>;

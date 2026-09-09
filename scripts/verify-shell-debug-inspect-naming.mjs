@@ -7,14 +7,14 @@
  *
  * I1 规则顺序与 resolver 实际分支一致
  * I2 一层一名：组件根须 root === element，且任何分支都不得沿祖先取名
- * I3 region 片段必须在所属 DS 组件的 *.module.css 中真实存在
+ * I3 region 片段必须在所属 EDS 组件的 *.module.css 中真实存在
  * I4 region 名不得与 catalog 组件重名（否则同链两层同名）
  * I5 region 不得覆盖已有 Vue 组件根（那属 R2，不该编造区域）
  * I6 旧机制字段已彻底移除（shellSubtree / ownerDomRootOnly / 逐组件壳层特判）
  * I7 布局 / 样式恒对准被点击节点
  * I8 CSS Module 片段匹配不得前缀误配（raw ⊄ paginationRaw）
  * I9 命名只有一条路径（UI 层不得另起 fallback）
- * I10 任意 DS 包组件根都有自己的名字（未入 catalog 也不得退化成继承祖先名）
+ * I10 任意 EDS 包组件根都有自己的名字（未入 catalog 也不得退化成继承祖先名）
  * I11 同组件多 Figma 角色走 catalog resolveDisplayName hook，不写 resolver 特判
  * I12 「祖先」只作属性面板首行，禁止回流进命名
  * I13 Dev Inspect 不得读取壳外 Shell Debug UI（见 shellDebugUiScope.ts）
@@ -25,7 +25,7 @@ import { join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const repoRoot = join(fileURLToPath(import.meta.url), '..', '..');
-const dsRoot = join(repoRoot, '..', 'eds-desktop', 'packages', 'components', 'src');
+const edsRoot = join(repoRoot, '..', 'eds-desktop', 'packages', 'components', 'src');
 const inspectDir = join(repoRoot, 'src/dev/shell-debug/inspect');
 
 const read = (p) => readFileSync(join(inspectDir, p), 'utf8');
@@ -51,8 +51,8 @@ function walk(dir, ext, out = []) {
   return out;
 }
 
-const dsVueFiles = walk(dsRoot, '.vue');
-const dsCssFiles = walk(dsRoot, '.module.css');
+const edsVueFiles = walk(edsRoot, '.vue');
+const edsCssFiles = walk(edsRoot, '.module.css');
 
 function readCssClassNames(cssPath) {
   const names = new Set();
@@ -62,10 +62,10 @@ function readCssClassNames(cssPath) {
   return names;
 }
 
-/** 由 DS 组件根 eds-* 类反查其源码目录（承载该组件的 .vue 所在目录）。 */
+/** 由 EDS 组件根 eds-* 类反查其源码目录（承载该组件的 .vue 所在目录）。 */
 function findComponentDirByDomClass(domClass) {
   const needle = new RegExp(`['"\`]${domClass}['"\`]|class="${domClass}[ "]`);
-  for (const file of dsVueFiles) {
+  for (const file of edsVueFiles) {
     if (needle.test(readFileSync(file, 'utf8'))) return dirname(file);
   }
   return null;
@@ -135,7 +135,7 @@ function readFunctionBody(source, name) {
   return end < 0 ? source.slice(start) : source.slice(start, end + 2);
 }
 
-for (const fnName of ['findComponentRootOwner', 'findDsComponentRootInstance', 'findVueInstancesWithDomRoot']) {
+for (const fnName of ['findComponentRootOwner', 'findEdsComponentRootInstance', 'findVueInstancesWithDomRoot']) {
   const body = readFunctionBody(identitySource, fnName);
   if (!body) {
     fail('I2', `缺少 ${fnName}（组件根判定入口）`);
@@ -189,21 +189,21 @@ if (regionSpecs.length === 0) fail('I3', 'region 表为空（至少应含 Pagina
 for (const spec of regionSpecs) {
   const dir = findComponentDirByDomClass(spec.parentDomClass);
   if (!dir) {
-    fail('I3', `region ${spec.displayName}: DS 中找不到 ${spec.parentDomClass}`);
+    fail('I3', `region ${spec.displayName}: EDS 中找不到 ${spec.parentDomClass}`);
     continue;
   }
 
-  const cssInDir = dsCssFiles.filter((p) => dirname(p) === dir);
+  const cssInDir = edsCssFiles.filter((p) => dirname(p) === dir);
   const hit = cssInDir.some((p) => readCssClassNames(p).has(spec.cssModuleFragment));
   if (!hit) {
     fail(
       'I3',
-      `region ${spec.displayName}: 片段 "${spec.cssModuleFragment}" 不在 ${relative(dsRoot, dir)}/*.module.css`,
+      `region ${spec.displayName}: 片段 "${spec.cssModuleFragment}" 不在 ${relative(edsRoot, dir)}/*.module.css`,
     );
   }
 
   // I5：若同目录存在以该 fragment 为根的独立 Vue 组件，则应由 R2 命中
-  const ownedByComponent = dsVueFiles
+  const ownedByComponent = edsVueFiles
     .filter((p) => dirname(p) === dir)
     .some((p) => {
       const src = readFileSync(p, 'utf8');
@@ -290,28 +290,28 @@ for (const banned of ['buildLabel', 'formatVueInspectLabel']) {
   if (infoSource.includes(banned)) fail('I9', `并行命名路径残留：${banned}`);
 }
 
-// ------------------- I10 任意 DS 组件根都有自己的名字
+// ------------------- I10 任意 EDS 组件根都有自己的名字
 
 const rootBody = readFunctionBody(resolverSource, 'resolveComponentRootCandidate');
 if (!rootBody) {
   fail('I10', '缺少 resolveComponentRootCandidate');
-} else if (!/=\s*findDsComponentRootInstance\(element\)/.test(rootBody)) {
+} else if (!/=\s*findEdsComponentRootInstance\(element\)/.test(rootBody)) {
   fail(
     'I10',
-    'R2 必须含「任意 DS 包组件根」一级（findDsComponentRootInstance(element)），'
-      + '否则未入 catalog 的 DS 组件会退化成继承祖先名',
+    'R2 必须含「任意 EDS 包组件根」一级（findEdsComponentRootInstance(element)），'
+      + '否则未入 catalog 的 EDS 组件会退化成继承祖先名',
   );
 }
 
-const dsRootBody = readFunctionBody(identitySource, 'findDsComponentRootInstance');
-if (!dsRootBody) {
-  fail('I10', '缺少 findDsComponentRootInstance');
+const edsRootBody = readFunctionBody(identitySource, 'findEdsComponentRootInstance');
+if (!edsRootBody) {
+  fail('I10', '缺少 findEdsComponentRootInstance');
 } else {
-  if (!/root !== element/.test(dsRootBody)) {
-    fail('I10', 'findDsComponentRootInstance 必须以 root !== element 排除子树节点');
+  if (!/root !== element/.test(edsRootBody)) {
+    fail('I10', 'findEdsComponentRootInstance 必须以 root !== element 排除子树节点');
   }
-  if (!/isDsPackageInstance/.test(dsRootBody)) {
-    fail('I10', 'findDsComponentRootInstance 必须用 isDsPackageInstance 限定 DS 包组件');
+  if (!/isEdsPackageInstance/.test(edsRootBody)) {
+    fail('I10', 'findEdsComponentRootInstance 必须用 isEdsPackageInstance 限定 EDS 包组件');
   }
 }
 

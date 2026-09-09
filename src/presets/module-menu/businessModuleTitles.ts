@@ -1,30 +1,11 @@
-/** Cregis 业务场景 Module Menu 模块名 — 与 Cregis Nav Bar 一致。 */
-export const cregisModuleMenuBusinessTitles = [
-  'Wallet',
-  'Tasks',
-  'WaaS',
-  'Payment Engine',
-  'Report',
-  'Risk Control',
-  'Manage',
-  'Marketplace',
-  'Notifications',
-  'Account Settings',
-] as const;
+import {
+  cregisModuleMenuBusinessTitles,
+  DEFAULT_CREGIS_MODULE_MENU_BUSINESS_TITLE,
+  type CregisModuleMenuBusinessTitle,
+} from '@eds/desktop-components';
 
-export type CregisModuleMenuBusinessTitle = (typeof cregisModuleMenuBusinessTitles)[number];
-
-export type ModuleMenuBusinessScenario = 'cregis' | 'udun';
-
-export const DEFAULT_CREGIS_MODULE_MENU_BUSINESS_TITLE: CregisModuleMenuBusinessTitle = 'Wallet';
-
-/** Cregis：已在 `cregisModuleMenuByTitle` 单独维护菜单组数据的模块。 */
-export const cregisModuleMenuBusinessTitlesWithMenuPreset: readonly CregisModuleMenuBusinessTitle[] =
-  ['Tasks', 'Payment Engine', 'Manage', 'Notifications', 'Account Settings'];
-
-/** Cregis：标题走 EgFlotation Combo（模块菜单下拉标题）。 */
-export const cregisModuleMenuBusinessTitlesWithFlotationTitle: readonly CregisModuleMenuBusinessTitle[] =
-  ['WaaS', 'Payment Engine'];
+export type { CregisModuleMenuBusinessTitle };
+export { DEFAULT_CREGIS_MODULE_MENU_BUSINESS_TITLE };
 
 /** Cregis：Nav 聚焦时不展示 Module Menu（Report / Marketplace / 应用入口）。 */
 export const cregisNavLabelsWithoutModuleMenu = [
@@ -38,14 +19,6 @@ const NAV_CHROME_LABEL_TO_MODULE_TITLE: Record<string, CregisModuleMenuBusinessT
   Notice: 'Notifications',
   'User avatar': 'Account Settings',
 };
-
-export function moduleMenuBusinessTitleUsesFlotationTitle(
-  scenario: ModuleMenuBusinessScenario,
-  title: string,
-): boolean {
-  if (scenario !== 'cregis') return false;
-  return (cregisModuleMenuBusinessTitlesWithFlotationTitle as readonly string[]).includes(title);
-}
 
 /** Nav Bar 按钮 aria-label → Module Menu 业务模块名。 */
 export function resolveNavChromeLabelToModuleMenuTitle(

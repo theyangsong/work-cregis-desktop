@@ -5,7 +5,7 @@
 
 /*
  * Showcase `/components/popovers` · scenario=guide（Figma preset 256）。
- * 仅 .guideHost 内覆盖 EgPopover 视觉，不改 DS 组件。
+ * 仅 .guideHost 内覆盖 EgPopover 视觉，不改 EDS 组件。
  */
 .guideHost :global(> .eds-popover svg) {
   filter: none;

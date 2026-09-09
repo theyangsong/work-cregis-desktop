@@ -3,7 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import {
   EgAnchoredPopover,
   EgIcon,
-  EgTooltip,
+  EgTooltipPanel,
   useThemeProvider,
 } from '@eds/desktop-components';
 import {
@@ -112,7 +112,7 @@ onBeforeUnmount(() => {
     >
       <template #trigger="{ active, onClick }">
         <span data-eds-trigger-metrics :class="styles.triggerMetrics">
-          <EgTooltip
+          <EgTooltipPanel
             :class="styles.launcherShell"
             panel-kind="popup"
             panel-radius="radius-full"
@@ -133,7 +133,7 @@ onBeforeUnmount(() => {
               </span>
               <span :class="styles.launcherLabel">Model</span>
             </button>
-          </EgTooltip>
+          </EgTooltipPanel>
         </span>
       </template>
 

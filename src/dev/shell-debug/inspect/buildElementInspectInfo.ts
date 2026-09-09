@@ -37,14 +37,14 @@ export type InspectPropertyGroup = {
 export type ElementInspectInfo = {
   element: Element;
   label: string;
-  /** 自内向外的 DS 组件链路（内部识别，UI 不展示完整路径）。 */
+  /** 自内向外的 EDS 组件链路（内部识别，UI 不展示完整路径）。 */
   componentChain: string[];
   tagName: string;
   domPath: string;
   classList: string[];
   edsComponentHints: string[];
   edsComponent: InspectTargetResolution['edsComponent'];
-  /** 非 DS 组件时展示的元素本身属性。 */
+  /** 非 EDS 组件时展示的元素本身属性。 */
   elementAttributes: InspectPropertyItem[];
   rect: { width: number; height: number };
   code: {

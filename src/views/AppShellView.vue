@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { EgLayout, EgNavBar } from '@eds/desktop-components';
-import CregisModuleMenu from '@/components/CregisModuleMenu.vue';
+import { EgCregisModuleMenu, EgCregisNavBar, EgLayout } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
 import PreferencePage from '@/scenes/account-settings/PreferencePage.vue';
 import {
@@ -10,8 +9,6 @@ import {
   resolveNavChromeLabelToModuleMenuTitle,
   type CregisModuleMenuBusinessTitle,
 } from '@/presets/module-menu/businessModuleTitles';
-import { getCregisModuleMenuGroups } from '@/presets/module-menu/cregisModuleMenuGroups';
-import { cregisNavBarDeclarativeAttrs } from '@/presets/nav/cregisNavBarDeclarative';
 import { resolveEnglishUiText } from '@/i18n/translateUiText';
 import TasksDataListPage from '@/scenes/tasks/TasksDataListPage.vue';
 import { setMultiSignCollaborationModuleActive } from '@/scenes/tasks/signing/multiSignInvitation/multiSignInvitationStore';
@@ -19,24 +16,15 @@ import { useTasksModuleMenuGroups } from '@/scenes/tasks/useTasksModuleMenuGroup
 import {
   DEFAULT_TASKS_DATA_LIST_MENU_ITEM,
   isTasksDataListMenuItem,
+  resolveTasksModuleMenuDisplayLabel,
   type TasksDataListMenuItemLabel,
 } from '@/scenes/tasks/tasksDataListPageData';
 
 const { messages, ui, locale } = useAppI18n();
 
-const navBarAttrs = computed(() => ({
-  ...cregisNavBarDeclarativeAttrs,
-  moduleLabel1: ui('Wallet'),
-  moduleLabel2: ui('Tasks'),
-  moduleLabel3: ui('WaaS'),
-  moduleLabel4: ui('Payment Engine'),
-  moduleLabel5: ui('Report'),
-  moduleLabel6: ui('Risk Control'),
-  moduleLabel7: ui('Manage'),
-  moduleLabel8: ui('Marketplace'),
-  appEntryLabel1: ui('UniChain'),
-  appEntryLabel2: ui('MetaMask'),
-}));
+function translateModuleMenu(text: string) {
+  return ui(resolveTasksModuleMenuDisplayLabel(text, locale.value));
+}
 
 const activeModuleTitle = ref<CregisModuleMenuBusinessTitle>(
   DEFAULT_CREGIS_MODULE_MENU_BUSINESS_TITLE,
@@ -60,13 +48,6 @@ const showPreferencePage = computed(
 );
 
 const tasksModuleMenuGroups = useTasksModuleMenuGroups();
-
-const moduleMenuGroups = computed(() => {
-  if (activeModuleTitle.value === 'Tasks') {
-    return tasksModuleMenuGroups.value;
-  }
-  return getCregisModuleMenuGroups(activeModuleTitle.value);
-});
 
 watch(activeModuleTitle, (title) => {
   if (title === 'Tasks') {
@@ -118,14 +99,15 @@ function onModuleMenuItemSelect(label: string) {
   <EgLayout type="free">
     <template #nav>
       <div class="app-shell-nav" @click.capture="onNavClick">
-        <EgNavBar v-bind="navBarAttrs" />
+        <EgCregisNavBar :translate="ui" />
       </div>
     </template>
 
     <template v-if="showModuleMenu" #moduleMenu>
-      <CregisModuleMenu
+      <EgCregisModuleMenu
         :title="activeModuleTitle"
-        :groups="moduleMenuGroups"
+        :translate="translateModuleMenu"
+        :groups="activeModuleTitle === 'Tasks' ? tasksModuleMenuGroups : undefined"
         @item-select="onModuleMenuItemSelect"
       />
     </template>

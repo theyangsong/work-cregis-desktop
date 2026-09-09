@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, toRef } from 'vue';
-import { EgDialog, EgPopup } from '@eds/desktop-components';
+import { EgDialog, EgDialogPopup } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
 import { formatGroupedDecimalAmount } from '@/utils/formatGroupedDisplay';
 import { usePopupShellLifecycle } from '../../shared/usePopupShellLifecycle';
@@ -53,10 +53,9 @@ function onContinueSending() {
 </script>
 
 <template>
-  <EgPopup
+  <EgDialogPopup
     v-if="popupMounted"
     v-model:open="popupOpen"
-    uses="dialog"
     dialog-type="standard"
     alert-vertical-align="offset-top"
     @close="onPopupClosed"
@@ -71,5 +70,5 @@ function onContinueSending() {
       @cancel="onIncreaseQuota"
       @confirm="onContinueSending"
     />
-  </EgPopup>
+  </EgDialogPopup>
 </template>

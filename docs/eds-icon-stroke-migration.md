@@ -1,7 +1,7 @@
-# DS Icon 描边 — 业务侧说明
+# EDS Icon 描边 — 业务侧说明
 
 **日期：** 2026-08-18  
-**DS 真源：** `../eds-desktop/packages/components/docs/icon-stroke-scaling.md`
+**EDS 真源：** `../eds-desktop/packages/components/docs/icon-stroke-scaling.md`
 
 ## 当前方案（Chrome <153）
 
@@ -22,4 +22,4 @@ stroke-width: calc(var(--eds-icon-stroke-screen) * 32 / var(--eds-icon-display-p
 
 1. `pnpm install` / 重启 dev（`4173`）+ 硬刷新
 2. **禁止**在 `.eds-i-s` 写 `stroke` / `stroke-width` / `vector-effect`
-3. 153 发布后按 DS 文档「Chrome 153 后验证清单」再评估是否切回 `non-scaling-stroke`
+3. 153 发布后按 EDS 文档「Chrome 153 后验证清单」再评估是否切回 `non-scaling-stroke`

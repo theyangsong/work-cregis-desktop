@@ -2,6 +2,10 @@
 
 本项目是 **Desktop 客户端**，不是 Showcase / 文档站。
 
+## 工作推进（Agent 必读）
+
+默认按 **大阶段 + 强逻辑** 与用户协作：定目标 → 摸底 → 实施 → 验证 → 收尾。每阶段先一句短思考、再写做了什么；过程可见，禁止改完再打包汇报。详案：`.cursor/rules/work.mdc` 文首（与 EDS `work.mdc` §0.1 一致）。
+
 ## 硬约束（违反即错误）
 
 1. **只允许** `@eds/desktop-tokens`、`@eds/desktop-animations`、`@eds/desktop-components`（及未来的 patterns / workflows）。
@@ -11,7 +15,7 @@
    例：`.typography-footnote` / `composes: typography-body-medium from global`；**不存在** `--eds-footnote-medium-size`。
 5. **组件样式** dev/build 走 eds-desktop **源码**（见 `vite.config.ts` alias），不要 `@import '@eds/desktop-components/style.css'`（dist 快照会过期）。
 6. **`pnpm sync` / 说「同步 eds-desktop」** 只更新 Desktop packages，与 showcase / Website 无关。
-7. **禁止复制**：所有业务页面（含后续新增）不得向用户提供复制能力；`installPageCopyGuard()` 拦截 `copy`/`cut`；`.app-preview` 与 teleport 到 `body` 的 `eds-tooltip-v-*` / `.eds-flotation-menu` 全局 `user-select: none`（`global.css`）。不得新增复制按钮、clipboard API、DS 复制 Menu。
+7. **禁止复制**：所有业务页面（含后续新增）不得向用户提供复制能力；`installPageCopyGuard()` 拦截 `copy`/`cut`；`.app-preview` 与 teleport 到 `body` 的 `eds-tooltip-v-*` / `.eds-flotation-menu` 全局 `user-select: none`（`global.css`）。不得新增复制按钮、clipboard API、EDS 复制 Menu。
 8. **开发改动须 dev 实时生效**：UI/样式/交互改 `src/**` 或引用库时，须在 `pnpm dev` 下保存即 HMR/full-reload 可见；禁止只 `pnpm build` 不 dev。详见 `.cursor/rules/work.mdc` §2.3。
 9. **禁止主动 `git push`**：用户说推送后，只准备 commit 说明与终端命令，由用户自己推。推送必须是 **work-cregis-desktop + eds-desktop 截止当前的最新**；Pages CI 的 eds-desktop `ref` 必须等于 **远程已存在的 SHA**。推前验完 typecheck、Pages 同路径 preview（4174）、pin、工作区干净。详见 `.cursor/rules/work.mdc` §2.5。
 
@@ -21,7 +25,7 @@
 
 | 变更类型 | 改哪里 | 不要 |
 |----------|--------|------|
-| DS 组件行为（Tooltip、BatchBar、DataList、CryptoAddress…） | `eds-desktop/packages/components/**` | 在业务项目手搓平行实现 |
+| EDS 组件行为（Tooltip、BatchBar、DataList、CryptoAddress…） | `eds-desktop/packages/components/**` | 在业务项目手搓平行实现 |
 | 业务 list-field 薄封装（`TasksListField*`） | 对齐 Showcase 集成方式：`ListFieldPreviewPanel.vue` | 误用 `EgListFieldHashLikeLine` 渲染发起人、钱包、金额等普通文本；**禁止**接入带复制的 HashLikeLine / CryptoAddress 复制侧栏 |
 | 可 sync 的 list-field 辅助 | 随 sync 或手动 diff showcase 同名文件后合并 | 整文件覆盖 `listFieldCryptoSampleAddresses.ts`（§ list-field 本地扩展） |
 
@@ -46,7 +50,7 @@
 
 ```
 #app                                    ← Vue 挂载 + flex 居中；不是客户端视口
-└─ .app-preview.desktopTokens          ← EgTooltip container（1280×800 预览框）
+└─ .app-preview.desktopTokens          ← EgTooltipPanel container（1280×800 预览框）
    ├─ EgContainer → EgLayout → 业务页
    └─ AppPopupOverlayHost              ← EgPopup 客户端 shell（与 Container 同级）
 ```
@@ -67,7 +71,15 @@
 | reminder / verify | `EgPopup` 须 `v-if="open"` 或 shell host 在关闭时卸载，避免空遮罩 |
 | detail 关闭 | `EgDetail @close` → **仅** `popupOpen=false`；`emit('update:open', false)` 与数据清理在 EgPopup `@close` / `onClosed`（`.motion-layout` 出场后）。关闭钮与点遮罩须同链（`work.mdc` §7.1） |
 
-权威说明：`../eds-desktop/.cursor/rules/eds-project.mdc` §7 EgPopup。
+权威说明：`../eds-desktop/.cursor/rules/work.mdc` §7 EgPopup。
+
+## 场景组件优先（硬约束）
+
+EDS 已封装的业务场景，业务侧与 Showcase 走 **同一 `Eg*` 入口**，**禁止**用 primitives 手拼：二次确认 `EgConfirmPopover`、引导 `EgGuidancePopover`、备注 `EgRemarkPopover`、矿工费 `EgGasFeePopover`、Tag `EgStatusTag` / `EgColorfulTag` / `EgBusinessTag`、Popup `EgDetailPopup` / `EgDialogPopup` / `EgVerifyPopup`、Dialog `EgSymbolDialog` / `EgBusinessDialog`、单因子校验 `Eg*Verify`。
+
+EDS 已清空全部 `@deprecated` 公共 API（`EgButton variant="primary"`、`EgBatchBar action-label`、`EgModuleMenuItem level|active`、`EgTooltip micro-float`、`EgCryptoSymbol show-entry-badge`）—— 写了编译即失败。
+
+详案：`.cursor/rules/work.mdc` §4.1 / §4.2。Cregis NavBar / Module Menu preset 在 EDS 统一维护（`EgCregisNavBar`、`EgCregisModuleMenu`）；Tasks 动态 badge 仅 `:groups` 覆盖。命名真源：`../eds-desktop/.cursor/rules/work.mdc` §17。
 
 ## 数字千分位（硬约束）
 
@@ -83,7 +95,7 @@
 
 - **仅可覆盖**：`key` / `title` / `value` / `tag` / `valueSymbolCrypto` / `valueIcon` / `valueSymbolAvatarName`
 - **映射参考**：`src/scenes/tasks/approval/buildApprovalDetailSections.ts`
-- **详案**：`../eds-desktop/packages/components/docs/detail-apply-item.md` · 约定 `eds-project.mdc` §7
+- **详案**：`../eds-desktop/packages/components/docs/detail-apply-item.md` · 约定 `../eds-desktop/.cursor/rules/work.mdc` §7
 
 ## Top & Bottom Mask — 滚动顶底毛玻璃（硬约束）
 
@@ -93,9 +105,9 @@
 | Popup / Flotation 自定义列表壳 | `useScrollChromeScrim` + `var(--effect-mask)` + `var(--eds-blur-bg)` |
 | 改 mask 不透明度 | eds-desktop 改 `effect-mask` token，再同步 |
 
-详案：`.cursor/rules/work.mdc` §6.3。DS 真源：`../eds-desktop/.cursor/rules/eds-project.mdc` §13。
+详案：`.cursor/rules/work.mdc` §6.3。EDS 真源：`../eds-desktop/.cursor/rules/work.mdc` §13。
 
-**注意**：顶部未滚动时顶栏为实色；下滚后才 scrim——与 DS 一致。
+**注意**：顶部未滚动时顶栏为实色；下滚后才 scrim——与 EDS 一致。
 
 ## UI 文案 i18n（硬约束）
 
@@ -117,5 +129,5 @@ Showcase 外层是 **Website token 壳**，部分未在 Desktop spec 定义的�
 ## 更多细节
 
 - `README.md` — 集成与脚本
-- `.cursor/rules/work.mdc` — **唯一业务规范**（`alwaysApply`；含 i18n §5、顶底毛玻璃 §6.3、Popup §7.1、批处理 §7.2 等）
-- `.cursor/rules/eds-project.mdc` — 完整 EDS 约定（在 eds-desktop 仓库）
+- `.cursor/rules/work.mdc` — **唯一业务规范**（`alwaysApply`；含 Agent 工作推进文首、场景组件 §4.1、i18n §5、顶底毛玻璃 §6.3、Popup §7.1、批处理 §7.2 等）
+- `../eds-desktop/.cursor/rules/work.mdc` — 完整 EDS 约定（在 eds-desktop 仓库）

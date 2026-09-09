@@ -8,7 +8,7 @@ import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const repoRoot = join(fileURLToPath(import.meta.url), '..', '..');
-const dsRoot = join(repoRoot, '..', 'eds-desktop', 'packages', 'components', 'src');
+const edsRoot = join(repoRoot, '..', 'eds-desktop', 'packages', 'components', 'src');
 const catalogPath = join(repoRoot, 'src/dev/shell-debug/inspect/edsInspectCatalog.ts');
 
 const INTERIOR_EDS_DOM_CLASSES = new Set([
@@ -69,7 +69,7 @@ const catalogSource = readFileSync(catalogPath, 'utf8');
 const catalogDom = readCatalogDomClasses(catalogSource);
 
 const componentRoots = new Map();
-for (const file of walk(dsRoot)) {
+for (const file of walk(edsRoot)) {
   const source = readFileSync(file, 'utf8');
   for (const className of readComponentRootClasses(source)) {
     if (STRUCTURAL.has(className)) continue;
@@ -78,7 +78,7 @@ for (const file of walk(dsRoot)) {
     if (!componentRoots.has(className)) {
       componentRoots.set(className, []);
     }
-    componentRoots.get(className).push(relative(dsRoot, file));
+    componentRoots.get(className).push(relative(edsRoot, file));
   }
 }
 
@@ -87,11 +87,11 @@ const missing = [...componentRoots.keys()]
   .sort();
 
 if (missing.length === 0) {
-  console.log('verify-shell-debug-inspect-catalog: OK — DS 组件根 eds-* 均已入 catalog');
+  console.log('verify-shell-debug-inspect-catalog: OK — EDS 组件根 eds-* 均已入 catalog');
   process.exit(0);
 }
 
-console.error('verify-shell-debug-inspect-catalog: 以下 DS 组件根 eds-* 未入 inspect catalog:\n');
+console.error('verify-shell-debug-inspect-catalog: 以下 EDS 组件根 eds-* 未入 inspect catalog:\n');
 for (const className of missing) {
   const files = componentRoots.get(className).slice(0, 3);
   console.error(`  ${className}`);

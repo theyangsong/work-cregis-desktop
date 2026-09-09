@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue';
-import { EgAnchoredTooltip, EgTooltip } from '@eds/desktop-components';
+import { EgTooltip, EgTooltipPanel } from '@eds/desktop-components';
 import type { ElementInspectInfo, InspectPropertyItem } from './buildElementInspectInfo';
 import { copyDevInspectText } from './copyDevInspectText';
 import { DEV_INSPECT_COPY_FEEDBACK } from './devInspectCopyFeedback';
@@ -287,7 +287,7 @@ onBeforeUnmount(() => {
               class="effect-class-trigger-host"
               :class="$style.effectClassTooltipHost"
             >
-              <EgAnchoredTooltip
+              <EgTooltip
                 ref="effectSpecTooltipRef"
                 placement="left"
                 align="end"
@@ -315,7 +315,7 @@ onBeforeUnmount(() => {
                   </span>
                 </button>
                 <template #content>
-                  <EgTooltip
+                  <EgTooltipPanel
                     panel-kind="flotation"
                     panel-radius="radius-md"
                     panel-layout-motion
@@ -369,9 +369,9 @@ onBeforeUnmount(() => {
                         </li>
                       </ul>
                     </div>
-                  </EgTooltip>
+                  </EgTooltipPanel>
                 </template>
-              </EgAnchoredTooltip>
+              </EgTooltip>
             </div>
             <button
               v-else

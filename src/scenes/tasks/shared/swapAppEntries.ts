@@ -1,4 +1,4 @@
-/** Nav Bar 应用入口 — 与 cregisNavBarDeclarative appEntry* 一致。 */
+/** Nav Bar 应用入口 — 与 EDS `cregisNavBarAppEntries` 一致。 */
 export const SWAP_APP_ENTRIES = [
   { label: 'UniChain', icon: 'eds-application-22' },
   { label: 'MetaMask', icon: 'eds-application-5' },

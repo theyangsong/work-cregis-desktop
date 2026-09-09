@@ -19,10 +19,10 @@ import {
   EgFlotation,
   EgIcon,
   EgIconButton,
-  EgIconButtonPro,
+  EgIconProButton,
   EgLayout,
   EgPaginer,
-  EgPaginationItem,
+  EgPaginationGroupButton,
   EgToast,
   EgToolBar,
   POPOVER_PRESET_WIDTH_BASE,
@@ -878,7 +878,7 @@ const displayBatchActions = computed(() => {
             >
               <template #trigger="{ expanded }">
                 <!--
-                  勿把整颗 EgIconButtonPro（button）放进 #trigger：
+                  勿把整颗 EgIconProButton（button）放进 #trigger：
                   AnchoredTooltip 会优先量到 button，主轴锚在含文案的 48×38 上。
                   仅 iconSlot 标 data-eds-trigger-metrics；文案仍在 trigger 内可点。
                 -->
@@ -935,7 +935,7 @@ const displayBatchActions = computed(() => {
                 />
               </template>
             </EgFlotation>
-            <EgIconButtonPro
+            <EgIconProButton
               v-else
               :label="ui(batchButton.label)"
               :badge="batchButton.badge"
@@ -945,8 +945,8 @@ const displayBatchActions = computed(() => {
               @click="onToolbarBatchClick"
             >
               <EgIcon :name="batchButton.icon" size="sm" />
-            </EgIconButtonPro>
-            <EgIconButtonPro
+            </EgIconProButton>
+            <EgIconProButton
               v-if="showAutomationButton"
               :label="ui(automationButton.label)"
               :badge="automationButton.badge"
@@ -955,10 +955,10 @@ const displayBatchActions = computed(() => {
               :disabled="isToolbarAutomationDisabled"
             >
               <EgIcon :name="automationButton.icon" size="sm" />
-            </EgIconButtonPro>
+            </EgIconProButton>
           </template>
           <template v-if="showToolBarSectionForMenu" #section>
-            <EgIconButtonPro
+            <EgIconProButton
               v-for="button in toolbarActionButtons"
               :key="button.key"
               :label="ui(button.item.label)"
@@ -973,10 +973,10 @@ const displayBatchActions = computed(() => {
               @click="onToolbarActionClick(button.key)"
             >
               <EgIcon :name="button.item.icon" size="sm" />
-            </EgIconButtonPro>
+            </EgIconProButton>
           </template>
           <template v-else #functional>
-            <EgIconButtonPro
+            <EgIconProButton
               v-for="button in toolbarActionButtons"
               :key="`functional-${button.key}`"
               :label="ui(button.item.label)"
@@ -991,7 +991,7 @@ const displayBatchActions = computed(() => {
               @click="onToolbarActionClick(button.key)"
             >
               <EgIcon :name="button.item.icon" size="sm" />
-            </EgIconButtonPro>
+            </EgIconProButton>
           </template>
         </EgToolBar>
       </template>
@@ -1448,24 +1448,24 @@ const displayBatchActions = computed(() => {
           :settings-jump-placeholder="ui('Please Enter')"
           @settings-jump="onSettingsJump"
         >
-          <EgPaginationItem
+          <EgPaginationGroupButton
             :kind="firstPagination.kind"
             :tone="firstPagination.tone"
             :disabled="prevNavDisabled || firstPagination.disabled"
             @click="goFirstPage"
           >
             <EgIcon name="eds-arrow-go-first" fit />
-          </EgPaginationItem>
-          <EgPaginationItem
+          </EgPaginationGroupButton>
+          <EgPaginationGroupButton
             :kind="prevPagination.kind"
             :tone="prevPagination.tone"
             :disabled="prevNavDisabled || prevPagination.disabled"
             @click="goPrevPage"
           >
             <EgIcon name="eds-arrow-left-mini-ios" fit />
-          </EgPaginationItem>
+          </EgPaginationGroupButton>
           <template v-if="!isManyPagination">
-            <EgPaginationItem
+            <EgPaginationGroupButton
               :kind="pagePagination.kind"
               :tone="pagePagination.tone"
               selected
@@ -1474,7 +1474,7 @@ const displayBatchActions = computed(() => {
             />
           </template>
           <template v-else>
-            <EgPaginationItem
+            <EgPaginationGroupButton
               v-for="(item, index) in manyPageItems"
               :key="`${item.kind}-${item.label}-${index}`"
               :kind="pagePagination.kind"
@@ -1486,22 +1486,22 @@ const displayBatchActions = computed(() => {
               @click="onManyPageItemClick(item)"
             />
           </template>
-          <EgPaginationItem
+          <EgPaginationGroupButton
             :kind="nextPagination.kind"
             :tone="nextPagination.tone"
             :disabled="nextNavDisabled || nextPagination.disabled"
             @click="goNextPage"
           >
             <EgIcon name="eds-arrow-right-mini-ios" fit />
-          </EgPaginationItem>
-          <EgPaginationItem
+          </EgPaginationGroupButton>
+          <EgPaginationGroupButton
             :kind="lastPagination.kind"
             :tone="lastPagination.tone"
             :disabled="nextNavDisabled || lastPagination.disabled"
             @click="goLastPage"
           >
             <EgIcon name="eds-arrow-go-last" fit />
-          </EgPaginationItem>
+          </EgPaginationGroupButton>
         </EgPaginer>
       </template>
     </EgLayout>

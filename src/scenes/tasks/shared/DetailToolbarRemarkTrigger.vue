@@ -9,16 +9,14 @@ import {
   watch,
 } from 'vue';
 import {
-  EgAnchoredPopover,
-  EgAnchoredTooltip,
   EgButton,
   EgIcon,
-  POPOVER_PRESET_WIDTH_BASE,
+  EgRemarkPopover,
+  EgTooltip,
   REMARK_POPOVER_MAX_LENGTH,
   TEXT_OVERFLOW_TOOLTIP_TOKEN_SCOPE,
 } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
-import ApprovalRemarkFormPanel from '../approval/ApprovalRemarkFormPanel.vue';
 import remarkTriggerStyles from './remarkPopoverTrigger.module.css';
 import styles from './DetailToolbarRemarkTrigger.module.css';
 
@@ -120,30 +118,35 @@ const remarkTooltipDisabled = computed(
   () => !hasRemarkEcho.value || !remarkOverflowing.value,
 );
 
-function onPopoverOpen() {
+function prepareDraft() {
   draftRemark.value = echoedRemark.value;
 }
 
-function onConfirm(close: () => void) {
+function onConfirm() {
   echoedRemark.value = draftRemark.value.slice(0, REMARK_POPOVER_MAX_LENGTH);
-  close();
+}
+
+function onDismiss() {
+  draftRemark.value = echoedRemark.value;
 }
 </script>
 
 <template>
-  <EgAnchoredPopover
+  <EgRemarkPopover
+    v-model="draftRemark"
+    :title="ui('Remark')"
+    :placeholder="ui(placeholderKey)"
+    feedback-text="Optional, Max. 256 characters"
+    :confirm-label="ui('Confirm')"
     boundary-selector=".eds-popup"
     teleport-to=".app-preview"
     placement="top"
-    width-mode="fixed"
-    :width="POPOVER_PRESET_WIDTH_BASE"
-    top-tool
-    :top-tool-title="ui('Remark')"
-    top-tool-closable
-    @open="onPopoverOpen"
+    :on-before-open="prepareDraft"
+    @confirm="onConfirm"
+    @dismiss="onDismiss"
   >
     <template #trigger="{ active, onClick }">
-      <EgAnchoredTooltip
+      <EgTooltip
         v-if="hasRemarkEcho"
         :content="echoedTrimmed"
         :disabled="remarkTooltipDisabled || active"
@@ -180,7 +183,7 @@ function onConfirm(close: () => void) {
             <span ref="measureRef" :class="styles.remarkLabel">{{ echoedTrimmed }}</span>
           </EgButton>
         </span>
-      </EgAnchoredTooltip>
+      </EgTooltip>
       <span
         v-else
         :class="[
@@ -203,16 +206,5 @@ function onConfirm(close: () => void) {
         </EgButton>
       </span>
     </template>
-    <template #default="{ close }">
-      <ApprovalRemarkFormPanel
-        v-model="draftRemark"
-        :placeholder-key="placeholderKey"
-        feedback-text="Optional, Max. 256 characters"
-        :confirm-label="ui('Confirm')"
-        :reset-on-mount="false"
-        hide-label
-        @confirm="onConfirm(close)"
-      />
-    </template>
-  </EgAnchoredPopover>
+  </EgRemarkPopover>
 </template>

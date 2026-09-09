@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, toRef, watch } from 'vue';
-import { EgButton, EgDetail, EgPopup, type TagStatus } from '@eds/desktop-components';
+import { EgButton, EgConfirmPopover, EgDetail, EgDetailPopup, type TagStatus } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
 import {
   formatGroupedAmountText,
@@ -28,9 +28,7 @@ import ExpiryCountdown from '../shared/ExpiryCountdown.vue';
 import { useDetailAmlSearchFlow } from '../shared/useDetailAmlSearchFlow';
 import { applyDetailAmlSearchSectionOverlay } from '../shared/applyDetailAmlSearchSectionOverlay';
 import DetailAmlSearchToastHost from '../shared/DetailAmlSearchToastHost.vue';
-import WithdrawApplicationConfirmPopover from '../shared/WithdrawApplicationConfirmPopover.vue';
 import remarkTriggerStyles from '../shared/remarkPopoverTrigger.module.css';
-import withdrawConfirmTriggerStyles from '../shared/WithdrawApplicationConfirmPopover.module.css';
 import { sentRequestDetailShowsWithdrawToolbar } from '../tasksDataListPageData';
 
 const props = withDefaults(
@@ -213,10 +211,9 @@ function onDetailClose() {
 </script>
 
 <template>
-  <EgPopup
+  <EgDetailPopup
     v-if="popupMounted"
     v-model:open="popupOpen"
-    uses="detail"
     @close="onPopupClosed"
   >
     <div ref="detailHostRef" :class="detailChromeStyles.detailHost">
@@ -250,14 +247,19 @@ function onDetailClose() {
             <DetailToolbarRemarkTrigger :page-key="detail?.id" />
           </template>
           <template #actions>
-            <WithdrawApplicationConfirmPopover
+            <EgConfirmPopover
               v-if="resolvedShowWithdrawAction"
+              :title="ui('Warm reminder')"
+              :message="ui('Are you sure you want to withdraw this application?')"
+              :confirm-label="ui('Confirm')"
+              :close-label="ui('Close')"
+              placement="top"
               @confirm="onWithdrawConfirm"
             >
               <template #trigger="{ onClick, active }">
                 <span
                   :class="[
-                    withdrawConfirmTriggerStyles.trigger,
+                    remarkTriggerStyles.remarkTrigger,
                     active && remarkTriggerStyles.remarkTriggerWithdrawPressed,
                   ]"
                 >
@@ -272,7 +274,7 @@ function onDetailClose() {
                   </EgButton>
                 </span>
               </template>
-            </WithdrawApplicationConfirmPopover>
+            </EgConfirmPopover>
             <template v-else-if="!readOnly">
               <EgButton
                 tone="danger"
@@ -326,5 +328,5 @@ function onDetailClose() {
       :text="amlToastText"
     />
     </div>
-  </EgPopup>
+  </EgDetailPopup>
 </template>

@@ -12,7 +12,7 @@ import {
   EgPopup,
   EgStreamer,
   EgButton,
-  EgAnchoredTooltip,
+  EgTooltip,
   EgPopover,
   MOTION_LAYOUT_DEFORM_CONTENT,
   MOTION_LAYOUT_DEFORM_CONTENT_ENTERING,
@@ -389,7 +389,7 @@ useBatchSignConfirmEscape({
         />
       </template>
       <template v-if="minerFeeProfile" #toolbar-confirm>
-        <EgAnchoredTooltip
+        <EgTooltip
           ref="minerFeeAnchoredRef"
           placement="top"
           align="center"
@@ -436,7 +436,7 @@ useBatchSignConfirmEscape({
               />
             </EgPopover>
           </template>
-        </EgAnchoredTooltip>
+        </EgTooltip>
       </template>
       <div
         :class="[

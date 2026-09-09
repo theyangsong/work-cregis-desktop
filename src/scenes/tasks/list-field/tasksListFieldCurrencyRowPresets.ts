@@ -10,7 +10,7 @@ export type CurrencyRowPreset = {
   addressFamily?: CryptoAddressFamily;
 };
 
-/** 首列第 1–8 条固定币种（0-based rowIndex 0–7）。第 6 条 GBG：DS 暂无独立图标，暂映射 BGB。 */
+/** 首列第 1–8 条固定币种（0-based rowIndex 0–7）。第 6 条 GBG：EDS 暂无独立图标，暂映射 BGB。 */
 export const CURRENCY_ROW_PRESETS: readonly CurrencyRowPreset[] = [
   {
     symbol: 'USDT',

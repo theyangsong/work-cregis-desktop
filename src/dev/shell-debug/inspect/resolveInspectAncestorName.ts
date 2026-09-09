@@ -3,7 +3,7 @@
  *
  * ## 为什么需要
  *
- * 命名恒「点谁是谁」（`inspectNamingRules.ts` 五条规则），所以 DS 组件名只出现在它自己的
+ * 命名恒「点谁是谁」（`inspectNamingRules.ts` 五条规则），所以 EDS 组件名只出现在它自己的
  * 根节点上。但有些组件根**点不到**：`ToolBar.module.css` 的 `.root` / `.chrome` 是
  * `width: 100%` 且无内边距，被 `.raw` 完全铺满 —— 点工具栏永远命中 `.raw`（`Div`），
  * `header.eds-tool-bar` 没有任何可点像素。Paginer / Skid / NavBar 的固定栏同理。

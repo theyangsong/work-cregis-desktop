@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { toRef } from 'vue';
 import {
-  EgPopup,
-  EgVerify,
+  EgTransactionPasswordVerify,
+  EgVerifyPopup,
   closeAllAnchoredTooltips,
   useVerifySubmit,
 } from '@eds/desktop-components';
@@ -53,16 +53,14 @@ function closePopup() {
 </script>
 
 <template>
-  <EgPopup
+  <EgVerifyPopup
     v-if="popupMounted"
     v-model:open="popupOpen"
-    uses="verify"
     verify-type="single-trade-password"
     @close="onPopupClosed"
   >
-    <EgVerify
+    <EgTransactionPasswordVerify
       v-model="verify.code"
-      type="single-trade-password"
       action-tone="decor"
       :state="verify.state"
       :title="ui('Transaction password')"
@@ -78,5 +76,5 @@ function closePopup() {
       @switch="closePopup"
       @cancel="closePopup"
     />
-  </EgPopup>
+  </EgVerifyPopup>
 </template>

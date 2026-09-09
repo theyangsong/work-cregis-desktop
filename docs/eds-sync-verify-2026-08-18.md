@@ -1,11 +1,11 @@
-# DS 同步核对清单（2026-08-18）
+# EDS 同步核对清单（2026-08-18）
 
 eds-desktop 已拆分 **Animations** 为独立 workspace 包；业务侧须完成以下核对。
 
 ## 已自动更新
 
 - [x] `package.json` — `link:@eds/desktop-animations`，`predev` / `prebuild` 增加 `build:animations`
-- [x] `vite.config.ts` — `@eds/desktop-animations` alias 到 DS 源码 + watch
+- [x] `vite.config.ts` — `@eds/desktop-animations` alias 到 EDS 源码 + watch
 - [x] `tsconfig.json` — animations 路径映射
 
 ## 请本地执行
@@ -20,7 +20,7 @@ pnpm build       # ✓ 已通过（Agent 2026-08-18）
 pnpm dev   # 5178，保存应 HMR
 ```
 
-## 已随 DS 迁移修复（业务代码）
+## 已随 EDS 迁移修复（业务代码）
 
 - `EgPopup`：`uses="reminder"` → `uses="dialog"`，`reminder-type="echo"` → `dialog-type="compose"`
 - `EgReminder`：`type="echo"` → `type="compose"`（后续可改 `EgDialog`）

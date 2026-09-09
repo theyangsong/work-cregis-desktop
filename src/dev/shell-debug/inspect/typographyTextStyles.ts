@@ -1,4 +1,4 @@
-/** Desktop typography Text Styles — labels / class names align Figma / DS spec/text/styles.json */
+/** Desktop typography Text Styles — labels / class names align Figma / EDS spec/text/styles.json */
 export type TypographyTextStyleRole = {
   label: string;
   className: string;

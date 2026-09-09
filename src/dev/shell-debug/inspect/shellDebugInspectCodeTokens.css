@@ -8,7 +8,7 @@
  * 在**声明处**求值，teleport 出去的浮层拿不到变量链，`color` 会整条失效并继承父色。
  * 【禁止】在 Vue 侧用 inline `style` 或 `!important` 给某个容器单独补色。
  *
- * 主色 / 注释走 DS token（两处容器都在 `.desktopTokens` 内）；语法色 sRGB 后跟 P3 渐进增强。
+ * 主色 / 注释走 EDS token（两处容器都在 `.desktopTokens` 内）；语法色 sRGB 后跟 P3 渐进增强。
  */
 
 .dev-inspect-code-token--prop,

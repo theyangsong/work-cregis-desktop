@@ -5,7 +5,7 @@ import {
   EgDataListCellOverflow,
   EgDataListColumn,
   EgDivider,
-  EgTextOverflowTooltip,
+  EgTooltipOverflow,
   type DataListItem,
 } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
@@ -213,14 +213,14 @@ function rowIndexFromData(data: DataListItem) {
         </template>
         <template #default="{ data }">
           <div :class="styles.batchIneligibleReasonCell">
-            <EgTextOverflowTooltip
+            <EgTooltipOverflow
               :tooltip-text="String(data.ineligibleReasonLabel ?? '')"
               :typography-class="styles.batchIneligibleReasonCellText"
               :measure-class="styles.batchIneligibleReasonCellText"
               boundary-selector=".eds-data-list"
             >
               {{ String(data.ineligibleReasonLabel ?? '') }}
-            </EgTextOverflowTooltip>
+            </EgTooltipOverflow>
           </div>
         </template>
       </EgDataListColumn>

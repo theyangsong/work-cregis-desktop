@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import {
-  EgAnchoredTooltip,
+  EgTooltip,
   EgIcon,
   EgToast,
-  EgTooltip,
+  EgTooltipPanel,
   closeAllAnchoredTooltips,
 } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
@@ -31,7 +31,7 @@ const anchoredRef = ref<{
   close?: () => void;
 } | null>(null);
 
-/** 与 EgAnchoredTooltip @open/@close 同步；开/关唯一业务态。 */
+/** 与 EgTooltip @open/@close 同步；开/关唯一业务态。 */
 const panelExpanded = ref(false);
 
 const toastText = ref('');
@@ -41,7 +41,7 @@ const toastMotionActive = ref(false);
 let toastTimer: ReturnType<typeof setTimeout> | undefined;
 let toastLeaveTimer: ReturnType<typeof setTimeout> | undefined;
 
-/** 离开待签名后再进入时递增，强制 remount EgAnchoredTooltip（配合 v-if 清 teleport 残留）。 */
+/** 离开待签名后再进入时递增，强制 remount EgTooltip（配合 v-if 清 teleport 残留）。 */
 const floatMountGeneration = ref(0);
 let floatHadBeenHidden = false;
 
@@ -73,7 +73,7 @@ const triggerLabelParts = computed(() => {
   };
 });
 
-function readDsOpen(): boolean {
+function readEdsOpen(): boolean {
   const openState = anchoredRef.value?.open;
   if (openState == null) {
     return false;
@@ -88,7 +88,7 @@ function dismissPanel() {
   panelExpanded.value = false;
   anchoredRef.value?.close?.();
   void nextTick(() => {
-    if (readDsOpen()) {
+    if (readEdsOpen()) {
       panelExpanded.value = false;
       anchoredRef.value?.close?.();
     }
@@ -96,7 +96,7 @@ function dismissPanel() {
 }
 
 function healDesyncBeforeOpen() {
-  if (readDsOpen() && !panelExpanded.value) {
+  if (readEdsOpen() && !panelExpanded.value) {
     panelExpanded.value = false;
     anchoredRef.value?.close?.();
   }
@@ -120,7 +120,7 @@ function openPanel() {
       anchoredRef.value?.openPanel?.();
 
       void nextTick(() => {
-        if (panelExpanded.value || readDsOpen()) {
+        if (panelExpanded.value || readEdsOpen()) {
           return;
         }
         if (retriesLeft > 0) {
@@ -134,7 +134,7 @@ function openPanel() {
 }
 
 /**
- * click-toggle=false：仅此 handler 开/关；须 stop 到 trigger，避免 DS 默认 click 双触发。
+ * click-toggle=false：仅此 handler 开/关；须 stop 到 trigger，避免 EDS 默认 click 双触发。
  * 与 ShellDebugLauncherAnchored / work.mdc §7.3 同模式。
  */
 function onBadgeClick(event: MouseEvent) {
@@ -289,7 +289,7 @@ onBeforeUnmount(() => {
     data-app-client-float-host
   >
     <div :class="styles.floatAnchor" data-float-interactive>
-      <EgAnchoredTooltip
+      <EgTooltip
         :key="floatMountGeneration"
         ref="anchoredRef"
         placement="top"
@@ -312,7 +312,7 @@ onBeforeUnmount(() => {
           :class="styles.floatBadgeMetrics"
           @click.stop.prevent="onBadgeClick"
         >
-          <EgTooltip
+          <EgTooltipPanel
             :class="styles.floatBadge"
             panel-kind="popup"
             panel-radius="radius-full"
@@ -334,7 +334,7 @@ onBeforeUnmount(() => {
                 {{ triggerLabelParts.before }}<span :class="styles.floatBadgeCount">{{ triggerLabelParts.count }}</span>{{ triggerLabelParts.after }}
               </span>
             </button>
-          </EgTooltip>
+          </EgTooltipPanel>
         </span>
 
         <template #content>
@@ -344,7 +344,7 @@ onBeforeUnmount(() => {
             @close="dismissPanel"
           />
         </template>
-      </EgAnchoredTooltip>
+      </EgTooltip>
     </div>
 
     <div

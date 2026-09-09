@@ -16,10 +16,10 @@ const EDS_TOKENS_DIST_DIR = resolve(EDS_ROOT, 'packages/tokens/dist');
 const EDS_TOKENS_BUILD_SCRIPT = resolve(EDS_ROOT, 'packages/tokens/scripts/build.mjs');
 
 /**
- * DS → 业务 实时：监听 sibling eds-desktop。
+ * EDS → 业务 实时：监听 sibling eds-desktop。
  * - tokens/spec 变更 → build:tokens → full-reload
  * - components 源码 → HMR / full-reload
- * - 仅读取 ../eds-desktop，不写业务代码回 DS
+ * - 仅读取 ../eds-desktop，不写业务代码回 EDS
  */
 function watchEdsDesktopPackages(): Plugin {
   let building = false;

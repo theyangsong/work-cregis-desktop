@@ -1,25 +1,34 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, type Component } from 'vue';
 import {
   EgMinerFeeBatchStubPanel,
   EgMinerFeeBitcoinPanel,
   EgMinerFeeEthereumPanel,
   EgMinerFeeTonPanel,
   EgMinerFeeTronPanel,
+  EgRemarkPopoverPanel,
   REMARK_POPOVER_MAX_LENGTH,
   type ButtonTone,
+  type GasFeeNetwork,
   type MinerFeeConfirmPayload,
 } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
+import { resolveGasFeeNetworkFromProfile } from '../shared/resolveGasFeeNetwork';
 import type { MinerFeeProfile, MinerFeeSelection } from '../shared/minerFeeProfile';
 import {
   isMinerFeeBatchStubProfile,
   resolveMinerFeeBatchTransactionCount,
 } from '../shared/minerFeeProfile';
-import ApprovalRemarkFormPanel from './ApprovalRemarkFormPanel.vue';
 import styles from './ApprovalRemarkPopoverPanel.module.css';
 
 type MinerFeeScreen = 'list' | 'custom';
+
+const PANEL_BY_NETWORK: Record<GasFeeNetwork, Component> = {
+  bitcoin: EgMinerFeeBitcoinPanel,
+  ethereum: EgMinerFeeEthereumPanel,
+  ton: EgMinerFeeTonPanel,
+  tron: EgMinerFeeTronPanel,
+};
 
 const props = withDefaults(
   defineProps<{
@@ -61,23 +70,16 @@ const emit = defineEmits<{
 
 const { ui } = useAppI18n();
 
-type MinerFeeEvmPanelExpose = {
-  resetMinerFeeFlow: () => void;
+type MinerFeePanelExpose = {
+  resetMinerFeeFlow?: () => void;
   attemptConfirm: () => void;
-  attemptCancelCustom: () => void;
-  attemptSaveCustom: () => void;
+  attemptCancelCustom?: () => void;
+  attemptSaveCustom?: () => void;
   confirmDisabled?: boolean | { value: boolean };
 };
 
-type MinerFeeSimplePanelExpose = {
-  attemptConfirm: () => void;
-};
-
-const evmPanelRef = ref<MinerFeeEvmPanelExpose | null>(null);
-const bitcoinPanelRef = ref<MinerFeeEvmPanelExpose | null>(null);
-const tonPanelRef = ref<MinerFeeSimplePanelExpose | null>(null);
-const tronPanelRef = ref<MinerFeeSimplePanelExpose | null>(null);
-const batchStubPanelRef = ref<MinerFeeSimplePanelExpose | null>(null);
+const gasFeePanelRef = ref<MinerFeePanelExpose | null>(null);
+const batchStubPanelRef = ref<MinerFeePanelExpose | null>(null);
 const minerFeeScreen = ref<MinerFeeScreen>('list');
 
 const resolvedProfile = computed<MinerFeeProfile | null>(() => {
@@ -95,12 +97,6 @@ const resolvedProfile = computed<MinerFeeProfile | null>(() => {
   return null;
 });
 
-const isBitcoinProfile = computed(
-  () =>
-    resolvedProfile.value?.kind === 'evm'
-    && resolvedProfile.value.symbol.trim().toUpperCase() === 'BTC',
-);
-
 const minerFeeTransactionCount = computed(() =>
   resolveMinerFeeBatchTransactionCount(
     props.selectedCount,
@@ -114,6 +110,42 @@ const showBatchStubOnly = computed(() => {
     return false;
   }
   return isMinerFeeBatchStubProfile(profile, minerFeeTransactionCount.value);
+});
+
+const gasFeeNetwork = computed(() => {
+  const profile = resolvedProfile.value;
+  if (!profile || showBatchStubOnly.value) {
+    return null;
+  }
+  return resolveGasFeeNetworkFromProfile(profile);
+});
+
+const gasFeePanelComponent = computed(
+  () => (gasFeeNetwork.value ? PANEL_BY_NETWORK[gasFeeNetwork.value] : null),
+);
+
+function resolveGasFeePanelSymbolProps(resolvedProfile: MinerFeeProfile) {
+  if (
+    resolvedProfile.kind === 'evm'
+    || resolvedProfile.kind === 'ton-xrp'
+    || resolvedProfile.kind === 'tron'
+  ) {
+    return { symbol: resolvedProfile.symbol };
+  }
+  return {};
+}
+
+const gasFeePanelProps = computed(() => {
+  const profile = resolvedProfile.value;
+  const base = {
+    translate: ui,
+    hideInlineConfirm: props.hideInlineConfirm,
+    transactionCount: minerFeeTransactionCount.value,
+  };
+  if (!profile || profile.kind === 'evm' && gasFeeNetwork.value === 'bitcoin') {
+    return base;
+  }
+  return { ...base, ...resolveGasFeePanelSymbolProps(profile) };
 });
 
 const remarkModel = computed({
@@ -146,21 +178,17 @@ function onRemarkOnlyConfirm() {
   emit('confirm', null);
 }
 
-function activeEvmPanelRef() {
-  return isBitcoinProfile.value ? bitcoinPanelRef.value : evmPanelRef.value;
-}
-
 function resetMinerFeeFlow() {
   minerFeeScreen.value = 'list';
-  activeEvmPanelRef()?.resetMinerFeeFlow();
+  gasFeePanelRef.value?.resetMinerFeeFlow?.();
 }
 
 function attemptCancelCustom() {
-  activeEvmPanelRef()?.attemptCancelCustom();
+  gasFeePanelRef.value?.attemptCancelCustom?.();
 }
 
 function attemptSaveCustom() {
-  activeEvmPanelRef()?.attemptSaveCustom();
+  gasFeePanelRef.value?.attemptSaveCustom?.();
 }
 
 function attemptConfirm() {
@@ -168,16 +196,8 @@ function attemptConfirm() {
     batchStubPanelRef.value?.attemptConfirm();
     return;
   }
-  if (resolvedProfile.value?.kind === 'evm') {
-    activeEvmPanelRef()?.attemptConfirm();
-    return;
-  }
-  if (resolvedProfile.value?.kind === 'ton-xrp') {
-    tonPanelRef.value?.attemptConfirm();
-    return;
-  }
-  if (resolvedProfile.value?.kind === 'tron') {
-    tronPanelRef.value?.attemptConfirm();
+  if (gasFeeNetwork.value) {
+    gasFeePanelRef.value?.attemptConfirm();
     return;
   }
   onRemarkOnlyConfirm();
@@ -193,14 +213,16 @@ function readConfirmDisabled(
 }
 
 const confirmDisabled = computed(() => {
-  if (resolvedProfile.value?.kind === 'evm') {
-    return readConfirmDisabled(activeEvmPanelRef()?.confirmDisabled);
+  if (gasFeeNetwork.value === 'bitcoin' || gasFeeNetwork.value === 'ethereum') {
+    return readConfirmDisabled(gasFeePanelRef.value?.confirmDisabled);
   }
   return false;
 });
 
 const isMinerFeeCustomScreen = computed(
-  () => resolvedProfile.value?.kind === 'evm' && minerFeeScreen.value === 'custom',
+  () =>
+    (gasFeeNetwork.value === 'bitcoin' || gasFeeNetwork.value === 'ethereum')
+    && minerFeeScreen.value === 'custom',
 );
 
 const minerFeeConfirmClass = computed(() =>
@@ -231,59 +253,24 @@ defineExpose({
     @confirm="onMinerFeeConfirm"
   />
 
-  <EgMinerFeeBitcoinPanel
-    v-else-if="resolvedProfile && isBitcoinProfile"
-    ref="bitcoinPanelRef"
+  <component
+    v-else-if="gasFeePanelComponent && resolvedProfile"
+    :is="gasFeePanelComponent"
+    ref="gasFeePanelRef"
     :class="minerFeeConfirmClass"
-    :translate="ui"
-    :hide-inline-confirm="hideInlineConfirm"
-    :transaction-count="minerFeeTransactionCount"
+    v-bind="gasFeePanelProps"
     @miner-fee-screen-change="onMinerFeeScreenChange"
     @confirm="onMinerFeeConfirm"
   />
 
-  <EgMinerFeeEthereumPanel
-    v-else-if="resolvedProfile && resolvedProfile.kind === 'evm'"
-    ref="evmPanelRef"
-    :class="minerFeeConfirmClass"
-    :translate="ui"
-    :symbol="resolvedProfile.symbol"
-    :hide-inline-confirm="hideInlineConfirm"
-    :transaction-count="minerFeeTransactionCount"
-    @miner-fee-screen-change="onMinerFeeScreenChange"
-    @confirm="onMinerFeeConfirm"
-  />
-
-  <EgMinerFeeTonPanel
-    v-else-if="resolvedProfile && resolvedProfile.kind === 'ton-xrp'"
-    ref="tonPanelRef"
-    :class="minerFeeConfirmClass"
-    :translate="ui"
-    :symbol="resolvedProfile.symbol"
-    :hide-inline-confirm="hideInlineConfirm"
-    :transaction-count="minerFeeTransactionCount"
-    @confirm="onMinerFeeConfirm"
-  />
-
-  <EgMinerFeeTronPanel
-    v-else-if="resolvedProfile && resolvedProfile.kind === 'tron'"
-    ref="tronPanelRef"
-    :class="minerFeeConfirmClass"
-    :translate="ui"
-    :hide-inline-confirm="hideInlineConfirm"
-    :transaction-count="minerFeeTransactionCount"
-    @confirm="onMinerFeeConfirm"
-  />
-
-  <ApprovalRemarkFormPanel
+  <EgRemarkPopoverPanel
     v-else
     v-model="remarkModel"
     :hide-confirm="hideInlineConfirm"
     :label="ui('Remark')"
-    :placeholder-key="placeholderKey"
-    :feedback-text="feedbackKey"
+    :placeholder="ui(placeholderKey)"
+    :feedback-text="ui(feedbackKey)"
     :confirm-label="ui('Confirm')"
-    :confirm-tone="confirmTone"
     hide-label
     :reset-on-mount="false"
     @confirm="onRemarkOnlyConfirm"

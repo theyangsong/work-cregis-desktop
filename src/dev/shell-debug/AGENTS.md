@@ -20,14 +20,14 @@
 | # | 规则 | 结果 |
 |---|------|------|
 | R1 | 节点在原子图形宿主内（`.eds-icon` / `.eds-crypto` / `.eds-avatar`） | 该宿主组件 |
-| R2 | 节点自身带 catalog `eds-*` 根类，**或** 节点就是**任意** DS 包组件的 Vue DOM 根 | 该组件 + props |
+| R2 | 节点自身带 catalog `eds-*` 根类，**或** 节点就是**任意** EDS 包组件的 Vue DOM 根 | 该组件 + props |
 | R3 | 节点是排版文本叶子 | **Text** |
-| R4 | 节点带某 DS 组件 CSS Module 的**具名 Figma 组件区域**类（`edsInspectComponentRegions.ts`） | 该区域名 |
+| R4 | 节点带某 EDS 组件 CSS Module 的**具名 Figma 组件区域**类（`edsInspectComponentRegions.ts`） | 该区域名 |
 | R5 | 其余 | HTML 标签（**Div** / **Span** / **Td**…） |
 
-**一层一名**：「内层要不要组件名」只看 **它自己是什么**，不看它被谁包着 —— 自己是 DS 组件 → 组件名（R2）；自己只有 CSS Module 类 → HTML 标签（R5）。
+**一层一名**：「内层要不要组件名」只看 **它自己是什么**，不看它被谁包着 —— 自己是 EDS 组件 → 组件名（R2）；自己只有 CSS Module 类 → HTML 标签（R5）。
 
-**「来自设计系统」= 节点自己就是 DS 组件**，不是「被 DS 组件渲染」。`_functionalGroup_` 由 `ToolBar.vue` 渲染，但它自己只是 `<div>` → `Div`。
+**「来自设计系统」= 节点自己就是 EDS 组件**，不是「被 EDS 组件渲染」。`_functionalGroup_` 由 `ToolBar.vue` 渲染，但它自己只是 `<div>` → `Div`。
 
 ### 点不到的父层 → 属性面板首行「祖先」
 
@@ -56,21 +56,21 @@
 | 沿 `parentElement` 回溯最近具名层 | ToolBar 根与内部 `_functional_` 容器同名 |
 | 按渲染归属（`__vnode.ctx`）继承 | 同上，只是判据换成 Vue 内部字段 |
 
-父级与子级同名 → 属性区与代码片段取到同一份参数，这是本模块反复回归的根因。组件内部的普通容器（ToolBar 的 `_functional_`、Popup 的 `_stage_`、Detail 的 `_itemTitle_`、`td` 里的 `_cellContent_`）在 DS 里就是 `<div>`，Figma 里也没有对应组件 —— 一律 R5 显示 HTML 标签。
+父级与子级同名 → 属性区与代码片段取到同一份参数，这是本模块反复回归的根因。组件内部的普通容器（ToolBar 的 `_functional_`、Popup 的 `_stage_`、Detail 的 `_itemTitle_`、`td` 里的 `_cellContent_`）在 EDS 里就是 `<div>`，Figma 里也没有对应组件 —— 一律 R5 显示 HTML 标签。
 
 **真嵌套组件允许同名**：两个嵌套的 `EgLayout`（外层 + `eds-layout-chrome-overlay`）都显示 `Layout` —— 它们是**两个独立组件实例**，各带自己的 props，不是子节点借父级的名。与「非组件子节点借名」是两回事，勿当 bug 修。
 
-DS 组件识别用 dev 下 plugin-vue 注入的 `__file`（含 `eds-desktop/packages/components/`），build 下回退 catalog 名 —— 覆盖未入 catalog 的 DS 内部组件。
+EDS 组件识别用 dev 下 plugin-vue 注入的 `__file`（含 `eds-desktop/packages/components/`），build 下回退 catalog 名 —— 覆盖未入 catalog 的 EDS 内部组件。
 
 **R2 三级**（`resolveComponentRootCandidate`）：
 
 1. 节点自身 catalog `eds-*` 根类 → catalog 组件 + 精选 props
-2. 节点是已入 catalog 的 DS 组件的 Vue DOM 根 → 同上
-3. 节点是**任意** DS 包组件的 Vue DOM 根 → 组件自己的名字 + 通用 props
+2. 节点是已入 catalog 的 EDS 组件的 Vue DOM 根 → 同上
+3. 节点是**任意** EDS 包组件的 Vue DOM 根 → 组件自己的名字 + 通用 props
 
-**【必须】** 保留第 3 级。DS 有 105 个组件、其中 **33 个未入 catalog**（`CryptoAddress`、`Verify`、`MinerFee*Panel`、`DataListHeaderCell`…）。少了这一级，它们的根会掉进 R5 HTML 标签 —— 点弹窗里的 `Verify` 显示 `Popup`，这正是「组件名重复 → 参数相同 → 代码片段参数不对」的来源。未入 catalog 只意味着「没有精选 props」，**不影响命名**。
+**【必须】** 保留第 3 级。EDS 有 105 个组件、其中 **33 个未入 catalog**（`CryptoAddress`、`Verify`、`MinerFee*Panel`、`DataListHeaderCell`…）。少了这一级，它们的根会掉进 R5 HTML 标签 —— 点弹窗里的 `Verify` 显示 `Popup`，这正是「组件名重复 → 参数相同 → 代码片段参数不对」的来源。未入 catalog 只意味着「没有精选 props」，**不影响命名**。
 
-**同一组件多 Figma 角色** → catalog 的 `resolveDisplayName` hook，**【禁止】** 在 resolver 里写逐组件 `if`。现有一例：`EgTooltip` 被 EgPopup / 预览壳复用为盒子，按 `panelKind` 取名：
+**同一组件多 Figma 角色** → catalog 的 `resolveDisplayName` hook，**【禁止】** 在 resolver 里写逐组件 `if`。现有一例：`EgTooltipPanel` 被 EgPopup / 预览壳复用为盒子，按 `panelKind` 取名：
 
 | `panelKind` | 名字 | 依据 |
 |---|---|---|
@@ -84,7 +84,7 @@ DS 组件识别用 dev 下 plugin-vue 注入的 `__file`（含 `eds-desktop/pack
 
 **【禁止】** R4 区域层复制组件 Vue props —— props 只属于 R2 组件根，具名层只展示自己的布局 / 样式（面板自动隐藏无属性的 `<EgX />` 用法块）。
 
-**【禁止】** 为普通 auto-layout 容器编造区域名（曾有 `ToolBarFunctional` / `SkidPanel` / `raw`→`Paginer`，DS 里它们只是 `<div>`，且 `raw`→`Paginer` 与 R5 HTML 标签重复）。R4 收录门槛见该文件头注释。
+**【禁止】** 为普通 auto-layout 容器编造区域名（曾有 `ToolBarFunctional` / `SkidPanel` / `raw`→`Paginer`，EDS 里它们只是 `<div>`，且 `raw`→`Paginer` 与 R5 HTML 标签重复）。R4 收录门槛见该文件头注释。
 
 **【禁止】** 在 `buildElementInspectInfo` 或 UI 层另起命名 fallback —— 命名只有 `resolveInspectTarget` 一条路径。
 
@@ -129,9 +129,9 @@ DS 组件识别用 dev 下 plugin-vue 注入的 `__file`（含 `eds-desktop/pack
   - **合并**：`buildInspectCodeSections` — Effect 语义区块 **优先** 于 declared；Divider / Icon 等组件专用块仍可覆盖同名区；Text 追加「字体排版」。
 - **壳层 Tooltip**：`.app-preview` 根 `panelKind=container` 与 EgPopup 外壳 Tooltip **跳过**（见 `resolveEdsComponentInspect.ts`）。
 
-**Text 识别**：仅 **typography 叶子**（`span` / `p` / `label` 等，含 Bar 子像素宿主）→ **Text**；`td` / `div` / `button` 等容器或组件根 → DS 组件 catalog 或元素属性，**不**判为 Text。
+**Text 识别**：仅 **typography 叶子**（`span` / `p` / `label` 等，含 Bar 子像素宿主）→ **Text**；`td` / `div` / `button` 等容器或组件根 → EDS 组件 catalog 或元素属性，**不**判为 Text。
 
-**Token 展示原则**：布局 / 样式代码 **优先输出 stylesheet 原始 `var(--*)` 声明**；仅 Text 在无 declared 排版时回退 typography role 匹配。属性面板 token 仍经 `resolveDesignToken.ts`；**禁止**用 computed 色值反查冒充 DS 声明。
+**Token 展示原则**：布局 / 样式代码 **优先输出 stylesheet 原始 `var(--*)` 声明**；仅 Text 在无 declared 排版时回退 typography role 匹配。属性面板 token 仍经 `resolveDesignToken.ts`；**禁止**用 computed 色值反查冒充 EDS 声明。
 
 **Text 样式名**：按 **视觉有效字号**（含 Bar 11px 的 2×+`scale(0.5)` / `zoom(0.5)` 子像素处理）匹配 Figma Text Style（`typographyInspectMatch.ts`），属性「样式」与「字体排版」区块输出对应 role 的 `--eds-*` token，而非 DOM 上的 2× computed 值。
 
@@ -155,7 +155,7 @@ DS 组件识别用 dev 下 plugin-vue 注入的 `__file`（含 `eds-desktop/pack
 
 - 位于 `.app-preview` 右侧；Popover `320×360–530` adaptive；`teleport-to="body"`。
 - Dev / QA 各自独立 Popover；QA 不受 Dev Inspect 拦截影响（`data-shell-debug-ui` 排除）。
-- **Dev 进入点选时保留业务浮层**：Dev 启动器使用 `EgAnchoredTooltip` + `openPanel()`（绕过 `EgAnchoredPopover` 的 `closeAllAnchoredTooltips`）；`installShellDebugFloatLayerGuard` 使点击壳层 UI 不触发业务 click Popover 的外部关闭。
+- **Dev 进入点选时保留业务浮层**：Dev 启动器使用 `EgTooltip` + `openPanel()`（绕过 `EgAnchoredPopover` 的 `closeAllAnchoredTooltips`）；`installShellDebugFloatLayerGuard` 使点击壳层 UI 不触发业务 click Popover 的外部关闭。
 - **Dev 进入时关闭其它壳层 Popover**：点击 Dev 进入点选须 `closeShellDebugLauncherPopovers()`（Model / Wnd / QA 的 `EgAnchoredPopover`）；**不**调用 `closeAllAnchoredTooltips`，业务浮层保持打开。
 
 **Catalog 覆盖**：`node scripts/verify-shell-debug-inspect-catalog.mjs` 对照 `../eds-desktop` 组件根 `eds-*` 与 `edsInspectCatalog.ts`；缺条目时补 catalog，勿再开 CSS Module 借名后门。
@@ -166,7 +166,7 @@ DS 组件识别用 dev 下 plugin-vue 注入的 `__file`（含 `eds-desktop/pack
 **【禁止】** 用 inline `style`、`!important`、`[data-effect-spec-panel]` 等容器分支给某一处单独补色；**【禁止】** 在 `InspectDetailPanel.vue` 的 `<style module>` 里再声明 `.token*` 颜色。 
 **【必须】** 主色 / 注释走 `var(--text-base-primary)` / `var(--text-base-tertiary)`（两处容器都在 `.desktopTokens` 内）；语法色 sRGB 后跟 `color(display-p3 …)` 渐进增强。
 
-**Inspect 命名**：`node scripts/verify-shell-debug-inspect-naming.mjs` —— 14 项全局不变量（规则顺序、归属判据、region 真源 / 不重名 / 不覆盖组件根、旧机制已清、样式对准点击节点、片段匹配、单一命名路径、任意 DS 组件根有自己的名字、多角色走 catalog hook、祖先只作属性首行、壳外 UI 排除、hover 轻量路径）。已接入 `predev` / `prebuild`，与 catalog 覆盖脚本同时跑。
+**Inspect 命名**：`node scripts/verify-shell-debug-inspect-naming.mjs` —— 14 项全局不变量（规则顺序、归属判据、region 真源 / 不重名 / 不覆盖组件根、旧机制已清、样式对准点击节点、片段匹配、单一命名路径、任意 EDS 组件根有自己的名字、多角色走 catalog hook、祖先只作属性首行、壳外 UI 排除、hover 轻量路径）。已接入 `predev` / `prebuild`，与 catalog 覆盖脚本同时跑。
 
 **4174 Inspect 与 4173 对齐**：R2 / DataList 实例读取依赖 DOM 上的 `__vueParentComponent`（`inspectIdentity.ts` 的 `findVueInstancesWithDomRoot`）。Vue 3.5 production 默认不写入，须在 Shell Debug 构建中开启 `__VUE_PROD_DEVTOOLS__`（见 `vite.config.ts`）；`verify-pages-artifact.mjs` 会检查 bundle 含 `__vueParentComponent`。
 

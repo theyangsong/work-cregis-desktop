@@ -2,9 +2,6 @@
 export const MULTI_SIGN_WAITING_POPUP_WIDTH = 780;
 export const MULTI_SIGN_WAITING_POPUP_HEIGHT = 560;
 
-/** 多签等待页关闭二次确认 Popover 面板宽（px）。 */
-export const MULTI_SIGN_WAITING_EXIT_CONFIRM_POPOVER_WIDTH = 296;
-
 /** 演示：第 2–(n-1) 名成员每次在 0–3s 内随机加入。 */
 export const MULTI_SIGN_MEMBER_JOIN_RANDOM_MAX_MS = 3_000;
 

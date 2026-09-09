@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { toRef } from 'vue';
-import { EgDialog, EgPopup } from '@eds/desktop-components';
+import { EgBusinessDialog, EgDialogPopup } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
 import styles from './AddressViewMoreReminderPopup.module.css';
 import { usePopupShellLifecycle } from './usePopupShellLifecycle';
@@ -37,16 +37,14 @@ function onCancel() {
 </script>
 
 <template>
-  <EgPopup
+  <EgDialogPopup
     v-if="popupMounted"
     v-model:open="popupOpen"
-    uses="dialog"
     dialog-type="compose"
     alert-vertical-align="offset-top"
     @close="onPopupClosed"
   >
-    <EgDialog
-      type="compose"
+    <EgBusinessDialog
       :title="ui('Address details')"
       :show-secondary-text="false"
       :confirm-label="ui('Confirm')"
@@ -57,6 +55,6 @@ function onCancel() {
       <template #default>
         <pre :class="styles.viewMoreText">{{ text }}</pre>
       </template>
-    </EgDialog>
-  </EgPopup>
+    </EgBusinessDialog>
+  </EgDialogPopup>
 </template>

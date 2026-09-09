@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { EgIcon, EgIconButtonPro } from '@eds/desktop-components';
+import { EgIcon, EgIconProButton } from '@eds/desktop-components';
 import { useAppI18n } from '@/composables/useAppI18n';
 
 const { ui } = useAppI18n();
@@ -10,7 +10,7 @@ function onFilterClick() {
 </script>
 
 <template>
-  <EgIconButtonPro :label="ui('Filter')" @click="onFilterClick">
+  <EgIconProButton :label="ui('Filter')" @click="onFilterClick">
     <EgIcon name="eds-filter" size="sm" />
-  </EgIconButtonPro>
+  </EgIconProButton>
 </template>

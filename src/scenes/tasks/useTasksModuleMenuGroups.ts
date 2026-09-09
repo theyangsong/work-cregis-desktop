@@ -3,7 +3,7 @@ import {
   getCregisModuleMenuGroups,
   type ModuleMenuPresetGroup,
   type ModuleMenuPresetItem,
-} from '@/presets/module-menu/cregisModuleMenuGroups';
+} from '@eds/desktop-components';
 import {
   approvalStoreRevision,
   countPendingApprovals,

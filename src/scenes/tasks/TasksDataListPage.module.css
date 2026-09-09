@@ -141,7 +141,7 @@
 }
 
 /**
- * 批处理 Flotation 触发器：视觉同 EgIconButtonPro，但定位锚点仅 iconSlot
+ * 批处理 Flotation 触发器：视觉同 EgIconProButton，但定位锚点仅 iconSlot
  *（data-eds-trigger-metrics），避免 AnchoredTooltip 量到含文案的 button。
  */
 .batchProTriggerRoot {

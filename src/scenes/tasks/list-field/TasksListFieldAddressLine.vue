@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import {
+  EgBusinessTag,
+  EgColorfulTag,
   EgListFieldAddressLine,
   EgListFieldOverflowText,
   EgTag,
-  EgTextOverflowTooltip,
+  EgTooltipOverflow,
   formatMoreTagLabel,
   hasAddressTags,
   splitTagsForDisplay,
@@ -104,7 +106,7 @@ const walletMetaRowClass = computed(() =>
     .filter(Boolean)
     .join(' '),
 );
-/** measureRef 专用：覆盖 DS .measure 的 nowrap，勿与 walletMetaRow 混用。 */
+/** measureRef 专用：覆盖 EDS .measure 的 nowrap，勿与 walletMetaRow 混用。 */
 const walletMetaMeasureClass = computed(() =>
   [styles.walletMetaMeasureHost, props.alignEnd && styles.walletMetaMeasureHostAlignEnd]
     .filter(Boolean)
@@ -156,7 +158,7 @@ function isColorfulTag(tag: (typeof inlineTags.value)[number]): boolean {
     </div>
 
     <div v-if="showWalletMetaRow" :class="walletMetaRowClass">
-      <EgTextOverflowTooltip
+      <EgTooltipOverflow
         v-if="showSecondaryText"
         :tooltip-text="model.address"
         :copy-value="model.address"
@@ -181,28 +183,26 @@ function isColorfulTag(tag: (typeof inlineTags.value)[number]): boolean {
         >
           {{ secondaryLineText }}
         </span>
-      </EgTextOverflowTooltip>
+      </EgTooltipOverflow>
 
       <span v-if="showTags || showMoreTag" :class="styles.walletMetaTags">
         <template v-for="(tag, index) in inlineTags" :key="`wallet-meta-tag-${index}`">
-          <EgTag
+          <EgBusinessTag
             v-if="isCustomTag(tag)"
-            family="custom"
             :custom-style="tag.customStyle ?? 'vermilion'"
             size="sm"
             truncate
           >
             {{ tagLabel(tag.label) }}
-          </EgTag>
-          <EgTag
+          </EgBusinessTag>
+          <EgColorfulTag
             v-else-if="isColorfulTag(tag)"
-            family="colorful"
             :colorful-style="tag.colorfulStyle ?? 'apricot'"
             size="sm"
             truncate
           >
             {{ tagLabel(tag.label) }}
-          </EgTag>
+          </EgColorfulTag>
           <EgTag
             v-else
             family="system"
@@ -222,7 +222,7 @@ function isColorfulTag(tag: (typeof inlineTags.value)[number]): boolean {
   </div>
 
   <div v-else :class="[styles.aliasHost, alignEnd && styles.aliasHostAlignEnd]">
-    <EgTextOverflowTooltip
+    <EgTooltipOverflow
       :tooltip-text="model.address"
       :copy-value="model.address"
       :trigger="tooltipTrigger"
@@ -268,24 +268,22 @@ function isColorfulTag(tag: (typeof inlineTags.value)[number]): boolean {
 
         <div v-if="showTags" :class="[styles.metaRow, styles.metaRowInteractive]">
           <template v-for="(tag, index) in inlineTags" :key="`alias-tag-${index}`">
-            <EgTag
+            <EgBusinessTag
               v-if="isCustomTag(tag)"
-              family="custom"
               :custom-style="tag.customStyle ?? 'vermilion'"
               size="sm"
               truncate
             >
               {{ tagLabel(tag.label) }}
-            </EgTag>
-            <EgTag
+            </EgBusinessTag>
+            <EgColorfulTag
               v-else-if="isColorfulTag(tag)"
-              family="colorful"
               :colorful-style="tag.colorfulStyle ?? 'apricot'"
               size="sm"
               truncate
             >
               {{ tagLabel(tag.label) }}
-            </EgTag>
+            </EgColorfulTag>
             <EgTag
               v-else
               family="system"
@@ -301,6 +299,6 @@ function isColorfulTag(tag: (typeof inlineTags.value)[number]): boolean {
           </EgTag>
         </div>
       </div>
-    </EgTextOverflowTooltip>
+    </EgTooltipOverflow>
   </div>
 </template>

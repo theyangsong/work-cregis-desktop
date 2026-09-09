@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { EgTooltip } from '@eds/desktop-components';
+import { EgTooltipPanel } from '@eds/desktop-components';
 import type { ElementInspectInfo } from './buildElementInspectInfo';
 import InspectDetailPanel from './InspectDetailPanel.vue';
 
@@ -40,7 +40,7 @@ const shellStyle = computed(() => {
     :class="$style.host"
     :style="shellStyle"
   >
-    <EgTooltip
+    <EgTooltipPanel
       panel-kind="flotation"
       panel-radius="radius-md"
       panel-flush
@@ -51,7 +51,7 @@ const shellStyle = computed(() => {
       :scrollable="true"
     >
       <InspectDetailPanel :info="info" />
-    </EgTooltip>
+    </EgTooltipPanel>
   </div>
 </template>
 

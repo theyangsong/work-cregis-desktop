@@ -5,7 +5,7 @@ import {
   EgCrypto,
   EgIcon,
   EgIconButton,
-  EgLink,
+  EgLinkButton,
   EgTag,
   type DetailItemData,
 } from '@eds/desktop-components';
@@ -169,14 +169,14 @@ function onItemRowCopyClick(item: DetailItemData, itemIndex: number, event?: Mou
       </EgTag>
 
       <div v-if="itemHasValueTrailingActions(item)" :class="styles.itemValueTrailing">
-        <EgLink
+        <EgLinkButton
           v-if="item.showValueLink"
           size="sm"
           tone="brand"
           @click="emit('value-link-click')"
         >
           {{ ui(item.valueLinkLabel ?? 'Edit') }}
-        </EgLink>
+        </EgLinkButton>
 
         <span
           v-if="item.showValueCopy"

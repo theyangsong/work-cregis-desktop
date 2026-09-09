@@ -47,7 +47,7 @@
 }
 
 /*
- * EgTextOverflowTooltip measureRef 叠加 DS _measure_*（nowrap + ellipsis）。
+ * EgTooltipOverflow measureRef 叠加 EDS _measure_*（nowrap + ellipsis）。
  * 地址单独作为 Flotation trigger；Tag 在 walletMetaRow 内与之并列。
  */
 .walletAliasHost .walletMetaMeasureHost {
@@ -223,7 +223,7 @@
   justify-content: flex-end;
 }
 
-/** EgListFieldAddressLine 根节点（EgTextOverflowTooltip / EgFlotation host）。 */
+/** EgListFieldAddressLine 根节点（EgTooltipOverflow / EgFlotation host）。 */
 .addressLineHostAlignEnd > :global(span) {
   display: inline-flex;
   flex-direction: column;
@@ -233,7 +233,7 @@
   margin-left: auto;
 }
 
-/** DS EgListFieldAddressLine · eds-crypto-address-flotation 触发区右对齐。 */
+/** EDS EgListFieldAddressLine · eds-crypto-address-flotation 触发区右对齐。 */
 .addressLineHostAlignEnd :global(.eds-crypto-address-flotation) {
   display: inline-flex;
   flex-direction: column;

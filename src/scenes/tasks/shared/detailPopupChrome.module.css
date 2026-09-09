@@ -15,14 +15,14 @@
   line-height: var(--eds-body-small-line-height);
 }
 
-/** EgDetail headlineMain 内 eyebrow 插槽：对齐 DS `.eyebrow` 排版，不额外包一层 group。 */
+/** EgDetail headlineMain 内 eyebrow 插槽：对齐 EDS `.eyebrow` 排版，不额外包一层 group。 */
 .detailHeadlineEyebrowHost {
   display: block;
   min-width: 0;
   max-width: 100%;
 }
 
-/* eyebrow + 金额 + 额度 Streamer 同组：复用 DS headlineMain 纵向 gap。 */
+/* eyebrow + 金额 + 额度 Streamer 同组：复用 EDS headlineMain 纵向 gap。 */
 .detailHost :global([class*='headlineMain'][data-detail-headline-with-streamer]) {
   align-self: stretch;
   width: 100%;
